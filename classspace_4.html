@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ClassSpace</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f0f11;--s:#18181c;--s2:#1f1f25;--b:#2a2a32;--a:#e8ff47;--a2:#5b6af0;--t:#f0f0f2;--td:#7a7a88;--tf:#3a3a45;--r:#ff5252;--g:#52ffa0;--o:#ffb347;--R:16px;--r2:10px}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--t);font-family:'DM Sans',sans-serif;font-size:15px;min-height:100vh;overflow-x:hidden}
+#app{max-width:430px;margin:0 auto;min-height:100vh;position:relative}
+.screen{position:absolute;inset:0;overflow-y:auto;overscroll-behavior:contain;padding-bottom:86px;transition:transform .35s cubic-bezier(.4,0,.2,1),opacity .35s}
+.screen.hidden{transform:translateX(100%);opacity:0;pointer-events:none}
+.screen.slide-left{transform:translateX(-40%);opacity:0;pointer-events:none}
+/* topbar */
+.tb{padding:18px 20px 14px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--b)}
+.tb-back{width:36px;height:36px;background:var(--s);border:1px solid var(--b);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;flex-shrink:0;transition:background .15s}
+.tb-back:active{background:var(--s2)}
+.tb-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;flex:1}
+.tb-sub{font-size:12px;color:var(--td);margin-top:1px}
+.tb-act{font-size:13px;font-weight:600;color:var(--a);cursor:pointer;white-space:nowrap;font-family:'Syne',sans-serif}
+/* nav */
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--bg);border-top:1px solid var(--b);display:flex;z-index:100}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0 12px;cursor:pointer;gap:4px;position:relative}
+.ni .ic{font-size:20px;transition:transform .2s}
+.ni .lb{font-size:11px;color:var(--td);font-weight:500;transition:color .15s}
+.ni.on .lb{color:var(--a)}.ni.on .ic{transform:scale(1.1)}
+.ndot{position:absolute;top:8px;right:calc(50% - 14px);width:7px;height:7px;background:var(--r);border-radius:50%;border:2px solid var(--bg)}
+/* fab */
+.fab{position:fixed;bottom:82px;right:20px;width:52px;height:52px;background:var(--a);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;cursor:pointer;color:#0f0f11;box-shadow:0 4px 20px rgba(232,255,71,.35);transition:transform .15s;z-index:50}
+.fab:active{transform:scale(.92)}
+/* cards */
+.card{background:var(--s);border:1px solid var(--b);border-radius:var(--R);padding:16px}
+.card-sm{background:var(--s);border:1px solid var(--b);border-radius:var(--r2);padding:12px 14px}
+/* buttons */
+.btn{width:100%;border:none;border-radius:var(--r2);padding:14px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s}
+.btn:active{opacity:.85}
+.btn-p{background:var(--a);color:#0f0f11}
+.btn-s{background:transparent;color:var(--td);border:1px solid var(--b);margin-top:8px}
+.btn-big{padding:16px;border-radius:var(--r2);font-family:'Syne',sans-serif;font-size:16px;font-weight:700;cursor:pointer;border:none;width:100%;transition:opacity .15s}
+.btn-big:active{opacity:.85}
+.btn-big.p{background:var(--a);color:#0f0f11}
+.btn-big.o{background:transparent;border:1px solid var(--b);color:var(--t)}
+/* form */
+.fl{font-size:12px;font-weight:600;color:var(--td);margin-bottom:6px;font-family:'Syne',sans-serif;text-transform:uppercase;letter-spacing:.06em;display:block}
+.fi{width:100%;background:var(--bg);border:1px solid var(--b);border-radius:var(--r2);padding:12px 14px;color:var(--t);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s}
+.fi:focus{border-color:var(--a)}
+.fta{width:100%;background:var(--bg);border:1px solid var(--b);border-radius:var(--r2);padding:12px 14px;color:var(--t);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;resize:none;height:100px;transition:border-color .15s}
+.fta:focus{border-color:var(--a)}
+.fsel{width:100%;background:var(--bg);border:1px solid var(--b);border-radius:var(--r2);padding:12px 14px;color:var(--t);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;appearance:none}
+.ff{margin-bottom:14px}
+.trow{display:flex;align-items:center;background:var(--bg);border:1px solid var(--b);border-radius:var(--r2);padding:12px 14px;gap:10px;margin-bottom:14px}
+.trow-l{flex:1;font-size:14px}
+.tog{width:42px;height:24px;background:var(--s2);border-radius:12px;position:relative;cursor:pointer;transition:background .2s;border:1px solid var(--b)}
+.tog.on{background:var(--a);border-color:var(--a)}
+.tog::after{content:'';width:18px;height:18px;background:white;border-radius:50%;position:absolute;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.tog.on::after{transform:translateX(18px)}
+/* sheet */
+.sh-ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .25s}
+.sh-ov.open{opacity:1;pointer-events:all}
+.sh{background:var(--s);border-radius:20px 20px 0 0;width:100%;max-width:430px;margin:0 auto;padding:20px;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);max-height:90vh;overflow-y:auto}
+.sh-ov.open .sh{transform:translateY(0)}
+.sh-h{width:36px;height:4px;background:var(--b);border-radius:2px;margin:0 auto 20px}
+.sh-t{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:4px}
+.sh-s{font-size:13px;color:var(--td);margin-bottom:18px}
+/* share */
+.share-card{background:var(--s2);border:1px solid var(--b);border-radius:var(--r2);padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.share-link{flex:1;font-size:13px;color:var(--td);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:monospace}
+.copy-btn{background:var(--a);color:#0f0f11;border:none;border-radius:8px;padding:7px 14px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer}
+.sh-opt{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--b);cursor:pointer}
+.sh-opt:last-child{border-bottom:none}
+.sh-opt-ic{width:38px;height:38px;background:var(--bg);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+/* ann */
+.ann-list{padding:12px 20px 0;display:flex;flex-direction:column;gap:10px}
+.ann-card{background:var(--s);border:1px solid var(--b);border-radius:var(--R);padding:16px;cursor:pointer;transition:border-color .15s}
+.ann-card.pinned{border-color:var(--a)}
+.ann-card:active{border-color:var(--tf)}
+.ann-top{display:flex;align-items:flex-start;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.tag{font-size:11px;font-weight:600;font-family:'Syne',sans-serif;padding:3px 8px;border-radius:4px}
+.tag-pin{background:#e8ff4718;color:var(--a)}
+.tag-urg{background:#ff525218;color:var(--r)}
+.tag-t{font-size:11px;color:var(--td);margin-left:auto;margin-top:2px}
+.ann-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;line-height:1.3;margin-bottom:6px}
+.ann-body{font-size:14px;color:var(--td);line-height:1.5}
+.ann-foot{margin-top:12px;display:flex;align-items:center;gap:8px}
+.ann-auth{font-size:12px;color:var(--td);display:flex;align-items:center;gap:5px}
+.av{width:22px;height:22px;background:var(--a);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#0f0f11;flex-shrink:0}
+.ann-acts{margin-left:auto;display:flex;gap:6px}
+.a-btn{background:var(--s2);border:none;border-radius:6px;padding:5px 10px;color:var(--td);font-size:12px;cursor:pointer}
+.a-btn:active{background:var(--b)}
+/* filters */
+.fbar{padding:14px 20px 2px;display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.fbar::-webkit-scrollbar{display:none}
+.fc{flex-shrink:0;padding:6px 14px;background:var(--s);border:1px solid var(--b);border-radius:20px;font-size:13px;color:var(--td);cursor:pointer;font-weight:500;transition:all .15s;white-space:nowrap}
+.fc.on{background:var(--a);color:#0f0f11;border-color:var(--a);font-weight:600}
+/* tabs */
+.tabs{display:flex;padding:16px 20px 0;gap:6px}
+.tab{flex:1;padding:10px;background:var(--s);border:1px solid var(--b);border-radius:var(--r2);font-family:'Syne',sans-serif;font-size:13px;font-weight:600;color:var(--td);cursor:pointer;text-align:center;transition:all .15s}
+.tab.on{background:var(--a);color:#0f0f11;border-color:var(--a)}
+/* course folders */
+.cfl{padding:14px 20px 0;display:flex;flex-direction:column;gap:8px}
+.cf{background:var(--s);border:1px solid var(--b);border-radius:var(--R);padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:border-color .15s,transform .15s;position:relative;overflow:hidden}
+.cf::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.cf0::before{background:var(--a)}.cf1::before{background:var(--a2)}.cf2::before{background:var(--g)}.cf3::before{background:var(--o)}.cf4::before{background:var(--r)}
+.cf:active{transform:scale(.98)}
+.cf-ic{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.cf0 .cf-ic{background:#e8ff4718}.cf1 .cf-ic{background:#5b6af018}.cf2 .cf-ic{background:#52ffa018}.cf3 .cf-ic{background:#ffb34718}.cf4 .cf-ic{background:#ff525218}
+.cf-inf{flex:1;min-width:0}
+.cf-n{font-family:'Syne',sans-serif;font-size:14px;font-weight:700}
+.cf-c{font-size:12px;color:var(--td);margin-top:2px}
+.cf-cnt{font-size:12px;color:var(--td);background:var(--s2);border-radius:8px;padding:3px 9px;flex-shrink:0}
+/* mat */
+.mat-list{padding:12px 20px 0}
+.mat-cat-t{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--td);text-transform:uppercase;letter-spacing:.08em;padding:8px 0}
+.mat-card{background:var(--s);border:1px solid var(--b);border-radius:var(--r2);padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .15s;margin-bottom:6px}
+.mat-card:active{border-color:var(--tf)}
+.mat-ic{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.mi-pdf{background:#ff525218}.mi-doc{background:#5b6af018}.mi-ppt{background:#ffb34718}.mi-img{background:#52ffa018}.mi-oth{background:#7a7a8820}
+.mat-inf{flex:1;min-width:0}
+.mat-n{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mat-m{font-size:12px;color:var(--td);margin-top:2px;display:flex;gap:8px}
+.mat-up{font-size:11px;color:var(--tf)}
+.mat-acts{display:flex;gap:6px;flex-shrink:0}
+.mat-btn{width:32px;height:32px;background:var(--s2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;cursor:pointer;border:1px solid var(--b)}
+.mat-btn:active{background:var(--b)}
+/* colour pills */
+.cp0{background:#e8ff4718;color:var(--a)}.cp1{background:#5b6af018;color:#8b97ff}
+.cp2{background:#52ffa018;color:var(--g)}.cp3{background:#ffb34718;color:var(--o)}
+.cp4{background:#ff525218;color:var(--r)}.cpg{background:#ffffff0d;color:var(--td)}
+/* landing */
+.landing{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 28px;text-align:center}
+.logo{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;letter-spacing:.1em;color:var(--a);margin-bottom:40px;text-transform:uppercase}
+.land-t{font-family:'Syne',sans-serif;font-size:34px;font-weight:800;line-height:1.1;margin-bottom:14px}
+.land-t span{color:var(--a)}
+.land-s{font-size:16px;color:var(--td);line-height:1.6;margin-bottom:40px}
+.land-cta{display:flex;flex-direction:column;gap:10px;width:100%}
+/* onboard */
+.ob-hd{padding:36px 24px 24px}
+.ob-step{font-size:12px;font-weight:600;color:var(--a);font-family:'Syne',sans-serif;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.ob-t{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;line-height:1.15;margin-bottom:8px}
+.ob-s{font-size:15px;color:var(--td);line-height:1.5}
+.ob-bd{padding:0 24px 24px}
+.prog{height:3px;background:var(--s2);border-radius:2px;margin:0 24px 28px;overflow:hidden}
+.prog-f{height:100%;background:var(--a);border-radius:2px;transition:width .3s}
+.cr-row{display:flex;gap:8px;margin-bottom:10px;align-items:center}
+.cr-row .fi{flex:1}
+.cr-row .fi.code{width:110px;flex:none}
+.rm-btn{width:38px;height:44px;background:var(--s2);border:1px solid var(--b);border-radius:var(--r2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;flex-shrink:0;color:var(--r)}
+.add-link{font-size:13px;color:var(--a);cursor:pointer;margin-bottom:14px;display:inline-block;font-weight:600}
+/* join */
+.join-hero{background:linear-gradient(180deg,#1a1a20 0%,var(--bg) 100%);padding:36px 24px 28px;text-align:center;border-bottom:1px solid var(--b)}
+.j-icon{width:72px;height:72px;background:#e8ff4718;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 14px}
+.j-name{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:6px}
+.j-sub{font-size:14px;color:var(--td)}
+.j-rep{display:inline-flex;align-items:center;gap:6px;margin-top:12px;font-size:13px;color:var(--td);background:var(--s);border:1px solid var(--b);border-radius:20px;padding:5px 12px}
+.rdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.j-actions{padding:20px}
+.j-or{text-align:center;color:var(--tf);font-size:13px;padding:8px 0}
+.j-blur{filter:blur(3px);pointer-events:none;user-select:none}
+.ann-prev{background:var(--s);border:1px solid var(--b);border-radius:var(--r2);padding:12px 14px;cursor:pointer}
+.ann-prev-top{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.apt{font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;font-family:'Syne',sans-serif}
+.at{font-size:11px;color:var(--td);margin-left:auto}
+.ann-prev-t{font-size:14px;font-weight:500;line-height:1.3}
+.ann-prev-b{font-size:13px;color:var(--td);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.udot{width:7px;height:7px;background:var(--a);border-radius:50%;flex-shrink:0}
+/* home */
+.home-hd{padding:28px 20px 20px}
+.home-gr{font-size:13px;color:var(--td);margin-bottom:4px}
+.home-n{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;line-height:1.1}
+.home-n span{color:var(--a)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 20px 24px}
+.stat{background:var(--s);border:1px solid var(--b);border-radius:var(--r2);padding:14px 16px}
+.stat-v{font-family:'Syne',sans-serif;font-size:28px;font-weight:800}
+.stat-l{font-size:12px;color:var(--td);margin-top:2px}
+.stat.ac{background:var(--a);border-color:var(--a)}
+.stat.ac .stat-v{color:#0f0f11}
+.stat.ac .stat-l{color:#3a3a1a}
+.sec-hd{padding:0 20px 12px;display:flex;align-items:center;justify-content:space-between}
+.sec-t{font-family:'Syne',sans-serif;font-size:16px;font-weight:700}
+.sec-a{font-size:12px;color:var(--a);cursor:pointer;font-weight:500}
+/* my space card */
+.msc{margin:0 20px 24px;background:var(--s);border:1px solid var(--b);border-radius:var(--R);padding:18px;cursor:pointer;transition:border-color .15s,transform .15s;position:relative;overflow:hidden}
+.msc::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--a)}
+.msc:active{transform:scale(.985)}
+.msc-top{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.msc-ic{width:52px;height:52px;background:#e8ff4718;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.msc-n{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;line-height:1.2}
+.msc-rep{font-size:12px;color:var(--td);display:flex;align-items:center;gap:5px;margin-top:5px}
+.msc-ft{display:flex;gap:8px;flex-wrap:wrap}
+.pill{font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;font-family:'Syne',sans-serif}
+.pill-a{background:#e8ff4718;color:var(--a)}
+.pill-b{background:#5b6af018;color:#8b97ff}
+.pill-r{background:#ff525218;color:var(--r)}
+/* space hero */
+.sp-hero{margin:16px 20px 0;background:var(--s);border:1px solid var(--b);border-radius:var(--R);padding:18px;display:flex;align-items:center;gap:16px;position:relative;overflow:hidden}
+.sp-hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--a)}
+.sp-hero-ic{width:52px;height:52px;background:#e8ff4718;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+/* profile */
+.pf-hd{padding:28px 20px 20px;text-align:center}
+.pf-av{width:80px;height:80px;background:var(--a);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:#0f0f11;margin:0 auto 14px;font-family:'Syne',sans-serif}
+.pf-n{font-family:'Syne',sans-serif;font-size:22px;font-weight:800}
+.pf-d{font-size:14px;color:var(--td);margin-top:4px}
+.pf-bdg{display:inline-flex;align-items:center;gap:6px;background:var(--s);border:1px solid var(--b);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--td);margin-top:10px}
+.slist{padding:0 20px;display:flex;flex-direction:column;gap:8px}
+.sgrp{background:var(--s);border:1px solid var(--b);border-radius:var(--R);overflow:hidden}
+.si{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;border-bottom:1px solid var(--b);transition:background .15s}
+.si:last-child{border-bottom:none}
+.si:active{background:var(--s2)}
+.si-ic{width:34px;height:34px;background:var(--s2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.si-t{font-size:14px;font-weight:500}
+.si-s{font-size:12px;color:var(--td);margin-top:2px}
+/* join input */
+.dlc{background:var(--s2);border:1px solid var(--b);border-radius:var(--r2);padding:10px 12px;font-size:13px;cursor:pointer;transition:border-color .15s;margin-bottom:6px;display:block}
+.dlc:active{border-color:var(--a)}
+/* empty */
+.empty{text-align:center;padding:48px 20px;color:var(--td)}
+.empty-e{font-size:40px;margin-bottom:12px}
+.empty-t{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--t);margin-bottom:6px}
+/* toast */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--a);color:#0f0f11;padding:10px 20px;border-radius:20px;font-family:'Syne',sans-serif;font-weight:600;font-size:13px;z-index:999;white-space:nowrap;transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+/* file picker */
+.fp{border:2px dashed var(--b);border-radius:var(--r2);padding:24px;text-align:center;cursor:pointer;transition:border-color .15s;margin-bottom:14px;position:relative}
+.fp:hover,.fp.drag{border-color:var(--a)}
+.fp input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.fc-chosen{background:var(--bg);border:1px solid var(--b);border-radius:var(--r2);padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:14px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.fu{animation:fadeUp .4s ease both}
+.fu1{animation-delay:.05s}.fu2{animation-delay:.12s}.fu3{animation-delay:.19s}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- LANDING -->
+<div class="screen" id="sc-land" style="padding-bottom:0;overflow-y:hidden">
+  <div class="landing">
+    <div class="logo">ClassSpace</div>
+    <div class="land-t">Your class.<br><span>Organised.</span></div>
+    <div class="land-s">One space for your department's announcements and study materials. No noise, just what matters.</div>
+    <div class="land-cta">
+      <button class="btn-big p" onclick="go('sc-setup1')">Create a Space →</button>
+      <button class="btn-big o" onclick="go('sc-join-input')">Join with a Link</button>
+    </div>
+    <div style="margin-top:28px;font-size:13px;color:var(--tf)">Made for Nigerian students 🇳🇬</div>
+  </div>
+</div>
+
+<!-- SETUP 1 -->
+<div class="screen hidden" id="sc-setup1" style="padding-bottom:0">
+  <div class="prog"><div class="prog-f" style="width:33%"></div></div>
+  <div class="ob-hd">
+    <div class="ob-step">Step 1 of 3</div>
+    <div class="ob-t">Tell us about your class</div>
+    <div class="ob-s">This becomes your space's identity.</div>
+  </div>
+  <div class="ob-bd">
+    <div class="ff"><label class="fl">Your Name</label><input class="fi" id="s1-rep" type="text" placeholder="e.g. Emeka Obi"></div>
+    <div class="ff"><label class="fl">Department</label><input class="fi" id="s1-dept" type="text" placeholder="e.g. Production Engineering"></div>
+    <div class="ff"><label class="fl">Level</label><input class="fi" id="s1-lvl" type="text" placeholder="e.g. 300 Level"></div>
+    <div class="ff"><label class="fl">University</label><input class="fi" id="s1-uni" type="text" placeholder="e.g. University of Lagos"></div>
+    <button class="btn btn-p" onclick="setup1()">Continue →</button>
+  </div>
+</div>
+
+<!-- SETUP 2 -->
+<div class="screen hidden" id="sc-setup2" style="padding-bottom:0">
+  <div class="prog"><div class="prog-f" style="width:66%"></div></div>
+  <div class="ob-hd">
+    <div class="ob-step">Step 2 of 3</div>
+    <div class="ob-t">Add your courses</div>
+    <div class="ob-s">Each course gets its own folder in Materials.</div>
+  </div>
+  <div class="ob-bd">
+    <div id="cr-wrap"></div>
+    <div class="add-link" onclick="addCourseRow()">+ Add another course</div>
+    <button class="btn btn-p" onclick="setup2()">Continue →</button>
+    <button class="btn btn-s" onclick="setup2skip()">Skip for now</button>
+  </div>
+</div>
+
+<!-- SETUP 3 -->
+<div class="screen hidden" id="sc-setup3" style="padding-bottom:0;overflow-y:hidden">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 28px;text-align:center">
+    <div style="font-size:56px;margin-bottom:20px">🎉</div>
+    <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;margin-bottom:10px">Space is live!</div>
+    <div style="font-size:15px;color:var(--td);line-height:1.6;margin-bottom:32px">Share the link below with your classmates so they can join.</div>
+    <div class="share-card" style="width:100%">
+      <div class="share-link" id="setup-link">classspace.app/s/abc123</div>
+      <button class="copy-btn" onclick="copyLink('setup-link')">Copy</button>
+    </div>
+    <button class="btn-big p" onclick="enterApp()">Go to My Space →</button>
+  </div>
+</div>
+
+<!-- JOIN INPUT -->
+<div class="screen hidden" id="sc-join-input" style="padding-bottom:0">
+  <div class="tb">
+    <div class="tb-back" onclick="go('sc-land')">←</div>
+    <div class="tb-title">Join with a Link</div>
+  </div>
+  <div style="padding:28px 24px 0">
+    <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;line-height:1.2;margin-bottom:8px">Paste your<br><span style="color:var(--a)">ClassSpace link</span></div>
+    <div style="font-size:14px;color:var(--td);line-height:1.5;margin-bottom:24px">Your class rep shares a link via WhatsApp. Paste it here to preview and join.</div>
+    <div class="ff">
+      <label class="fl">Link</label>
+      <input class="fi" id="ji-link" type="url" placeholder="classspace.app/s/abc123/…" oninput="onLinkInput()">
+    </div>
+    <div id="ji-preview" style="display:none;margin-bottom:16px;background:var(--s2);border:1px solid var(--b);border-radius:var(--r2);padding:12px 14px;display:none;align-items:center;gap:10px">
+      <div id="ji-prev-icon" style="font-size:22px;flex-shrink:0">🏗️</div>
+      <div><div id="ji-prev-type" style="font-size:11px;font-weight:700;color:var(--a);font-family:'Syne',sans-serif;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Space</div>
+      <div id="ji-prev-label" style="font-size:13px;color:var(--td)">classspace.app/s/abc123</div></div>
+    </div>
+    <button class="btn btn-p" id="ji-btn" onclick="resolveLink()" style="opacity:.4;pointer-events:none">Preview →</button>
+    <div style="margin-top:24px;background:var(--s);border:1px solid var(--b);border-radius:var(--r2);padding:16px">
+      <div style="font-size:11px;font-weight:700;color:var(--td);font-family:'Syne',sans-serif;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Try a demo link</div>
+      <div class="dlc" onclick="demoLink('classspace.app/s/abc123')">🏗️ Space &nbsp;<span style="color:var(--td)">/s/abc123</span></div>
+      <div class="dlc" onclick="demoLink('classspace.app/s/abc123/ann/1')">📢 Announcement &nbsp;<span style="color:var(--td)">/ann/1</span></div>
+      <div class="dlc" onclick="demoLink('classspace.app/s/abc123/mat/101')">📄 Material &nbsp;<span style="color:var(--td)">/mat/101</span></div>
+      <div class="dlc" onclick="demoLink('classspace.app/s/abc123/course/1')">📂 Course folder &nbsp;<span style="color:var(--td)">/course/1</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- JOIN: SPACE -->
+<div class="screen hidden" id="sc-join-space" style="padding-bottom:0">
+  <div class="tb"><div class="tb-back" onclick="go('sc-join-input')">←</div><div class="tb-title">Join Space</div></div>
+  <div class="join-hero">
+    <div class="j-icon" id="jss-icon">🏗️</div>
+    <div class="j-name" id="jss-name">300L Production Engineering</div>
+    <div class="j-sub" id="jss-sub">University of Lagos · 2024/2025</div>
+    <div class="j-rep"><div class="rdot" style="background:var(--g)"></div><span id="jss-rep">Class Rep: Emeka Obi</span></div>
+  </div>
+  <div style="padding:0 20px" id="jss-teaser"></div>
+  <div class="j-actions">
+    <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px">Join this Space?</div>
+    <div style="font-size:14px;color:var(--td);margin-bottom:18px">Get access to all announcements and materials for this class.</div>
+    <div class="ff"><label class="fl">Your Name</label><input class="fi" id="jss-name-in" type="text" placeholder="Enter your name to join"></div>
+    <button class="btn btn-p" onclick="joinDo('jss-name-in')">Join Space →</button>
+    <div class="j-or">or</div>
+    <button class="btn btn-s" onclick="guestEnter()">Browse as guest</button>
+  </div>
+</div>
+
+<!-- JOIN: ANNOUNCEMENT -->
+<div class="screen hidden" id="sc-join-ann" style="padding-bottom:0">
+  <div class="tb"><div class="tb-back" onclick="go('sc-join-input')">←</div><div class="tb-title">Shared Announcement</div></div>
+  <div class="join-hero" style="text-align:left;padding:24px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div style="width:40px;height:40px;background:#e8ff4718;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">📢</div>
+      <div><div style="font-size:11px;font-weight:700;color:var(--a);font-family:'Syne',sans-serif;text-transform:uppercase;letter-spacing:.06em">Announcement</div>
+      <div id="ja-space" style="font-size:12px;color:var(--td)">300L Production Engineering</div></div>
+    </div>
+    <div id="ja-badges" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
+    <div id="ja-title" style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:8px"></div>
+    <div id="ja-body" style="font-size:14px;color:var(--td);line-height:1.6;margin-bottom:10px"></div>
+    <div style="font-size:12px;color:var(--td);display:flex;align-items:center;gap:5px">
+      <div class="av" id="ja-av" style="width:18px;height:18px;font-size:9px">E</div>
+      <span id="ja-auth"></span><span style="color:var(--tf)">·</span><span id="ja-time"></span>
+    </div>
+  </div>
+  <div class="j-actions">
+    <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px">Want full access?</div>
+    <div style="font-size:14px;color:var(--td);margin-bottom:18px">Join to see all announcements and materials.</div>
+    <div class="ff"><label class="fl">Your Name</label><input class="fi" id="ja-name-in" type="text" placeholder="Enter your name to join"></div>
+    <button class="btn btn-p" onclick="joinDo('ja-name-in')">Join Space →</button>
+    <div class="j-or">or</div>
+    <button class="btn btn-s" onclick="guestEnter()">Just view this announcement</button>
+  </div>
+</div>
+
+<!-- JOIN: MATERIAL -->
+<div class="screen hidden" id="sc-join-mat" style="padding-bottom:0">
+  <div class="tb"><div class="tb-back" onclick="go('sc-join-input')">←</div><div class="tb-title">Shared File</div></div>
+  <div class="join-hero" style="text-align:left;padding:24px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div style="width:40px;height:40px;background:#5b6af018;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">📂</div>
+      <div><div style="font-size:11px;font-weight:700;color:#8b97ff;font-family:'Syne',sans-serif;text-transform:uppercase;letter-spacing:.06em">Material</div>
+      <div id="jm-space" style="font-size:12px;color:var(--td)">300L Production Engineering</div></div>
+    </div>
+    <div style="background:var(--s2);border:1px solid var(--b);border-radius:var(--R);padding:16px;display:flex;align-items:center;gap:14px;margin-bottom:14px">
+      <div id="jm-icon" style="width:48px;height:48px;background:#ff525218;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">📄</div>
+      <div style="flex:1;min-width:0">
+        <div id="jm-name" style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;line-height:1.3"></div>
+        <div id="jm-course" style="font-size:12px;color:var(--td);margin-top:3px"></div>
+        <div style="display:flex;gap:10px;margin-top:5px">
+          <span id="jm-cat" style="font-size:11px;background:#5b6af018;color:#8b97ff;padding:2px 8px;border-radius:4px;font-weight:600;font-family:'Syne',sans-serif"></span>
+          <span id="jm-size" style="font-size:11px;color:var(--tf)"></span>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:13px;color:var(--td);display:flex;align-items:center;gap:5px">
+      Uploaded by <div class="av" id="jm-av" style="width:18px;height:18px;font-size:9px">E</div>
+      <span id="jm-up"></span><span style="color:var(--tf)">·</span><span id="jm-date"></span>
+    </div>
+  </div>
+  <div class="j-actions">
+    <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px">Download this file</div>
+    <div style="font-size:14px;color:var(--td);margin-bottom:18px">Join the space to download and access all class materials.</div>
+    <div class="ff"><label class="fl">Your Name</label><input class="fi" id="jm-name-in" type="text" placeholder="Enter your name to join"></div>
+    <button class="btn btn-p" onclick="joinDo('jm-name-in',true)">Join & Download →</button>
+    <div class="j-or">or</div>
+    <button class="btn btn-s" onclick="guestEnter()">Browse as guest</button>
+  </div>
+</div>
+
+<!-- JOIN: COURSE FOLDER -->
+<div class="screen hidden" id="sc-join-course" style="padding-bottom:0">
+  <div class="tb"><div class="tb-back" onclick="go('sc-join-input')">←</div><div class="tb-title">Shared Course Folder</div></div>
+  <div class="join-hero" style="text-align:left;padding:24px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+      <div id="jc-icon" style="width:60px;height:60px;background:#52ffa018;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0">⚙️</div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--g);font-family:'Syne',sans-serif;text-transform:uppercase;letter-spacing:.06em">Course Folder</div>
+        <div id="jc-name" style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-top:2px"></div>
+        <div id="jc-code" style="font-size:13px;color:var(--td);margin-top:2px"></div>
+      </div>
+    </div>
+    <div style="background:var(--s2);border:1px solid var(--b);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--td);font-family:'Syne',sans-serif;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Files in this folder</div>
+      <div id="jc-files"></div>
+    </div>
+    <div style="font-size:13px;color:var(--td)">Part of <span id="jc-space" style="color:var(--a);font-weight:600">300L Production Engineering</span></div>
+  </div>
+  <div class="j-actions">
+    <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px">Access this folder</div>
+    <div style="font-size:14px;color:var(--td);margin-bottom:18px">Join the space to download files from this course.</div>
+    <div class="ff"><label class="fl">Your Name</label><input class="fi" id="jc-name-in" type="text" placeholder="Enter your name to join"></div>
+    <button class="btn btn-p" onclick="joinDo('jc-name-in',false,true)">Join & Open Folder →</button>
+    <div class="j-or">or</div>
+    <button class="btn btn-s" onclick="guestEnter()">Browse as guest</button>
+  </div>
+</div>
+
+<!-- HOME -->
+<div class="screen hidden" id="sc-home">
+  <div class="home-hd fu">
+    <div class="home-gr">Good morning 👋</div>
+    <div class="home-n">Welcome back,<br><span id="home-uname">Tomiwa</span></div>
+  </div>
+  <div class="stats fu fu1">
+    <div class="stat ac"><div class="stat-v" id="home-unread">3</div><div class="stat-l">Unread announcements</div></div>
+    <div class="stat"><div class="stat-v" id="home-files">14</div><div class="stat-l">Files available</div></div>
+  </div>
+  <div class="sec-hd fu fu1"><div class="sec-t">My Space</div></div>
+  <div class="msc fu fu2" onclick="goToSpace()">
+    <div class="msc-top">
+      <div class="msc-ic">🏗️</div>
+      <div>
+        <div class="msc-n" id="home-sp-name">300 Level<br>Production Engineering</div>
+        <div class="msc-rep"><div class="rdot" style="background:var(--g)"></div><span id="home-sp-rep">Class Rep: Emeka Obi · Active</span></div>
+      </div>
+    </div>
+    <div class="msc-ft">
+      <span class="pill pill-a" id="home-ann-pill">7 announcements</span>
+      <span class="pill pill-b" id="home-mat-pill">14 files</span>
+      <span class="pill pill-r" id="home-unread-pill">3 unread</span>
+    </div>
+  </div>
+  <div class="sec-hd fu fu2"><div class="sec-t">Recent</div><div class="sec-a" onclick="goToSpace()">See all →</div></div>
+  <div style="padding:0 20px;display:flex;flex-direction:column;gap:8px" id="home-recent" class="fu fu3"></div>
+</div>
+
+<!-- SPACE -->
+<div class="screen hidden" id="sc-space">
+  <div class="tb">
+    <div style="flex:1;font-family:'Syne',sans-serif;font-size:17px;font-weight:800;line-height:1.2" id="sp-tb-t">300L Production Engineering</div>
+    <div class="tb-act" onclick="openShare('space')">Share 🔗</div>
+  </div>
+  <div class="sp-hero">
+    <div class="sp-hero-ic">🏗️</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;line-height:1.2" id="sp-name">300L · Production Engineering</div>
+      <div style="font-size:13px;color:var(--td);margin-top:3px" id="sp-sub">University of Lagos · 2024/2025</div>
+      <div style="font-size:12px;color:var(--td);display:flex;align-items:center;gap:5px;margin-top:5px">
+        <div class="rdot" style="background:var(--g)"></div><span id="sp-rep">Class Rep: Emeka Obi</span>
+      </div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab on" id="tab-ann" onclick="switchTab('ann')">📢 Announcements</div>
+    <div class="tab" id="tab-mat" onclick="switchTab('mat')">📂 Materials</div>
+  </div>
+  <div id="panel-ann">
+    <div class="fbar" id="ann-fbar"></div>
+    <div class="ann-list" id="ann-list"></div>
+  </div>
+  <div id="panel-mat" style="display:none">
+    <div class="cfl" id="cf-list"></div>
+  </div>
+</div>
+
+<!-- COURSE FILES -->
+<div class="screen hidden" id="sc-cf">
+  <div class="tb">
+    <div class="tb-back" onclick="goBack()">←</div>
+    <div style="flex:1"><div class="tb-title" id="cf-title">Course</div><div class="tb-sub" id="cf-sub">0 files</div></div>
+    <div class="tb-act" onclick="openShare('course')">Share</div>
+  </div>
+  <div class="mat-list" id="mat-list"></div>
+</div>
+
+<!-- PROFILE -->
+<div class="screen hidden" id="sc-profile">
+  <div class="tb"><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;flex:1">Profile</div></div>
+  <div class="pf-hd">
+    <div class="pf-av" id="pf-av">T</div>
+    <div class="pf-n" id="pf-name">Tomiwa</div>
+    <div class="pf-d" id="pf-det">Production Engineering · 300L · UNILAG</div>
+    <div class="pf-bdg" id="pf-role"><span style="width:7px;height:7px;background:var(--g);border-radius:50%;display:inline-block"></span>Member</div>
+  </div>
+  <div class="slist">
+    <div style="font-size:11px;font-weight:700;color:var(--td);text-transform:uppercase;letter-spacing:.08em;padding:0 4px 8px;font-family:'Syne',sans-serif">Notifications</div>
+    <div class="sgrp">
+      <div class="si"><div class="si-ic">🔔</div><div style="flex:1"><div class="si-t">Announcements</div><div class="si-s">Get notified on new posts</div></div><div class="tog on" id="t1" onclick="tog('t1')"></div></div>
+      <div class="si"><div class="si-ic">🚨</div><div style="flex:1"><div class="si-t">Urgent only</div><div class="si-s">Only urgent announcements</div></div><div class="tog" id="t2" onclick="tog('t2')"></div></div>
+      <div class="si"><div class="si-ic">📂</div><div style="flex:1"><div class="si-t">New materials</div><div class="si-s">When files are uploaded</div></div><div class="tog on" id="t3" onclick="tog('t3')"></div></div>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--td);text-transform:uppercase;letter-spacing:.08em;padding:12px 4px 8px;font-family:'Syne',sans-serif">Space</div>
+    <div class="sgrp">
+      <div class="si" onclick="openShare('space')"><div class="si-ic">🔗</div><div style="flex:1"><div class="si-t">Share Space</div><div class="si-s">Invite classmates with a link</div></div><div style="color:var(--tf)">›</div></div>
+      <div class="si" onclick="toast('Signed out (demo)')"><div class="si-ic">🚪</div><div style="flex:1"><div class="si-t">Sign out</div><div class="si-s" id="pf-email">student@edu.ng</div></div><div style="color:var(--tf)">›</div></div>
+    </div>
+    <div style="text-align:center;padding:28px 0 0;font-size:12px;color:var(--tf)">ClassSpace v2.0 · Made for Nigerian students 🇳🇬</div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="nav" id="nav" style="display:none">
+  <div class="ni on" id="ni-home" onclick="go('sc-home');setNav('ni-home')"><div class="ic">🏠</div><div class="lb">Home</div></div>
+  <div class="ni" id="ni-space" onclick="goToSpace();setNav('ni-space')"><div class="ic">🏗️</div><div class="lb">My Space</div><div class="ndot" id="sp-dot" style="display:none"></div></div>
+  <div class="ni" id="ni-profile" onclick="go('sc-profile');setNav('ni-profile')"><div class="ic">👤</div><div class="lb">Profile</div></div>
+</nav>
+
+<!-- FAB -->
+<div class="fab" id="fab" style="display:none" onclick="fabAct()">+</div>
+
+<!-- SHEET: POST ANN -->
+<div class="sh-ov" id="sh-ann" onclick="closeSheetOv('sh-ann',event)">
+  <div class="sh">
+    <div class="sh-h"></div>
+    <div class="sh-t">Post Announcement</div>
+    <div class="sh-s">Posted as <strong id="ann-poster">You</strong></div>
+    <div class="ff"><label class="fl">Related Course (optional)</label><select class="fsel" id="post-course"></select></div>
+    <div class="ff"><label class="fl">Title</label><input class="fi" id="post-title" type="text" placeholder="e.g. Test date confirmed"></div>
+    <div class="ff"><label class="fl">Message</label><textarea class="fta" id="post-body" placeholder="Type your announcement here..."></textarea></div>
+    <div class="trow"><span>🚨</span><div class="trow-l"><div style="font-weight:500">Mark as Urgent</div><div style="font-size:12px;color:var(--td)">Highlighted and pushed to top</div></div><div class="tog" id="post-urg" onclick="tog('post-urg')"></div></div>
+    <div class="trow"><span>📌</span><div class="trow-l"><div style="font-weight:500">Pin this announcement</div><div style="font-size:12px;color:var(--td)">Always visible at top</div></div><div class="tog" id="post-pin" onclick="tog('post-pin')"></div></div>
+    <button class="btn btn-p" onclick="submitPost()">Post Announcement</button>
+  </div>
+</div>
+
+<!-- SHEET: UPLOAD MAT -->
+<div class="sh-ov" id="sh-mat" onclick="closeSheetOv('sh-mat',event)">
+  <div class="sh">
+    <div class="sh-h"></div>
+    <div class="sh-t">Upload Material</div>
+    <div class="sh-s">Posted as <strong id="mat-poster">You</strong></div>
+    <div class="ff"><label class="fl">Course</label><select class="fsel" id="up-course"></select></div>
+    <div class="ff"><label class="fl">Category</label><select class="fsel" id="up-cat"><option>Notes</option><option>Slides</option><option>Assignments</option><option>Past Questions</option><option>Textbooks</option><option>Lab Resources</option><option>Templates</option><option>Other</option></select></div>
+    <div class="ff"><label class="fl">File</label>
+      <div class="fp" id="fp-area" ondragover="fpDrag(event,'fp-area')" ondragleave="fpLeave('fp-area')" ondrop="fpDrop(event)">
+        <input type="file" id="fp-input" accept="*/*" onchange="fpChosen(this)">
+        <div style="font-size:28px;margin-bottom:6px">📂</div>
+        <div style="font-size:14px;color:var(--td)">Tap to choose a file</div>
+        <div style="font-size:12px;color:var(--tf);margin-top:4px">PDF, DOCX, PPTX, JPEG…</div>
+      </div>
+      <div class="fc-chosen" id="fp-chosen" style="display:none">
+        <span id="fp-icon">📄</span>
+        <span style="flex:1;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="fp-name"></span>
+        <span style="font-size:16px;cursor:pointer;color:var(--td)" onclick="fpClear()">✕</span>
+      </div>
+    </div>
+    <div class="ff"><label class="fl">Custom Name (optional)</label><input class="fi" id="up-name" type="text" placeholder="Leave blank to use filename"></div>
+    <button class="btn btn-p" onclick="submitUpload()">Upload Material</button>
+  </div>
+</div>
+
+<!-- SHEET: SHARE -->
+<div class="sh-ov" id="sh-share" onclick="closeSheetOv('sh-share',event)">
+  <div class="sh">
+    <div class="sh-h"></div>
+    <div class="sh-t" id="sh-share-t">Share Space</div>
+    <div class="sh-s" id="sh-share-s">Anyone with this link can join</div>
+    <div class="share-card"><div class="share-link" id="sh-share-link">classspace.app/s/abc123</div><button class="copy-btn" onclick="copyLink('sh-share-link')">Copy</button></div>
+    <div class="sh-opt" onclick="shareWA()"><div class="sh-opt-ic">💬</div><div><div style="font-size:14px;font-weight:500">Share via WhatsApp</div><div style="font-size:12px;color:var(--td);margin-top:2px">Open in WhatsApp</div></div></div>
+    <div class="sh-opt" onclick="copyLink('sh-share-link')"><div class="sh-opt-ic">🔗</div><div><div style="font-size:14px;font-weight:500">Copy link</div><div style="font-size:12px;color:var(--td);margin-top:2px">Paste anywhere</div></div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast-el"></div>
+</div>
+
+<script>
+// ── STATE ──
+const S = {
+  user:{name:'',isRep:false},
+  space:{name:'',dept:'',level:'',uni:'',rep:'',id:'abc123'},
+  courses:[],
+  anns:[],
+  mats:{}
+};
+let curSc='sc-land', prevSc='sc-land', curTab='ann', curFilter='All', curCourse=null;
+let fpData=null;
+const ICONS=['🏗️','💧','🔥','⚙️','∑','✍️','📐','🔬','💡','🖥️'];
+const CCOLS=['cf0','cf1','cf2','cf3','cf4'];
+
+// ── DEMO DATA ──
+function loadDemo(){
+  S.user={name:'Tomiwa Adeyemi',isRep:false};
+  S.space={name:'300L Production Engineering',dept:'Production Engineering',level:'300 Level',uni:'University of Lagos',rep:'Emeka Obi',id:'abc123'};
+  S.courses=[
+    {id:1,name:'Fluid Mechanics',code:'PEG 301',icon:'💧',ci:0},
+    {id:2,name:'Thermodynamics II',code:'PEG 303',icon:'🔥',ci:1},
+    {id:3,name:'Process Control',code:'PEG 305',icon:'⚙️',ci:2},
+    {id:4,name:'Engineering Mathematics',code:'MTH 301',icon:'∑',ci:3},
+    {id:5,name:'Technical Communication',code:'GNS 301',icon:'✍️',ci:4}
+  ];
+  S.anns=[
+    {id:1,cid:1,title:'Lab Report Deadline — Friday',body:'Submit PEG 301 lab report by Friday 11:59 PM. Upload to portal; hard copy to lab tech Monday.',author:'Emeka Obi',time:'2h ago',pin:true,urg:false,read:false},
+    {id:2,cid:0,title:'No lectures Wednesday ⚠️',body:'ASUU disruptions expected Wednesday. No formal classes. Monitor this space for updates.',author:'Emeka Obi',time:'4h ago',pin:false,urg:true,read:false},
+    {id:3,cid:2,title:'Thermo II test — confirmed',body:'Mid-semester test: next Thursday 10am, Room G101. Chapters 1–6. Bring matric card.',author:'Chisom N.',time:'1d ago',pin:false,urg:false,read:true},
+    {id:4,cid:3,title:'Process Control makeup class',body:'Makeup class: Saturday 9am, Lab 2. Compulsory for absent students.',author:'Emeka Obi',time:'1d ago',pin:false,urg:false,read:false},
+    {id:5,cid:0,title:'Departmental meeting — Friday 2pm',body:'All 300L students must attend: Friday 2pm, Engineering Hall.',author:'Emeka Obi',time:'2d ago',pin:true,urg:false,read:true},
+    {id:6,cid:5,title:'GNS report format updated',body:'Approved format for GNS 301 changed. Download new template from Materials.',author:'Bolu F.',time:'3d ago',pin:false,urg:false,read:true}
+  ];
+  S.mats={
+    1:[{id:101,name:'Lecture Slides — Week 6',type:'ppt',cat:'Slides',size:'2.4 MB',date:'2d ago',up:'Emeka Obi',dataUrl:null},
+       {id:102,name:'Lab Report Template',type:'doc',cat:'Templates',size:'145 KB',date:'3d ago',up:'Emeka Obi',dataUrl:null},
+       {id:103,name:'Past Questions 2022/2023',type:'pdf',cat:'Past Questions',size:'1.1 MB',date:'5d ago',up:'Chisom N.',dataUrl:null}],
+    2:[{id:201,name:'Thermo II — Chapter 4 Notes',type:'pdf',cat:'Notes',size:'890 KB',date:'3d ago',up:'Emeka Obi',dataUrl:null},
+       {id:202,name:'Practice Problems Set 2',type:'pdf',cat:'Assignments',size:'340 KB',date:'4d ago',up:'Bolu F.',dataUrl:null},
+       {id:203,name:'Cengel Textbook 8th Ed',type:'pdf',cat:'Textbooks',size:'38 MB',date:'1w ago',up:'Emeka Obi',dataUrl:null}],
+    3:[{id:301,name:'Control Systems Cheatsheet',type:'pdf',cat:'Notes',size:'560 KB',date:'1d ago',up:'Emeka Obi',dataUrl:null},
+       {id:302,name:'Lab 4 Procedure',type:'pdf',cat:'Lab Resources',size:'290 KB',date:'5d ago',up:'Emeka Obi',dataUrl:null},
+       {id:303,name:'Slides — Block Diagrams',type:'ppt',cat:'Slides',size:'1.8 MB',date:'1w ago',up:'Chisom N.',dataUrl:null}],
+    4:[{id:401,name:'Practice Problems — Integrals',type:'pdf',cat:'Assignments',size:'220 KB',date:'3d ago',up:'Emeka Obi',dataUrl:null},
+       {id:402,name:'Formula Sheet',type:'pdf',cat:'Notes',size:'180 KB',date:'1w ago',up:'Bolu F.',dataUrl:null}],
+    5:[{id:501,name:'Updated Report Format',type:'doc',cat:'Templates',size:'145 KB',date:'4d ago',up:'Emeka Obi',dataUrl:null},
+       {id:502,name:'Sample Technical Report',type:'doc',cat:'Templates',size:'320 KB',date:'1w ago',up:'Emeka Obi',dataUrl:null}]
+  };
+}
+
+// ── NAVIGATION ──
+const MAIN=['sc-home','sc-space','sc-cf','sc-profile'];
+function go(id){
+  if(curSc===id)return;
+  const cur=document.getElementById(curSc), nxt=document.getElementById(id);
+  if(id==='sc-cf'){cur.classList.add('slide-left');cur.classList.remove('hidden');}
+  else{cur.classList.add('hidden');cur.classList.remove('slide-left');}
+  nxt.classList.remove('hidden','slide-left');
+  prevSc=curSc; curSc=id;
+  document.getElementById('nav').style.display=MAIN.includes(id)?'flex':'none';
+  updateFab();
+}
+function goBack(){
+  const cur=document.getElementById(curSc),prev=document.getElementById(prevSc);
+  cur.classList.add('hidden'); prev.classList.remove('hidden','slide-left');
+  const t=curSc;curSc=prevSc;prevSc=t; updateFab();
+}
+function setNav(id){document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));document.getElementById(id).classList.add('on');}
+function goToSpace(){go('sc-space');setNav('ni-space');if(curTab!=='ann')switchTab('ann');}
+function updateFab(){
+  const f=document.getElementById('fab');
+  if(curSc==='sc-space'){f.style.display='flex';f.textContent=curTab==='ann'?'+':'↑';}
+  else if(curSc==='sc-home'){f.style.display='flex';f.textContent='+';}
+  else if(curSc==='sc-cf'){f.style.display='flex';f.textContent='↑';}
+  else f.style.display='none';
+}
+function fabAct(){
+  if(curSc==='sc-cf'){openMatSheet(curCourse);return;}
+  if(curSc==='sc-home'||curTab==='ann'){openAnnSheet();return;}
+  openMatSheet(null);
+}
+
+// ── SETUP FLOW ──
+let crCount=0;
+function setup1(){
+  const rep=document.getElementById('s1-rep').value.trim();
+  const dept=document.getElementById('s1-dept').value.trim();
+  const lvl=document.getElementById('s1-lvl').value.trim();
+  const uni=document.getElementById('s1-uni').value.trim();
+  if(!rep||!dept||!lvl||!uni){toast('Please fill all fields');return;}
+  S.user={name:rep,isRep:true};
+  S.space={name:`${lvl} ${dept}`,dept,level:lvl,uni,rep,id:'abc123'};
+  go('sc-setup2'); renderCourseRows();
+}
+function renderCourseRows(){
+  const w=document.getElementById('cr-wrap');w.innerHTML='';crCount=0;
+  addCourseRow();addCourseRow();addCourseRow();
+}
+function addCourseRow(){
+  const i=crCount++;
+  const w=document.getElementById('cr-wrap');
+  const d=document.createElement('div');d.className='cr-row';d.id='cr-'+i;
+  d.innerHTML=`<input class="fi" placeholder="Course name" id="crn-${i}"><input class="fi code" placeholder="Code" id="crc-${i}"><div class="rm-btn" onclick="rmCR(${i})">✕</div>`;
+  w.appendChild(d);
+}
+function rmCR(i){const e=document.getElementById('cr-'+i);if(e)e.remove();}
+function setup2(){
+  const rows=document.querySelectorAll('.cr-row');let added=0;S.courses=[];
+  rows.forEach((_,i)=>{
+    const n=document.getElementById('crn-'+i),c=document.getElementById('crc-'+i);
+    if(!n)return;
+    const nv=n.value.trim(),cv=c.value.trim();
+    if(nv&&cv){S.courses.push({id:Date.now()+added,name:nv,code:cv,icon:ICONS[added%ICONS.length],ci:added%5});S.mats[S.courses[S.courses.length-1].id]=[];added++;}
+  });
+  if(!added){toast('Add at least one course');return;}
+  document.getElementById('setup-link').textContent=`classspace.app/s/${S.space.id}`;
+  go('sc-setup3');
+}
+function setup2skip(){S.courses=[];document.getElementById('setup-link').textContent=`classspace.app/s/${S.space.id}`;go('sc-setup3');}
+function enterApp(){buildUI();go('sc-home');document.getElementById('nav').style.display='flex';updateHomeStats();}
+
+// ── JOIN FLOW ──
+let pendingCourseId=null;
+function onLinkInput(){
+  const v=document.getElementById('ji-link').value.trim();
+  const p=parseLink(v);
+  const btn=document.getElementById('ji-btn');
+  const prev=document.getElementById('ji-preview');
+  if(!p){btn.style.opacity='.4';btn.style.pointerEvents='none';prev.style.display='none';return;}
+  const labels={space:'Space link',ann:'Announcement link',mat:'Material link',course:'Course folder link'};
+  const icons={space:'🏗️',ann:'📢',mat:'📄',course:'📂'};
+  document.getElementById('ji-prev-icon').textContent=icons[p.type];
+  document.getElementById('ji-prev-type').textContent=labels[p.type];
+  document.getElementById('ji-prev-label').textContent=v;
+  prev.style.display='flex';
+  btn.style.opacity='1';btn.style.pointerEvents='';
+}
+function parseLink(raw){
+  const s=raw.trim().replace(/^https?:\/\//,'');
+  const m=s.match(/classspace\.app\/s\/([^\/]+)(?:\/(ann|mat|course)\/([^\/]+))?/);
+  if(!m)return null;
+  return{spaceId:m[1],type:m[2]||'space',subId:m[3]?parseInt(m[3])||m[3]:null};
+}
+function demoLink(l){
+  document.getElementById('ji-link').value=l;
+  onLinkInput();
+}
+function resolveLink(){
+  const v=document.getElementById('ji-link').value.trim();
+  const p=parseLink(v);
+  if(!p){toast('Invalid link');return;}
+  loadDemo();
+  if(p.type==='space'){popJoinSpace();go('sc-join-space');}
+  else if(p.type==='ann'){const a=S.anns.find(x=>x.id===p.subId)||S.anns[0];popJoinAnn(a);go('sc-join-ann');}
+  else if(p.type==='mat'){
+    let fm=null,fc=null;
+    for(const cid of Object.keys(S.mats)){const m=S.mats[cid].find(x=>x.id===p.subId);if(m){fm=m;fc=S.courses.find(c=>c.id===parseInt(cid));break;}}
+    if(!fm){fm=S.mats[1][0];fc=S.courses[0];}
+    popJoinMat(fm,fc);go('sc-join-mat');
+  }
+  else if(p.type==='course'){
+    const c=S.courses.find(x=>x.id===p.subId)||S.courses[0];
+    pendingCourseId=c.id;popJoinCourse(c);go('sc-join-course');
+  }
+}
+function popJoinSpace(){
+  document.getElementById('jss-name').textContent=S.space.name;
+  document.getElementById('jss-sub').textContent=`${S.space.uni} · 2024/2025`;
+  document.getElementById('jss-rep').textContent=`Class Rep: ${S.space.rep}`;
+  const a=S.anns[0];
+  document.getElementById('jss-teaser').innerHTML=a?`
+    <div style="margin-top:20px;margin-bottom:4px;font-size:11px;font-weight:700;color:var(--td);font-family:'Syne',sans-serif;text-transform:uppercase;letter-spacing:.06em">Latest announcement</div>
+    <div class="ann-prev j-blur"><div class="ann-prev-top">${a.urg?'<span class="apt tag-urg">🚨 Urgent</span>':''}<span class="at">${a.time}</span></div><div class="ann-prev-t">${a.title}</div><div class="ann-prev-b">${a.body}</div></div>
+    <div style="text-align:center;font-size:12px;color:var(--td);margin-top:6px">Join to see all announcements & materials</div>`:'';
+}
+function popJoinAnn(a){
+  const c=S.courses.find(x=>x.id===a.cid);
+  document.getElementById('ja-space').textContent=S.space.name;
+  document.getElementById('ja-title').textContent=a.title;
+  document.getElementById('ja-body').textContent=a.body;
+  document.getElementById('ja-auth').textContent=a.author;
+  document.getElementById('ja-time').textContent=a.time;
+  document.getElementById('ja-av').textContent=a.author[0].toUpperCase();
+  const b=[];
+  if(a.pin)b.push('<span class="tag tag-pin">📌 Pinned</span>');
+  if(a.urg)b.push('<span class="tag tag-urg">🚨 Urgent</span>');
+  if(c)b.push(`<span class="tag cp${c.ci}">${c.code}</span>`);
+  document.getElementById('ja-badges').innerHTML=b.join('');
+}
+function popJoinMat(m,c){
+  document.getElementById('jm-space').textContent=S.space.name;
+  document.getElementById('jm-name').textContent=m.name;
+  document.getElementById('jm-course').textContent=c?`${c.code} — ${c.name}`:'';
+  document.getElementById('jm-cat').textContent=m.cat;
+  document.getElementById('jm-size').textContent=m.size;
+  document.getElementById('jm-up').textContent=m.up;
+  document.getElementById('jm-date').textContent=m.date;
+  document.getElementById('jm-av').textContent=m.up[0].toUpperCase();
+  document.getElementById('jm-icon').textContent=fIcon(m.type);
+}
+function popJoinCourse(c){
+  const mats=S.mats[c.id]||[];
+  document.getElementById('jc-icon').textContent=c.icon;
+  document.getElementById('jc-name').textContent=c.name;
+  document.getElementById('jc-code').textContent=c.code;
+  document.getElementById('jc-space').textContent=S.space.name;
+  document.getElementById('jc-files').innerHTML=mats.slice(0,4).map(m=>
+    `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--b)"><span>${fIcon(m.type)}</span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.name}</div><div style="font-size:11px;color:var(--td)">${m.cat} · ${m.size}</div></div></div>`
+  ).join('')+(mats.length>4?`<div style="font-size:12px;color:var(--td);padding-top:8px">+${mats.length-4} more files</div>`:'');
+}
+function joinDo(inputId,goMat,goCourse){
+  const name=document.getElementById(inputId).value.trim();
+  if(!name){toast('Enter your name to join');return;}
+  S.user={name,isRep:false};
+  buildUI();go('sc-home');document.getElementById('nav').style.display='flex';updateHomeStats();
+  toast(`Welcome, ${name}! 🎉`);
+  if(goMat){setTimeout(()=>{goToSpace();switchTab('mat');},400);}
+  if(goCourse&&pendingCourseId){setTimeout(()=>{goToSpace();switchTab('mat');openCF(pendingCourseId);},400);}
+}
+function guestEnter(){
+  S.user={name:'Guest',isRep:false};
+  buildUI();go('sc-home');document.getElementById('nav').style.display='flex';updateHomeStats();
+}
+
+// ── BUILD UI ──
+function buildUI(){
+  const sp=S.space,u=S.user;
+  document.getElementById('home-uname').textContent=u.name.split(' ')[0];
+  document.getElementById('home-sp-name').innerHTML=`${sp.level}<br>${sp.dept}`;
+  document.getElementById('home-sp-rep').textContent=`Class Rep: ${sp.rep} · Active`;
+  document.getElementById('sp-tb-t').textContent=`${sp.level} ${sp.dept}`;
+  document.getElementById('sp-name').textContent=`${sp.level} · ${sp.dept}`;
+  document.getElementById('sp-sub').textContent=`${sp.uni} · 2024/2025`;
+  document.getElementById('sp-rep').textContent=`Class Rep: ${sp.rep}`;
+  const n=u.name;
+  document.getElementById('pf-av').textContent=n[0]?.toUpperCase()||'?';
+  document.getElementById('pf-name').textContent=n;
+  document.getElementById('pf-det').textContent=`${sp.dept} · ${sp.level} · ${sp.uni.split(' ').pop()}`;
+  document.getElementById('pf-role').innerHTML=`<span style="width:7px;height:7px;background:var(--g);border-radius:50%;display:inline-block"></span>${u.isRep?'Course Rep':'Member'}`;
+  document.getElementById('pf-email').textContent=`${n.toLowerCase().replace(/\s/g,'.')}@student.edu.ng`;
+  initFbar(); renderAnns('All'); renderCF();
+}
+
+// ── TABS ──
+function switchTab(t){
+  curTab=t;
+  document.getElementById('tab-ann').classList.toggle('on',t==='ann');
+  document.getElementById('tab-mat').classList.toggle('on',t==='mat');
+  document.getElementById('panel-ann').style.display=t==='ann'?'':'none';
+  document.getElementById('panel-mat').style.display=t==='mat'?'':'none';
+  if(t==='ann')renderAnns(curFilter); else renderCF();
+  updateFab();
+}
+
+// ── ANNOUNCEMENTS ──
+function initFbar(){
+  const fs=['All','Urgent','Pinned',...S.courses.map(c=>c.code)];
+  document.getElementById('ann-fbar').innerHTML=fs.map(f=>`<div class="fc${f==='All'?' on':''}" data-f="${f}" onclick="renderAnns('${f}')">${f}</div>`).join('');
+}
+function renderAnns(f){
+  curFilter=f;
+  document.querySelectorAll('#ann-fbar .fc').forEach(c=>c.classList.toggle('on',c.dataset.f===f));
+  let list=[...S.anns];
+  if(f==='Urgent')list=list.filter(a=>a.urg);
+  else if(f==='Pinned')list=list.filter(a=>a.pin);
+  else if(f!=='All'){const c=S.courses.find(c=>c.code===f);if(c)list=list.filter(a=>a.cid===c.id);}
+  list.sort((a,b)=>{if(a.urg&&!b.urg)return -1;if(!a.urg&&b.urg)return 1;if(a.pin&&!b.pin)return -1;if(!a.pin&&b.pin)return 1;return 0;});
+  document.getElementById('ann-list').innerHTML=list.length?list.map(annCard).join(''):`<div class="empty"><div class="empty-e">📭</div><div class="empty-t">Nothing here</div><div>No announcements match this filter.</div></div>`;
+}
+function annCard(a){
+  const c=S.courses.find(x=>x.id===a.cid);
+  const init=a.author.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  return `<div class="ann-card${a.pin?' pinned':''}" onclick="markRead(${a.id})">
+    <div class="ann-top">
+      ${a.pin?'<span class="tag tag-pin">📌 Pinned</span>':''}
+      ${a.urg?'<span class="tag tag-urg">🚨 Urgent</span>':''}
+      ${c?`<span class="tag cp${c.ci}">${c.code}</span>`:'<span class="tag cpg">General</span>'}
+      <span class="tag-t">${a.time}</span>
+    </div>
+    <div class="ann-title">${a.title}</div>
+    <div class="ann-body">${a.body}</div>
+    <div class="ann-foot">
+      <div class="ann-auth"><div class="av">${init}</div>${a.author}</div>
+      <div class="ann-acts"><button class="a-btn" onclick="event.stopPropagation();openShare('ann',${a.id})">🔗 Share</button></div>
+    </div>
+  </div>`;
+}
+function markRead(id){const a=S.anns.find(x=>x.id===id);if(a){a.read=true;updateHomeStats();}}
+
+// ── MATERIALS ──
+function renderCF(){
+  if(!S.courses.length){document.getElementById('cf-list').innerHTML=`<div class="empty"><div class="empty-e">📚</div><div class="empty-t">No courses yet</div></div>`;return;}
+  document.getElementById('cf-list').innerHTML=S.courses.map(c=>{
+    const n=(S.mats[c.id]||[]).length;
+    return `<div class="${'cf '+CCOLS[c.ci]}" onclick="openCF(${c.id})">
+      <div class="cf-ic">${c.icon}</div>
+      <div class="cf-inf"><div class="cf-n">${c.name}</div><div class="cf-c">${c.code}</div></div>
+      <div class="cf-cnt">${n} file${n!==1?'s':''}</div>
+      <div style="color:var(--tf);font-size:18px">›</div>
+    </div>`;
+  }).join('');
+}
+function openCF(cid){
+  curCourse=cid;
+  const c=S.courses.find(x=>x.id===cid);
+  const mats=S.mats[cid]||[];
+  document.getElementById('cf-title').textContent=c.name;
+  document.getElementById('cf-sub').textContent=`${c.code} · ${mats.length} file${mats.length!==1?'s':''}`;
+  renderMatList(cid);
+  go('sc-cf'); updateFab();
+}
+function renderMatList(cid){
+  const mats=S.mats[cid]||[];
+  const cats=[...new Set(mats.map(m=>m.cat))];
+  document.getElementById('mat-list').innerHTML=mats.length?cats.map(cat=>{
+    const items=mats.filter(m=>m.cat===cat);
+    return `<div style="margin-bottom:8px"><div class="mat-cat-t">${cat}</div>${items.map(m=>`
+      <div class="mat-card">
+        <div class="mat-ic ${mIC(m.type)}">${fIcon(m.type)}</div>
+        <div class="mat-inf"><div class="mat-n">${m.name}</div><div class="mat-m"><span>${m.date}</span><span style="color:var(--tf)">${m.size}</span></div><div class="mat-up">Uploaded by ${m.up}</div></div>
+        <div class="mat-acts">
+          <div class="mat-btn" style="background:transparent;border-color:transparent" onclick="openShare('mat',${m.id})">🔗</div>
+          <div class="mat-btn" onclick="dlMat(${m.id},${cid})">⬇️</div>
+        </div>
+      </div>`).join('')}</div>`;
+  }).join(''):`<div class="empty"><div class="empty-e">📭</div><div class="empty-t">No files yet</div></div>`;
+}
+
+// ── HOME STATS ──
+function updateHomeStats(){
+  const unread=S.anns.filter(a=>!a.read).length;
+  const files=Object.values(S.mats).flat().length;
+  document.getElementById('home-unread').textContent=unread;
+  document.getElementById('home-files').textContent=files;
+  document.getElementById('home-ann-pill').textContent=`${S.anns.length} announcement${S.anns.length!==1?'s':''}`;
+  document.getElementById('home-mat-pill').textContent=`${files} file${files!==1?'s':''}`;
+  const up=document.getElementById('home-unread-pill');
+  up.textContent=`${unread} unread`;up.style.display=unread>0?'':'none';
+  document.getElementById('sp-dot').style.display=unread>0?'':'none';
+  const recent=[...S.anns].sort((a,b)=>{if(a.urg&&!b.urg)return -1;if(a.pin&&!b.pin)return -1;return 0;}).slice(0,3);
+  document.getElementById('home-recent').innerHTML=recent.map(a=>{
+    const c=S.courses.find(x=>x.id===a.cid);
+    return `<div class="ann-prev" onclick="goToSpace()">
+      <div class="ann-prev-top">
+        ${!a.read?'<div class="udot"></div>':''}
+        ${c?`<span class="apt cp${c.ci}">${c.code}</span>`:'<span class="apt cpg">General</span>'}
+        ${a.urg?'<span class="apt tag-urg">🚨</span>':''}
+        <span class="at">${a.time}</span>
+      </div>
+      <div class="ann-prev-t">${a.title}</div>
+      <div class="ann-prev-b">${a.body}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── ANN SHEET ──
+function openAnnSheet(){
+  document.getElementById('post-course').innerHTML='<option value="0">General — no specific course</option>'+S.courses.map(c=>`<option value="${c.id}">${c.code} — ${c.name}</option>`).join('');
+  document.getElementById('ann-poster').textContent=S.user.name||'You';
+  document.getElementById('post-title').value='';
+  document.getElementById('post-body').value='';
+  document.getElementById('post-urg').classList.remove('on');
+  document.getElementById('post-pin').classList.remove('on');
+  openSh('sh-ann');
+}
+function submitPost(){
+  const title=document.getElementById('post-title').value.trim();
+  const body=document.getElementById('post-body').value.trim();
+  const cid=parseInt(document.getElementById('post-course').value)||0;
+  const urg=document.getElementById('post-urg').classList.contains('on');
+  const pin=document.getElementById('post-pin').classList.contains('on');
+  if(!title||!body){toast('Fill title and message');return;}
+  S.anns.unshift({id:Date.now(),cid,title,body,author:S.user.name||'Anonymous',time:'Just now',pin,urg,read:true});
+  closeSh('sh-ann');renderAnns(curFilter);initFbar();updateHomeStats();toast('Announcement posted! 🎉');
+}
+
+// ── MAT SHEET ──
+function openMatSheet(pcid){
+  document.getElementById('up-course').innerHTML=S.courses.map(c=>`<option value="${c.id}">${c.code} — ${c.name}</option>`).join('');
+  if(pcid)document.getElementById('up-course').value=pcid;
+  document.getElementById('mat-poster').textContent=S.user.name||'You';
+  document.getElementById('up-name').value='';
+  fpClear();openSh('sh-mat');
+}
+function submitUpload(){
+  if(!fpData){toast('Choose a file');return;}
+  const cid=parseInt(document.getElementById('up-course').value);
+  const cat=document.getElementById('up-cat').value;
+  const nm=document.getElementById('up-name').value.trim();
+  if(!cid){toast('Select a course');return;}
+  if(!S.mats[cid])S.mats[cid]=[];
+  S.mats[cid].unshift({id:Date.now(),name:nm||fpData.name,type:fpData.type,cat,size:fpData.size,date:'Just now',up:S.user.name||'Anonymous',dataUrl:fpData.dataUrl});
+  closeSh('sh-mat');fpClear();renderCF();updateHomeStats();
+  if(curCourse===cid&&curSc==='sc-cf')renderMatList(cid);
+  toast('File uploaded! 📂');
+}
+
+// ── FILE PICKER ──
+function fpDrag(e,id){e.preventDefault();document.getElementById(id).classList.add('drag');}
+function fpLeave(id){document.getElementById(id).classList.remove('drag');}
+function fpDrop(e){e.preventDefault();fpLeave('fp-area');const f=e.dataTransfer.files[0];if(!f)return;const dt=new DataTransfer();dt.items.add(f);document.getElementById('fp-input').files=dt.files;fpChosen(document.getElementById('fp-input'));}
+function fpChosen(inp){
+  const f=inp.files[0];if(!f)return;
+  const r=new FileReader();r.onload=e=>{
+    fpData={name:f.name,size:fmtSize(f.size),type:extType(f.name),dataUrl:e.target.result};
+    document.getElementById('fp-area').style.display='none';
+    document.getElementById('fp-chosen').style.display='flex';
+    document.getElementById('fp-icon').textContent=fIcon(fpData.type);
+    document.getElementById('fp-name').textContent=f.name;
+  };r.readAsDataURL(f);
+}
+function fpClear(){fpData=null;document.getElementById('fp-area').style.display='';document.getElementById('fp-chosen').style.display='none';document.getElementById('fp-input').value='';}
+
+// ── SHARE ──
+let curShareLink='';
+function openShare(type,id){
+  const titles={space:'Share Space',ann:'Share Announcement',mat:'Share Material',course:'Share Course Folder'};
+  const subs={space:'Anyone with this link can view and join',ann:'Opens app with option to join',mat:'Opens file for download',course:"Opens this course's materials"};
+  const links={space:`classspace.app/s/${S.space.id}`,ann:`classspace.app/s/${S.space.id}/ann/${id}`,mat:`classspace.app/s/${S.space.id}/mat/${id}`,course:`classspace.app/s/${S.space.id}/course/${curCourse}`};
+  document.getElementById('sh-share-t').textContent=titles[type];
+  document.getElementById('sh-share-s').textContent=subs[type];
+  document.getElementById('sh-share-link').textContent=links[type];
+  curShareLink=links[type];
+  openSh('sh-share');
+}
+function shareWA(){window.open(`https://wa.me/?text=Join%20our%20class%20space%3A%20${encodeURIComponent(curShareLink)}`,'_blank');}
+function copyLink(id){navigator.clipboard.writeText(document.getElementById(id).textContent).catch(()=>{});toast('Link copied! 🔗');}
+
+// ── DOWNLOAD ──
+function dlMat(mid,cid){
+  const m=(S.mats[cid]||[]).find(x=>x.id===mid);
+  if(!m)return;
+  if(m.dataUrl){const a=document.createElement('a');a.href=m.dataUrl;a.download=m.name;a.click();toast('Downloading…');}
+  else toast('Demo file — no real download');
+}
+
+// ── SHEET HELPERS ──
+function openSh(id){document.getElementById(id).classList.add('open');}
+function closeSh(id){document.getElementById(id).classList.remove('open');}
+function closeSheetOv(id,e){if(e.target===document.getElementById(id))closeSh(id);}
+
+// ── UTILS ──
+function tog(id){document.getElementById(id).classList.toggle('on');}
+let toastT;
+function toast(msg){const el=document.getElementById('toast-el');el.textContent=msg;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2200);}
+function extType(n){const e=n.split('.').pop().toLowerCase();if(e==='pdf')return 'pdf';if(['doc','docx'].includes(e))return 'doc';if(['ppt','pptx'].includes(e))return 'ppt';if(['xls','xlsx'].includes(e))return 'xls';if(['jpg','jpeg','png','gif','webp'].includes(e))return 'img';if(['mp4','mov'].includes(e))return 'video';return 'other';}
+function fIcon(t){return{pdf:'📄',doc:'📝',ppt:'📊',xls:'📊',img:'🖼️',video:'🎬',other:'📎'}[t]||'📎';}
+function mIC(t){return{pdf:'mi-pdf',doc:'mi-doc',ppt:'mi-ppt',xls:'mi-ppt',img:'mi-img',video:'mi-img',other:'mi-oth'}[t]||'mi-oth';}
+function fmtSize(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(0)+' KB';return(b/1048576).toFixed(1)+' MB';}
+</script>
+</body>
+</html>
