@@ -1,2 +1,2 @@
 # ClassSpace
-A space for class announcement and materials
+An organized space for class announcement and materials
