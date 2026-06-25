@@ -4,6 +4,18 @@ import { hashPassword, verifyPassword } from '../lib/hash.js';
 import { signToken } from '../lib/jwt.js';
 import { authMiddleware } from '../middleware/auth.js';
 
+function getUserSpace(userId: number) {
+  const db = getDb();
+  const member = db.prepare(
+    'SELECT sm.space_id, sm.role FROM space_members sm WHERE sm.user_id = ? LIMIT 1'
+  ).get(userId) as any;
+  if (!member) return null;
+  const space = db.prepare('SELECT * FROM spaces WHERE id = ?').get(member.space_id) as any;
+  if (!space) return null;
+  const courses = db.prepare('SELECT * FROM courses WHERE space_id = ? ORDER BY id').all(member.space_id);
+  return { ...space, courses, memberRole: member.role };
+}
+
 interface RegisterBody {
   name: string;
   email: string;
@@ -68,10 +80,12 @@ export function authRoutes(app: FastifyInstance) {
     }
 
     const token = signToken({ userId: user.id, email: user.email });
+    const space = getUserSpace(user.id);
 
     return {
       token,
       user: { id: user.id, name: user.name, email: user.email, role: user.role, avatar: user.avatar },
+      ...(space ? { space } : {}),
     };
   });
 
@@ -85,6 +99,8 @@ export function authRoutes(app: FastifyInstance) {
       throw { statusCode: 404, message: 'User not found' };
     }
 
-    return { user };
+    const space = getUserSpace(user.id);
+
+    return { user, ...(space ? { space } : {}) };
   });
 }

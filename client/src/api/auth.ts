@@ -4,6 +4,7 @@ import type { User } from '../types';
 interface AuthResponse {
   token: string;
   user: User;
+  space?: any;
 }
 
 export async function login(email: string, password: string): Promise<AuthResponse> {
@@ -16,9 +17,9 @@ export async function register(name: string, email: string, password: string): P
   return data;
 }
 
-export async function getMe(): Promise<User> {
+export async function getMe(): Promise<{ user: User; space?: any }> {
   const { data } = await api.get('/auth/me');
-  return data.user;
+  return data;
 }
 
 export async function getShareData(type: string, id: string | number) {

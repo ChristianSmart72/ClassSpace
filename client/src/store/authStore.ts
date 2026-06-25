@@ -26,7 +26,13 @@ export const useAuthStore = create<AuthState>((set) => ({
       return;
     }
     try {
-      const user = await getMe();
+      const res = await getMe();
+      const { user, space } = res as any;
+      if (space) {
+        localStorage.setItem('spaceId', space.id);
+        const { fetchSpace } = await import('./spaceStore');
+        fetchSpace(space.id);
+      }
       set({ user, token, initialized: true });
     } catch {
       localStorage.removeItem('token');
@@ -37,8 +43,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (email, password) => {
     set({ loading: true });
     try {
-      const { token, user } = await apiLogin(email, password);
+      const { token, user, space } = await apiLogin(email, password) as any;
       localStorage.setItem('token', token);
+      if (space) {
+        localStorage.setItem('spaceId', space.id);
+        const { useSpaceStore } = await import('./spaceStore');
+        useSpaceStore.getState().setSpace(space, space.courses ?? []);
+      }
       set({ user, token, loading: false });
     } catch (err: any) {
       set({ loading: false });
