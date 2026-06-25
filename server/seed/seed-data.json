@@ -1,0 +1,98 @@
+{
+  "user": {
+    "name": "Christian Smart",
+    "email": "christian@classspace.app",
+    "password": "demo1234",
+    "role": "rep"
+  },
+  "space": {
+    "id": "abc123",
+    "name": "300L Production Engineering",
+    "dept": "Production Engineering",
+    "level": "300 Level",
+    "uni": "University of Benin (UNIBEN)",
+    "invite_code": "UNIBEN01"
+  },
+  "courses": [
+    { "name": "Fluid Mechanics I", "code": "PEG 301", "icon": "💧", "color_index": 0 },
+    { "name": "Thermodynamics II", "code": "PEG 303", "icon": "🔥", "color_index": 1 },
+    { "name": "Manufacturing Processes I", "code": "PEG 305", "icon": "⚙️", "color_index": 2 },
+    { "name": "Engineering Mathematics III", "code": "MTH 301", "icon": "∑", "color_index": 3 },
+    { "name": "Use of English", "code": "GNS 301", "icon": "✍️", "color_index": 4 }
+  ],
+  "announcements": [
+    {
+      "course_index": 0,
+      "title": "Lab Report Deadline — Friday",
+      "body": "Please submit your fluid mechanics lab reports on or before Friday. Reports must follow the standard format outlined in the lab manual. Late submissions will not be accepted.",
+      "type": "assignment",
+      "urgent": false,
+      "pinned": true,
+      "deadline": "2026-06-27",
+      "venue": "Engineering Lab 3",
+      "instructions": "Write in ink, include all calculations, and attach your raw data sheets. Use the cover page template from the department.",
+      "submission_method": "Physical submission to department office",
+      "format": "Bound report, A4"
+    },
+    {
+      "course_index": -1,
+      "title": "No lectures Wednesday ⚠️",
+      "body": "All lectures for Wednesday are cancelled due to the faculty board meeting. Normal schedule resumes Thursday.",
+      "type": "update",
+      "urgent": true,
+      "pinned": false
+    },
+    {
+      "course_index": 1,
+      "title": "Thermo II Test — Confirmed",
+      "body": "The continuous assessment test for Thermodynamics II will hold this Friday at 10am. Bring your calculators and formula sheets.",
+      "type": "test",
+      "urgent": false,
+      "pinned": false,
+      "deadline": "2026-06-26",
+      "venue": "Lecture Hall B"
+    },
+    {
+      "course_index": 2,
+      "title": "Manufacturing Process Makeup Class",
+      "body": "There will be a makeup class for Manufacturing Processes I on Saturday at 9am. Attendance is compulsory.",
+      "type": "meeting",
+      "urgent": false,
+      "pinned": false,
+      "venue": "Workshop Complex"
+    },
+    {
+      "course_index": -1,
+      "title": "Departmental Meeting — Friday 2pm",
+      "body": "All 300L Production Engineering students are to attend the departmental meeting this Friday at the faculty auditorium. Attendance will be taken.",
+      "type": "meeting",
+      "urgent": false,
+      "pinned": true,
+      "venue": "Faculty Auditorium"
+    },
+    {
+      "course_index": 4,
+      "title": "GNS Report Format Updated",
+      "body": "The Use of English unit has released an updated format for the technical report. Download the new template from the materials section.",
+      "type": "announcement",
+      "urgent": false,
+      "pinned": false
+    }
+  ],
+  "materials": [
+    { "course_index": 0, "name": "Lecture Slides — Week 6", "file_type": "ppt", "category": "Slides", "file_size": 2516582 },
+    { "course_index": 0, "name": "Lab Report Template", "file_type": "doc", "category": "Templates", "file_size": 148480 },
+    { "course_index": 0, "name": "Past Questions 2022/2023", "file_type": "pdf", "category": "Past Questions", "file_size": 1153434 },
+    { "course_index": 1, "name": "Thermo II — Chapter 4 Notes", "file_type": "pdf", "category": "Notes", "file_size": 911360 },
+    { "course_index": 1, "name": "Practice Problems Set 2", "file_type": "pdf", "category": "Assignments", "file_size": 348160 },
+    { "course_index": 1, "name": "Cengel Textbook 8th Ed", "file_type": "pdf", "category": "Textbooks", "file_size": 39845888 },
+    { "course_index": 2, "name": "Manufacturing Processes Overview", "file_type": "pdf", "category": "Notes", "file_size": 573440 },
+    { "course_index": 2, "name": "Lab 4 Procedure", "file_type": "pdf", "category": "Lab Resources", "file_size": 296960 },
+    { "course_index": 2, "name": "Slides — Metal Forming", "file_type": "ppt", "category": "Slides", "file_size": 1887437 },
+    { "course_index": 3, "name": "Practice Problems — Integrals", "file_type": "pdf", "category": "Assignments", "file_size": 225280 },
+    { "course_index": 3, "name": "Formula Sheet", "file_type": "pdf", "category": "Notes", "file_size": 184320 },
+    { "course_index": 3, "name": "Differential Equations Notes", "file_type": "pdf", "category": "Notes", "file_size": 409600 },
+    { "course_index": 4, "name": "Updated Report Format", "file_type": "doc", "category": "Templates", "file_size": 148480 },
+    { "course_index": 4, "name": "Sample Technical Report", "file_type": "doc", "category": "Templates", "file_size": 327680 }
+  ]
+}

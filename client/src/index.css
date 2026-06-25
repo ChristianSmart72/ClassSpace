@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@theme {
+  --color-app-bg: #0f0f11;
+  --color-app-surface: #18181c;
+  --color-app-surface-2: #1f1f25;
+  --color-app-border: #2a2a32;
+  --color-app-accent: #e8ff47;
+  --color-app-accent-2: #5b6af0;
+  --color-app-text: #f0f0f2;
+  --color-app-text-dim: #7a7a88;
+  --color-app-text-faint: #3a3a45;
+  --color-app-red: #ff5252;
+  --color-app-green: #52ffa0;
+  --color-app-orange: #ffb347;
+
+  --font-syne: "Syne", sans-serif;
+  --font-dm: "DM Sans", sans-serif;
+
+  --animate-fadeIn: fadeIn 0.3s ease-out;
+  --animate-slideUp: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slideDown: slideDown 0.25s ease-out;
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+@layer base {
+  * { box-sizing: border-box; }
+  body {
+    @apply bg-app-bg text-app-text font-dm antialiased;
+    margin: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #root { @apply min-h-dvh max-w-[430px] mx-auto relative overflow-x-hidden; }
+  ::-webkit-scrollbar { display: none; }
+  input, textarea, select { @apply outline-none; }
+  a { @apply no-underline text-inherit; }
+  select { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%237a7a88' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
+}
+
+@layer utilities {
+  .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+}

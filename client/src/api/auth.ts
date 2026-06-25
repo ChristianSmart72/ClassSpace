@@ -1,0 +1,27 @@
+import api from './client';
+import type { User } from '../types';
+
+interface AuthResponse {
+  token: string;
+  user: User;
+}
+
+export async function login(email: string, password: string): Promise<AuthResponse> {
+  const { data } = await api.post('/auth/login', { email, password });
+  return data;
+}
+
+export async function register(name: string, email: string, password: string): Promise<AuthResponse> {
+  const { data } = await api.post('/auth/register', { name, email, password });
+  return data;
+}
+
+export async function getMe(): Promise<User> {
+  const { data } = await api.get('/auth/me');
+  return data.user;
+}
+
+export async function getShareData(type: string, id: string | number) {
+  const { data } = await api.get(`/share/${type}/${id}`);
+  return data;
+}
