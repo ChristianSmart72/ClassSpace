@@ -2,8 +2,8 @@ import { useState, useRef } from 'react';
 import { useSpaceStore } from '../../store/spaceStore';
 import { MATERIAL_CATEGORIES, FILE_ICONS, FILE_COLORS } from '../../types';
 
-export function UploadMaterialSheet({ spaceId, courseId: preselected, onClose }: {
-  spaceId: string; courseId?: number; onClose: () => void;
+export function UploadMaterialSheet({ courseId: preselected, onClose }: {
+  courseId?: number; onClose: () => void;
 }) {
   const { courses } = useSpaceStore();
   const [courseId, setCourseId] = useState<number>(preselected || courses[0]?.id || 0);

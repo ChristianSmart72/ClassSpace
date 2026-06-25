@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useContentStore } from '../store/contentStore';
-import { useSpaceStore } from '../store/spaceStore';
-import { ANNOUNCEMENT_TYPES } from '../types';
+import { useContentStore } from '../../store/contentStore';
+import { useSpaceStore } from '../../store/spaceStore';
+import { ANNOUNCEMENT_TYPES } from '../../types';
 
 export function PostAnnouncementSheet({ spaceId, onClose }: { spaceId: string; onClose: () => void }) {
   const { courses } = useSpaceStore();
@@ -62,14 +62,14 @@ export function PostAnnouncementSheet({ spaceId, onClose }: { spaceId: string; o
             <select value={courseId} onChange={(e) => setCourseId(e.target.value ? Number(e.target.value) : '')}
               className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-dm text-sm appearance-none">
               <option value="">General</option>
-              {courses.map((c) => <option key={c.id} value={c.id}>{c.code} — {c.name}</option>)}
+              {courses.map((c: any) => <option key={c.id} value={c.id}>{c.code} — {c.name}</option>)}
             </select>
           </div>
 
           <div>
             <label className="text-app-text-dim text-xs font-syne font-semibold uppercase tracking-wider mb-1.5 block">Type</label>
             <div className="flex flex-wrap gap-2">
-              {ANNOUNCEMENT_TYPES.map((t) => (
+              {ANNOUNCEMENT_TYPES.map((t: any) => (
                 <button key={t.value} onClick={() => setType(t.value)}
                   className={`px-3 py-1.5 rounded-full text-xs font-syne font-semibold transition-all border ${
                     type === t.value

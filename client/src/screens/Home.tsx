@@ -10,7 +10,7 @@ export function Home() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { currentSpace, courses, loading: spaceLoading } = useSpaceStore();
-  const { announcements, loading: annLoading, fetchAnnouncements } = useContentStore();
+  const { announcements, fetchAnnouncements } = useContentStore();
   const [greeting, setGreeting] = useState('');
 
   useEffect(() => {
