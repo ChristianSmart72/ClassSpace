@@ -175,7 +175,7 @@ export function Profile() {
             </motion.div>
 
             <p className="text-app-text-dim text-xs font-dm text-center mt-6 lg:text-left opacity-50">
-              ClassSpace v5 · Made for Nigerian students 🇳🇬
+              ClassSpace · Made for Nigerian students 🇳🇬
             </p>
           </div>
         </div>
