@@ -70,15 +70,16 @@ function AppRoutes() {
         <Route path="/setup" element={<ProtectedRoute><SetupWizard /></ProtectedRoute>} />
         <Route path="/join" element={<JoinInput />} />
         <Route path="/join/:type/:id" element={<JoinPreview />} />
-      <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-        <Route path="/home" element={<Home />} />
-        <Route path="/space/:id" element={<Space />} />
-        <Route path="/space/:id/course/:cid" element={<CourseFiles />} />
-        <Route path="/timetable" element={<Timetable />} />
-        <Route path="/profile" element={<Profile />} />
-      </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+          <Route path="/home" element={<Home />} />
+          <Route path="/space/:id" element={<Space />} />
+          <Route path="/space/:id/course/:cid" element={<CourseFiles />} />
+          <Route path="/timetable" element={<Timetable />} />
+          <Route path="/profile" element={<Profile />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }
 
