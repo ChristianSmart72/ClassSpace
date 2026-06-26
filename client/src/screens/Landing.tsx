@@ -236,8 +236,8 @@ export function Landing() {
           >
             <Link
               to="/register"
-              className="w-full text-center font-syne font-bold text-sm rounded-2xl py-4 text-app-bg transition-all duration-200 active:scale-[0.98]"
-              style={{ background: '#e8ff47', boxShadow: '0 4px 28px rgba(232,255,71,0.3)' }}
+              className="w-full text-center font-syne font-bold text-sm rounded-2xl py-4 transition-all duration-200 active:scale-[0.98]"
+              style={{ background: 'var(--app-accent)', color: 'var(--app-on-accent)', boxShadow: '0 4px 28px color-mix(in srgb, var(--app-accent) 30%, transparent)' }}
             >
               Create a Space — Free →
             </Link>
@@ -293,8 +293,8 @@ export function Landing() {
             </Link>
             <Link
               to="/register"
-              className="font-syne font-bold text-sm rounded-xl px-5 py-2.5 text-app-bg hover:opacity-90 transition-all duration-200 hover:scale-[1.02]"
-              style={{ background: '#e8ff47', boxShadow: '0 4px 20px rgba(232,255,71,0.25)' }}
+              className="font-syne font-bold text-sm rounded-xl px-5 py-2.5 hover:opacity-90 transition-all duration-200 hover:scale-[1.02]"
+              style={{ background: 'var(--app-accent)', color: 'var(--app-on-accent)', boxShadow: '0 4px 20px color-mix(in srgb, var(--app-accent) 25%, transparent)' }}
             >
               Get Started →
             </Link>
@@ -361,8 +361,8 @@ export function Landing() {
               >
                 <Link
                   to="/register"
-                  className="font-syne font-bold text-sm rounded-2xl px-8 py-4 text-app-bg hover:opacity-90 transition-all duration-200 hover:scale-[1.02]"
-                  style={{ background: '#e8ff47', boxShadow: '0 4px 32px rgba(232,255,71,0.3)' }}
+                  className="font-syne font-bold text-sm rounded-2xl px-8 py-4 hover:opacity-90 transition-all duration-200 hover:scale-[1.02]"
+                  style={{ background: 'var(--app-accent)', color: 'var(--app-on-accent)', boxShadow: '0 4px 32px color-mix(in srgb, var(--app-accent) 30%, transparent)' }}
                 >
                   Create a Space — Free →
                 </Link>

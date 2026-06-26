@@ -134,7 +134,7 @@ export function Home() {
           >
             <div className="absolute left-0 top-0 bottom-0 w-1" style={{ background: 'var(--app-accent)' }} />
             <div className="flex items-center gap-4 pl-3 mb-3">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0" style={{ background: 'rgba(232,255,71,0.10)' }}>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--app-accent) 10%, transparent)' }}>
                 🏛️
               </div>
               <div className="flex-1 min-w-0">

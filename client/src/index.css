@@ -55,48 +55,54 @@
 
 /* ── Light theme ── */
 [data-theme="light"] {
-  /* Core surfaces — clear layered hierarchy */
-  --app-bg: #f2f3f8;
+  /* Core surfaces */
+  --app-bg: #eeeef6;
   --app-surface: #ffffff;
-  --app-surface-2: #eaebf4;
-  --app-border: #d0d1e8;
+  --app-surface-2: #e4e5f0;
+  --app-border: #c8c9e0;
 
-  /* Accent — deep indigo reads clearly on white */
+  /* Accent */
   --app-accent: #4f46e5;
   --app-accent2: #7c3aed;
   --app-on-accent: #ffffff;
 
-  /* Text — strong contrast stack */
-  --app-text: #0a0a14;
-  --app-text-dim: #3a3a58;
-  --app-text-faint: #6868a0;
+  /* Text */
+  --app-text: #09090f;
+  --app-text-dim: #36364f;
+  --app-text-faint: #6464a0;
 
-  /* Semantic colours — vivid enough on light surfaces */
+  /* Semantic */
   --app-red: #dc2626;
-  --app-green: #16a34a;
-  --app-orange: #d97706;
+  --app-green: #15803d;
+  --app-orange: #c2590a;
 
-  --landing-bg: linear-gradient(135deg, #eef0ff 0%, #f5f5fb 60%);
+  --landing-bg: linear-gradient(135deg, #eceeff 0%, #f4f4fb 60%);
 
-  /* Override Tailwind theme tokens */
-  --color-app-bg: #f2f3f8;
+  /* Tailwind token overrides */
+  --color-app-bg: #eeeef6;
   --color-app-surface: #ffffff;
-  --color-app-surface-2: #eaebf4;
-  --color-app-border: #d0d1e8;
+  --color-app-surface-2: #e4e5f0;
+  --color-app-border: #c8c9e0;
   --color-app-accent: #4f46e5;
   --color-app-accent-2: #7c3aed;
   --color-app-accent2: #7c3aed;
-  --color-app-text: #0a0a14;
-  --color-app-text-dim: #3a3a58;
-  --color-app-text-faint: #6868a0;
+  --color-app-text: #09090f;
+  --color-app-text-dim: #36364f;
+  --color-app-text-faint: #6464a0;
   --color-app-red: #dc2626;
-  --color-app-green: #16a34a;
-  --color-app-orange: #d97706;
+  --color-app-green: #15803d;
+  --color-app-orange: #c2590a;
 }
 
-/* ── Dark theme on-accent text ── */
-:root, [data-theme="dark"] {
-  --app-on-accent: #0f0f11;
+/* ── on-accent text colour (text on an accent-coloured background) ── */
+:root, [data-theme="dark"] { --app-on-accent: #0f0f11; }
+
+/* ── Light mode depth: give white cards a shadow so they lift off the bg ── */
+[data-theme="light"] .bg-app-surface {
+  box-shadow: 0 1px 4px rgba(0, 0, 60, 0.07), 0 0 0 1px rgba(200, 201, 224, 0.6);
+}
+[data-theme="light"] .bg-app-surface-2 {
+  box-shadow: inset 0 0 0 1px rgba(200, 201, 224, 0.8);
 }
 
 @layer base {
