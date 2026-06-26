@@ -121,7 +121,7 @@ function DemoCard() {
 
       {/* Tab switcher */}
       <div className="flex border-b border-app-border">
-        {DEMO_VIEWS.map((v, i) => (
+        {DEMO_VIEWS.map((v) => (
           <button
             key={v.key}
             onClick={() => select(v.key)}
@@ -244,10 +244,10 @@ function DemoCard() {
       {/* Footer */}
       <div className="px-4 py-2 border-t border-app-border flex items-center justify-between bg-app-bg/30">
         <div className="flex gap-1">
-          {DEMO_VIEWS.map((_, i) => (
+          {DEMO_VIEWS.map((_v, idx) => (
             <div
-              key={i}
-              className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${i === viewIdx ? 'bg-app-accent w-3' : 'bg-app-border'}`}
+              key={idx}
+              className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${idx === viewIdx ? 'bg-app-accent w-3' : 'bg-app-border'}`}
             />
           ))}
         </div>

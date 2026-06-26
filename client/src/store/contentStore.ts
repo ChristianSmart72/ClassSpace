@@ -23,7 +23,7 @@ interface ContentState {
   deletePoll: (pollId: number) => Promise<void>;
 }
 
-export const useContentStore = create<ContentState>((set, get) => ({
+export const useContentStore = create<ContentState>((set) => ({
   announcements: [],
   materials: [],
   polls: [],

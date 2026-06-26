@@ -16,7 +16,7 @@ import { Profile } from './screens/Profile';
 import { Timetable } from './screens/Timetable';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
-  state = { error: null };
+  state = { error: null as Error | null };
   static getDerivedStateFromError(error: Error) { return { error }; }
   componentDidCatch(err: Error, info: unknown) { console.error('App error:', err, info); }
   render() {

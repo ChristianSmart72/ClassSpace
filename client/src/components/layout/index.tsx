@@ -13,12 +13,6 @@ function useNavTabs() {
   return NAV_TABS(currentSpace ? `/space/${currentSpace.id}` : '/setup');
 }
 
-function useIsActive(tab: ReturnType<typeof useNavTabs>[0]) {
-  const location = useLocation();
-  if (tab.matchPrefix) return location.pathname.startsWith(tab.matchPrefix);
-  return location.pathname === tab.path;
-}
-
 function NavItem({ tab }: { tab: ReturnType<typeof useNavTabs>[0] }) {
   const location = useLocation();
   const active = tab.matchPrefix

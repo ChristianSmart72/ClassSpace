@@ -1,21 +1,23 @@
 import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useSpaceStore } from '../store/spaceStore';
-import { useNavigate } from 'react-router-dom';
 import { ShareSheet } from '../components/sheets/ShareSheet';
 import { motion } from 'framer-motion';
 
 export function Profile() {
   const { user, logout } = useAuthStore();
-  const { currentSpace, courses, leaveSpace } = useSpaceStore();
-  const navigate = useNavigate();
+  const { currentSpace, courses: rawCourses, leaveSpace } = useSpaceStore();
+  const courses = rawCourses ?? [];
   const [showShare, setShowShare] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   const handleLogout = () => {
+    setSigningOut(true);
     logout();
     leaveSpace();
-    navigate('/');
+    // Hard redirect clears all React state — no router race conditions
+    window.location.href = '/';
   };
 
   const copyInviteCode = () => {
@@ -26,123 +28,156 @@ export function Profile() {
     });
   };
 
-  const avatarLetter = user?.name?.charAt(0)?.toUpperCase() || '?';
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-6 h-6 border-2 border-app-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const avatarLetter = user.name?.charAt(0)?.toUpperCase() || '?';
+  const isRep = user.role === 'rep';
 
   return (
-    <div className="px-4 pt-6 pb-6 lg:px-8 lg:pt-8">
+    <div className="pb-8">
+      {/* Page header */}
+      <div className="px-4 pt-6 pb-4 lg:px-8 lg:pt-8 border-b border-app-border mb-5">
+        <h1 className="text-app-text font-syne font-bold text-xl lg:text-2xl">Profile</h1>
+        <p className="text-app-text-dim text-sm font-dm mt-0.5">Manage your account and space settings</p>
+      </div>
 
-      {/* Desktop two-column */}
-      <div className="lg:grid lg:grid-cols-[280px_1fr] lg:gap-8 lg:items-start">
+      <div className="px-4 lg:px-8">
+        <div className="lg:grid lg:grid-cols-[300px_1fr] lg:gap-8 lg:items-start">
 
-        {/* Left column — profile identity */}
-        <div>
-          {/* Profile Header */}
-          <motion.div
-            className="flex flex-col items-center mb-6 lg:items-start"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div
-              className="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-syne font-bold mb-3"
-              style={{ background: 'linear-gradient(135deg, rgba(91,106,240,0.3) 0%, rgba(91,106,240,0.1) 100%)', color: '#5b6af0' }}
-            >
-              {avatarLetter}
-            </div>
-            <h2 className="text-app-text font-syne font-bold text-lg">{user?.name}</h2>
-            <p className="text-app-text-dim text-sm font-dm">{user?.email}</p>
-            <span className={`mt-2 text-[10px] font-syne font-semibold px-3 py-1 rounded-full ${
-              user?.role === 'rep' ? 'bg-app-accent/15 text-app-accent border border-app-accent/30' : 'bg-app-surface-2 text-app-text-dim border border-app-border'
-            }`}>
-              {user?.role === 'rep' ? '⭐ Class Rep' : '🎓 Member'}
-            </span>
-          </motion.div>
-
-          {/* Space Info */}
-          {currentSpace && (
+          {/* Left — identity */}
+          <div>
+            {/* Avatar + info card */}
             <motion.div
-              className="bg-app-surface rounded-2xl border border-app-border overflow-hidden mb-4"
-              initial={{ opacity: 0, y: 10 }}
+              className="bg-app-surface border border-app-border rounded-2xl p-5 mb-4"
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.05 }}
+              transition={{ duration: 0.3 }}
             >
-              <div className="px-4 py-3 border-b border-app-border flex items-center gap-2">
-                <span className="text-base">🏛️</span>
-                <p className="text-app-text-dim text-xs font-syne font-semibold uppercase tracking-wider">Your Space</p>
-              </div>
-              <div className="p-4">
-                <p className="text-app-text font-syne font-bold text-sm">{currentSpace.name}</p>
-                <p className="text-app-text-dim text-xs font-dm mt-0.5">{currentSpace.uni}</p>
-                <div className="flex items-center gap-2 mt-3 flex-wrap">
-                  <span className="text-[10px] bg-app-accent/10 text-app-accent font-syne font-semibold px-2 py-0.5 rounded-full">{currentSpace.level}</span>
-                  <span className="text-[10px] bg-app-surface-2 text-app-text-dim font-syne font-semibold px-2 py-0.5 rounded-full">{courses.length} courses</span>
+              <div className="flex items-center gap-4">
+                <div
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-syne font-bold flex-shrink-0"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(91,106,240,0.25) 0%, rgba(232,255,71,0.08) 100%)',
+                    color: '#5b6af0',
+                    border: '1.5px solid rgba(91,106,240,0.25)',
+                  }}
+                >
+                  {avatarLetter}
                 </div>
-                <div className="mt-3 bg-app-surface-2 rounded-xl p-3 border border-app-border flex items-center justify-between">
-                  <div>
-                    <p className="text-app-text-faint text-[10px] font-syne uppercase tracking-wider">Invite Code</p>
-                    <p className="text-app-accent font-syne font-bold text-lg tracking-widest">{currentSpace.invite_code}</p>
-                  </div>
-                  <button
-                    onClick={copyInviteCode}
-                    className={`text-xs font-syne font-semibold px-3 py-1.5 rounded-lg transition-all duration-200 ${
-                      copied ? 'bg-app-green/20 text-app-green' : 'bg-app-surface border border-app-border text-app-text-dim hover:text-app-text'
-                    }`}
-                  >
-                    {copied ? '✓ Copied!' : '📋 Copy'}
-                  </button>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-app-text font-syne font-bold text-base leading-tight truncate">{user.name}</h2>
+                  <p className="text-app-text-dim text-xs font-dm mt-0.5 truncate">{user.email}</p>
+                  <span className={`mt-2 inline-flex items-center gap-1 text-[11px] font-syne font-bold px-2.5 py-1 rounded-lg ${
+                    isRep
+                      ? 'bg-app-accent/15 text-app-accent border border-app-accent/25'
+                      : 'bg-app-surface-2 text-app-text-dim border border-app-border'
+                  }`}>
+                    {isRep ? '⭐ Class Rep' : '🎓 Member'}
+                  </span>
                 </div>
               </div>
             </motion.div>
-          )}
 
-          {/* Actions */}
-          <motion.div
-            className="flex flex-col gap-2"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-          >
+            {/* Space info */}
             {currentSpace && (
-              <button
-                onClick={() => setShowShare(true)}
-                className="w-full bg-app-surface border border-app-border text-app-text font-syne font-semibold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
+              <motion.div
+                className="bg-app-surface border border-app-border rounded-2xl overflow-hidden mb-4"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.06 }}
               >
-                <span>🔗</span> Share Space Link
-              </button>
+                <div className="px-4 py-3 border-b border-app-border flex items-center gap-2">
+                  <span>🏛️</span>
+                  <p className="text-app-text-dim text-xs font-syne font-semibold uppercase tracking-wider">Your Space</p>
+                </div>
+                <div className="p-4">
+                  <p className="text-app-text font-syne font-bold text-sm leading-tight">{currentSpace.name}</p>
+                  <p className="text-app-text-dim text-xs font-dm mt-0.5">{currentSpace.uni}</p>
+                  <div className="flex items-center gap-2 mt-3 flex-wrap">
+                    <span className="text-[11px] bg-app-accent/10 text-app-accent font-syne font-semibold px-2.5 py-1 rounded-full border border-app-accent/15">
+                      {currentSpace.level}
+                    </span>
+                    <span className="text-[11px] bg-app-surface-2 text-app-text-dim font-syne font-semibold px-2.5 py-1 rounded-full border border-app-border">
+                      {courses.length} courses
+                    </span>
+                  </div>
+
+                  {/* Invite code */}
+                  <div className="mt-4 bg-app-bg rounded-xl p-3 border border-app-border">
+                    <p className="text-app-text-dim text-[10px] font-syne font-bold uppercase tracking-widest mb-1">Invite Code</p>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-app-accent font-syne font-extrabold text-xl tracking-[0.2em]">{currentSpace.invite_code}</p>
+                      <button
+                        onClick={copyInviteCode}
+                        className={`text-xs font-syne font-semibold px-3 py-1.5 rounded-lg transition-all duration-200 flex-shrink-0 ${
+                          copied
+                            ? 'bg-app-green/15 text-app-green border border-app-green/25'
+                            : 'bg-app-surface border border-app-border text-app-text-dim hover:text-app-text hover:border-app-border/80'
+                        }`}
+                      >
+                        {copied ? '✓ Copied' : 'Copy'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
             )}
-            <button
-              onClick={handleLogout}
-              className="w-full bg-app-red/10 border border-app-red/30 text-app-red font-syne font-semibold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200"
+
+            {/* Actions */}
+            <motion.div
+              className="flex flex-col gap-2.5"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.12 }}
             >
-              Sign Out
-            </button>
-          </motion.div>
-        </div>
+              {currentSpace && (
+                <button
+                  onClick={() => setShowShare(true)}
+                  className="w-full bg-app-surface border border-app-border text-app-text font-syne font-semibold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 hover:border-app-border/70"
+                >
+                  🔗 Share Space Link
+                </button>
+              )}
+              <button
+                onClick={handleLogout}
+                disabled={signingOut}
+                className="w-full bg-app-red/10 border border-app-red/25 text-app-red font-syne font-bold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200 disabled:opacity-60"
+              >
+                {signingOut ? 'Signing out…' : 'Sign Out'}
+              </button>
+            </motion.div>
+          </div>
 
-        {/* Right column — settings */}
-        <div>
-          {/* Notification Settings */}
-          <motion.div
-            className="bg-app-surface rounded-2xl border border-app-border overflow-hidden mb-4 mt-6 lg:mt-0"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-          >
-            <div className="px-4 py-3 border-b border-app-border flex items-center gap-2">
-              <span className="text-base">🔔</span>
-              <p className="text-app-text-dim text-xs font-syne font-semibold uppercase tracking-wider">Notifications</p>
-            </div>
-            <div className="divide-y divide-app-border">
-              <ToggleRow label="All announcements" desc="New posts from your class rep" defaultOn />
-              <ToggleRow label="Urgent alerts only" desc="Only high-priority notifications" />
-              <ToggleRow label="New materials" desc="When files are uploaded" defaultOn />
-              <ToggleRow label="Test & assignment reminders" desc="Deadline alerts" defaultOn />
-            </div>
-          </motion.div>
+          {/* Right — settings */}
+          <div className="mt-5 lg:mt-0">
+            <motion.div
+              className="bg-app-surface border border-app-border rounded-2xl overflow-hidden"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+            >
+              <div className="px-4 py-3.5 border-b border-app-border flex items-center gap-2">
+                <span>🔔</span>
+                <p className="text-app-text font-syne font-semibold text-sm">Notifications</p>
+              </div>
+              <div className="divide-y divide-app-border">
+                <ToggleRow label="All announcements" desc="New posts from your class rep" defaultOn />
+                <ToggleRow label="Urgent alerts only" desc="Only high-priority notifications" />
+                <ToggleRow label="New materials" desc="When files are uploaded" defaultOn />
+                <ToggleRow label="Test & assignment reminders" desc="Deadline alerts" defaultOn />
+              </div>
+            </motion.div>
 
-          <p className="text-app-text-faint text-xs font-dm text-center mt-6 lg:text-left">
-            ClassSpace v5 · Made for Nigerian students 🇳🇬
-          </p>
+            <p className="text-app-text-dim text-xs font-dm text-center mt-6 lg:text-left opacity-50">
+              ClassSpace v5 · Made for Nigerian students 🇳🇬
+            </p>
+          </div>
         </div>
       </div>
 
@@ -155,10 +190,10 @@ export function Profile() {
 
 function ToggleRow({ label, desc, defaultOn }: { label: string; desc: string; defaultOn?: boolean }) {
   return (
-    <div className="flex items-center justify-between px-4 py-3 gap-3">
+    <div className="flex items-center justify-between px-4 py-3.5 gap-3">
       <div className="flex-1 min-w-0">
         <span className="text-app-text font-dm text-sm block">{label}</span>
-        <span className="text-app-text-faint text-[10px] font-dm block mt-0.5">{desc}</span>
+        <span className="text-app-text-dim text-xs font-dm block mt-0.5 opacity-70">{desc}</span>
       </div>
       <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
         <input type="checkbox" defaultChecked={defaultOn} className="sr-only peer" />

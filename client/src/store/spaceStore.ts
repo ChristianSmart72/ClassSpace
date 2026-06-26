@@ -51,7 +51,8 @@ export const useSpaceStore = create<SpaceState>((set) => ({
   fetchSpace: async (id) => {
     set({ loading: true, error: null });
     try {
-      const { space, courses, members, isMember, memberRole } = await apiGetSpace(id);
+      const { space, members, isMember, memberRole } = await apiGetSpace(id);
+      const courses: Course[] = space.courses ?? [];
       localStorage.setItem('spaceId', id);
       set({ currentSpace: space, courses, members, isMember, memberRole, loading: false, error: null });
     } catch {
