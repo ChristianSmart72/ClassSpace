@@ -1,0 +1,32 @@
+2026-06-26T10:06:30.65551405Z ==> It looks like we don't have access to your repo, but we'll try to clone it anyway.
+2026-06-26T10:06:30.655536001Z ==> Cloning from https://github.com/ChristianSmart72/ClassSpace
+2026-06-26T10:06:31.527392671Z ==> Checking out commit cefc479378291a5b6ddee881fe6b44d504cf1393 in branch main
+2026-06-26T10:06:42.356561571Z ==> Using Node.js version 24.14.1 (default)
+2026-06-26T10:06:42.356573722Z ==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+2026-06-26T10:06:42.500352543Z ==> Running build command 'npm install; npm run build'...
+2026-06-26T10:06:44.44423816Z 
+2026-06-26T10:06:44.444259632Z added 25 packages, and audited 28 packages in 2s
+2026-06-26T10:06:44.444270832Z 
+2026-06-26T10:06:44.44437392Z 6 packages are looking for funding
+2026-06-26T10:06:44.444466086Z   run `npm fund` for details
+2026-06-26T10:06:44.445331238Z 
+2026-06-26T10:06:44.445339589Z found 0 vulnerabilities
+2026-06-26T10:06:44.622636351Z 
+2026-06-26T10:06:44.622657193Z > classspace@5.0.0 build
+2026-06-26T10:06:44.622660883Z > cd client && npm install && npm run build && cd ../server && npm install && npm run build
+2026-06-26T10:06:44.622664593Z 
+2026-06-26T10:06:48.430036985Z 
+2026-06-26T10:06:48.430061277Z added 87 packages, and audited 88 packages in 4s
+2026-06-26T10:06:48.430072647Z 
+2026-06-26T10:06:48.430148923Z 18 packages are looking for funding
+2026-06-26T10:06:48.430196566Z   run `npm fund` for details
+2026-06-26T10:06:48.431100481Z 
+2026-06-26T10:06:48.431113082Z found 0 vulnerabilities
+2026-06-26T10:06:48.566528702Z 
+2026-06-26T10:06:48.566556434Z > client@0.0.0 build
+2026-06-26T10:06:48.566562375Z > tsc -b && vite build
+2026-06-26T10:06:48.566566995Z 
+2026-06-26T10:06:50.604618245Z src/screens/Home.tsx(31,9): error TS6133: 'pinnedCount' is declared but its value is never read.
+2026-06-26T10:06:50.604761395Z src/screens/Space.tsx(92,9): error TS6133: 'pinnedCount' is declared but its value is never read.
+2026-06-26T10:06:51.155788049Z ==> Build failed 😞
+2026-06-26T10:06:51.155815711Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
