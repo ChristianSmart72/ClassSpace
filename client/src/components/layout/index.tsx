@@ -7,7 +7,7 @@ export function BottomNav() {
 
   const tabs = [
     { path: '/home', icon: '🏠', label: 'Home' },
-    { path: currentSpace ? `/space/${currentSpace.id}` : '/home', icon: '📋', label: 'Space', matchPrefix: '/space' },
+    { path: currentSpace ? `/space/${currentSpace.id}` : '/setup', icon: '📋', label: 'Space', matchPrefix: '/space' },
     { path: '/profile', icon: '👤', label: 'Profile' },
   ];
 

@@ -9,11 +9,13 @@ interface SpaceState {
   isMember: boolean;
   memberRole: string | null;
   loading: boolean;
+  error: string | null;
   createSpace: (data: Parameters<typeof apiCreateSpace>[0]) => Promise<Space>;
   fetchSpace: (id: string) => Promise<void>;
   joinSpace: (code: string) => Promise<Space>;
   setSpace: (space: Space, courses: Course[]) => void;
   leaveSpace: () => void;
+  clearError: () => void;
 }
 
 export const useSpaceStore = create<SpaceState>((set) => ({
@@ -23,9 +25,10 @@ export const useSpaceStore = create<SpaceState>((set) => ({
   isMember: false,
   memberRole: null,
   loading: false,
+  error: null,
 
   createSpace: async (data) => {
-    set({ loading: true });
+    set({ loading: true, error: null });
     try {
       const { space, token } = await apiCreateSpace(data);
       if (token) localStorage.setItem('token', token);
@@ -36,27 +39,29 @@ export const useSpaceStore = create<SpaceState>((set) => ({
         isMember: true,
         memberRole: 'rep',
         loading: false,
+        error: null,
       });
       return space;
     } catch (err) {
-      set({ loading: false });
+      set({ loading: false, error: 'Failed to create space' });
       throw err;
     }
   },
 
   fetchSpace: async (id) => {
-    set({ loading: true });
+    set({ loading: true, error: null });
     try {
       const { space, courses, members, isMember, memberRole } = await apiGetSpace(id);
       localStorage.setItem('spaceId', id);
-      set({ currentSpace: space, courses, members, isMember, memberRole, loading: false });
+      set({ currentSpace: space, courses, members, isMember, memberRole, loading: false, error: null });
     } catch {
-      set({ loading: false });
+      localStorage.removeItem('spaceId');
+      set({ loading: false, error: 'Could not load space', currentSpace: null });
     }
   },
 
   joinSpace: async (code) => {
-    set({ loading: true });
+    set({ loading: true, error: null });
     try {
       const { space } = await apiJoinSpace(code);
       localStorage.setItem('spaceId', space.id);
@@ -66,21 +71,24 @@ export const useSpaceStore = create<SpaceState>((set) => ({
         isMember: true,
         memberRole: 'member',
         loading: false,
+        error: null,
       });
       return space;
     } catch (err) {
-      set({ loading: false });
+      set({ loading: false, error: 'Failed to join space' });
       throw err;
     }
   },
 
   setSpace: (space, courses) => {
     localStorage.setItem('spaceId', space.id);
-    set({ currentSpace: space, courses, isMember: true, memberRole: space.rep_id === 0 ? 'rep' : 'member' });
+    set({ currentSpace: space, courses, isMember: true, memberRole: 'member', error: null });
   },
 
   leaveSpace: () => {
     localStorage.removeItem('spaceId');
-    set({ currentSpace: null, courses: [], members: [], isMember: false, memberRole: null });
+    set({ currentSpace: null, courses: [], members: [], isMember: false, memberRole: null, error: null });
   },
+
+  clearError: () => set({ error: null }),
 }));

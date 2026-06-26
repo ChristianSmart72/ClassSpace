@@ -23,76 +23,120 @@
   "announcements": [
     {
       "course_index": 0,
-      "title": "Lab Report Deadline — Friday",
-      "body": "Please submit your fluid mechanics lab reports on or before Friday. Reports must follow the standard format outlined in the lab manual. Late submissions will not be accepted.",
+      "title": "Lab Report Deadline — Friday 5pm ⚠️",
+      "body": "Please submit your Fluid Mechanics lab reports on or before Friday 5pm. Reports must follow the standard format outlined in the lab manual. Late submissions will attract a 10-mark deduction per day. Ensure your data tables are clearly labelled and all graphs are properly scaled.",
       "type": "assignment",
-      "urgent": false,
+      "urgent": true,
       "pinned": true,
       "deadline": "2026-06-27",
       "venue": "Engineering Lab 3",
-      "instructions": "Write in ink, include all calculations, and attach your raw data sheets. Use the cover page template from the department.",
-      "submission_method": "Physical submission to department office",
-      "format": "Bound report, A4"
+      "instructions": "Write in ink, include all calculations and raw data sheets. Use the cover page template from the department. Reports should be spiral-bound. Each section must begin on a new page.",
+      "submission_method": "Physical submission to department office (Room 105)",
+      "format": "Spiral-bound report, A4, minimum 15 pages"
     },
     {
       "course_index": -1,
-      "title": "No lectures Wednesday ⚠️",
-      "body": "All lectures for Wednesday are cancelled due to the faculty board meeting. Normal schedule resumes Thursday.",
+      "title": "No Lectures Wednesday — Faculty Board Meeting",
+      "body": "All lectures for Wednesday 25th June are cancelled due to the Faculty Board Meeting. Normal timetable resumes Thursday. This affects all 300L courses. Use the free period to catch up on assignments.",
       "type": "update",
       "urgent": true,
       "pinned": false
     },
     {
       "course_index": 1,
-      "title": "Thermo II Test — Confirmed",
-      "body": "The continuous assessment test for Thermodynamics II will hold this Friday at 10am. Bring your calculators and formula sheets.",
+      "title": "Thermodynamics II CA Test — Confirmed for Friday",
+      "body": "The Continuous Assessment test for PEG 303 has been confirmed for this Friday at 10:00am sharp. Coverage is Chapters 6–9 (Entropy, Power Cycles, and Refrigeration). Bring your calculators, a formula sheet (one A4 page, handwritten only), and your student ID.",
       "type": "test",
       "urgent": false,
-      "pinned": false,
-      "deadline": "2026-06-26",
-      "venue": "Lecture Hall B"
+      "pinned": true,
+      "deadline": "2026-06-28",
+      "venue": "Lecture Hall B, Engineering Block"
     },
     {
       "course_index": 2,
-      "title": "Manufacturing Process Makeup Class",
-      "body": "There will be a makeup class for Manufacturing Processes I on Saturday at 9am. Attendance is compulsory.",
+      "title": "Makeup Class — Manufacturing Processes Saturday",
+      "body": "There will be a mandatory makeup class for PEG 305 this Saturday at 9:00am. We will cover CNC Machining and Additive Manufacturing topics that were missed during the strike. Attendance will be taken and counted toward your continuous assessment.",
       "type": "meeting",
       "urgent": false,
       "pinned": false,
-      "venue": "Workshop Complex"
+      "venue": "Workshop Complex, Room W4"
     },
     {
       "course_index": -1,
-      "title": "Departmental Meeting — Friday 2pm",
-      "body": "All 300L Production Engineering students are to attend the departmental meeting this Friday at the faculty auditorium. Attendance will be taken.",
+      "title": "Departmental Meeting — All 300L Students",
+      "body": "All 300L Production Engineering students are required to attend the departmental meeting this Friday at 2:00pm. The agenda includes industrial attachment briefing, second semester course registration, and election of new student union reps. Attendance is compulsory and will be recorded.",
       "type": "meeting",
       "urgent": false,
       "pinned": true,
-      "venue": "Faculty Auditorium"
+      "venue": "Faculty Auditorium, Ground Floor"
     },
     {
       "course_index": 4,
-      "title": "GNS Report Format Updated",
-      "body": "The Use of English unit has released an updated format for the technical report. Download the new template from the materials section.",
+      "title": "GNS 301 Report Format Updated — Download Now",
+      "body": "The Use of English unit has released an updated format for the technical report assignment. The new template includes additional sections on Abstract and Literature Review. Please discard any old templates and download the new one from the Materials section immediately. Submissions using the old format will be rejected.",
       "type": "announcement",
       "urgent": false,
       "pinned": false
+    },
+    {
+      "course_index": 3,
+      "title": "MTH 301 Tutorial Session — Tomorrow 4pm",
+      "body": "There will be a peer-led tutorial session for Engineering Mathematics III tomorrow (Thursday) at 4:00pm. Topics covered: Double Integrals, Green's Theorem, and Series Solutions. The session is student-organised but has been approved by the course lecturer. Practice problems will be shared beforehand.",
+      "type": "meeting",
+      "urgent": false,
+      "pinned": false,
+      "venue": "Seminar Room 2, Science Block"
+    },
+    {
+      "course_index": 0,
+      "title": "PEG 301 Lecture Slides — Week 7 Uploaded",
+      "body": "Week 7 lecture slides (Bernoulli's Equation and Applications) have been uploaded to the Materials section. The slides include the worked examples from Monday's class. Please review before Thursday's lecture as we will continue directly from slide 34.",
+      "type": "announcement",
+      "urgent": false,
+      "pinned": false
+    },
+    {
+      "course_index": 1,
+      "title": "Recommended Study Resources for Thermo CA",
+      "body": "For the upcoming CA test, focus on Cengel & Boles Chapters 6–9. Pay special attention to the Clausius inequality proofs and T-s diagrams for ideal gas power cycles. Past exam questions from 2022 and 2023 are in the Materials section under Past Questions — these are very indicative of what to expect.",
+      "type": "announcement",
+      "urgent": false,
+      "pinned": false
+    },
+    {
+      "course_index": -1,
+      "title": "Industrial Attachment Forms Available",
+      "body": "SIWES / Industrial Attachment placement forms are now available at the department office. All 300L students must collect and submit a completed form by July 15th. Students who fail to submit will not be cleared for their IT placement. Forms are ₦500 at the department secretary's desk.",
+      "type": "announcement",
+      "urgent": true,
+      "pinned": false,
+      "deadline": "2026-07-15"
     }
   ],
   "materials": [
-    { "course_index": 0, "name": "Lecture Slides — Week 6", "file_type": "ppt", "category": "Slides", "file_size": 2516582 },
-    { "course_index": 0, "name": "Lab Report Template", "file_type": "doc", "category": "Templates", "file_size": 148480 },
+    { "course_index": 0, "name": "Lecture Slides — Week 6 (Pipe Flow)", "file_type": "ppt", "category": "Slides", "file_size": 2516582 },
+    { "course_index": 0, "name": "Lecture Slides — Week 7 (Bernoulli)", "file_type": "ppt", "category": "Slides", "file_size": 2189000 },
+    { "course_index": 0, "name": "Lab Report Template (Official)", "file_type": "doc", "category": "Templates", "file_size": 148480 },
     { "course_index": 0, "name": "Past Questions 2022/2023", "file_type": "pdf", "category": "Past Questions", "file_size": 1153434 },
-    { "course_index": 1, "name": "Thermo II — Chapter 4 Notes", "file_type": "pdf", "category": "Notes", "file_size": 911360 },
+    { "course_index": 0, "name": "Past Questions 2021/2022", "file_type": "pdf", "category": "Past Questions", "file_size": 987654 },
+    { "course_index": 0, "name": "Lab 5 — Pipe Flow Experiment Data", "file_type": "pdf", "category": "Lab Resources", "file_size": 512000 },
+    { "course_index": 1, "name": "Thermo II — Chapter 6 Notes (Entropy)", "file_type": "pdf", "category": "Notes", "file_size": 911360 },
+    { "course_index": 1, "name": "Thermo II — Chapter 7 Notes (Power Cycles)", "file_type": "pdf", "category": "Notes", "file_size": 843000 },
     { "course_index": 1, "name": "Practice Problems Set 2", "file_type": "pdf", "category": "Assignments", "file_size": 348160 },
-    { "course_index": 1, "name": "Cengel Textbook 8th Ed", "file_type": "pdf", "category": "Textbooks", "file_size": 39845888 },
-    { "course_index": 2, "name": "Manufacturing Processes Overview", "file_type": "pdf", "category": "Notes", "file_size": 573440 },
-    { "course_index": 2, "name": "Lab 4 Procedure", "file_type": "pdf", "category": "Lab Resources", "file_size": 296960 },
-    { "course_index": 2, "name": "Slides — Metal Forming", "file_type": "ppt", "category": "Slides", "file_size": 1887437 },
-    { "course_index": 3, "name": "Practice Problems — Integrals", "file_type": "pdf", "category": "Assignments", "file_size": 225280 },
-    { "course_index": 3, "name": "Formula Sheet", "file_type": "pdf", "category": "Notes", "file_size": 184320 },
-    { "course_index": 3, "name": "Differential Equations Notes", "file_type": "pdf", "category": "Notes", "file_size": 409600 },
-    { "course_index": 4, "name": "Updated Report Format", "file_type": "doc", "category": "Templates", "file_size": 148480 },
-    { "course_index": 4, "name": "Sample Technical Report", "file_type": "doc", "category": "Templates", "file_size": 327680 }
+    { "course_index": 1, "name": "Practice Problems Set 3 (CA Prep)", "file_type": "pdf", "category": "Assignments", "file_size": 290000 },
+    { "course_index": 1, "name": "Cengel & Boles Textbook 8th Ed", "file_type": "pdf", "category": "Textbooks", "file_size": 39845888 },
+    { "course_index": 1, "name": "Past Questions 2023/2024", "file_type": "pdf", "category": "Past Questions", "file_size": 780000 },
+    { "course_index": 2, "name": "Manufacturing Processes Overview — Chapter 1", "file_type": "pdf", "category": "Notes", "file_size": 573440 },
+    { "course_index": 2, "name": "CNC Machining Notes", "file_type": "pdf", "category": "Notes", "file_size": 420000 },
+    { "course_index": 2, "name": "Lab 4 — Metal Cutting Procedure", "file_type": "pdf", "category": "Lab Resources", "file_size": 296960 },
+    { "course_index": 2, "name": "Slides — Metal Forming Processes", "file_type": "ppt", "category": "Slides", "file_size": 1887437 },
+    { "course_index": 2, "name": "Slides — Additive Manufacturing (3D Printing)", "file_type": "ppt", "category": "Slides", "file_size": 2100000 },
+    { "course_index": 3, "name": "Practice Problems — Double Integrals", "file_type": "pdf", "category": "Assignments", "file_size": 225280 },
+    { "course_index": 3, "name": "Formula Sheet (All Topics)", "file_type": "pdf", "category": "Notes", "file_size": 184320 },
+    { "course_index": 3, "name": "Differential Equations — Full Notes", "file_type": "pdf", "category": "Notes", "file_size": 409600 },
+    { "course_index": 3, "name": "Past Questions 2022–2024 Compiled", "file_type": "pdf", "category": "Past Questions", "file_size": 650000 },
+    { "course_index": 4, "name": "Updated Technical Report Template (June 2026)", "file_type": "doc", "category": "Templates", "file_size": 148480 },
+    { "course_index": 4, "name": "Sample Technical Report (A-Grade)", "file_type": "doc", "category": "Templates", "file_size": 327680 },
+    { "course_index": 4, "name": "GNS 301 Course Outline & Assessment Guide", "file_type": "pdf", "category": "Notes", "file_size": 210000 }
   ]
 }
