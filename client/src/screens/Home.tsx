@@ -28,7 +28,6 @@ export function Home() {
   const courseList = courses ?? [];
   const courseCount = courseList.length;
   const urgentCount = announcements.filter(a => a.urgent).length;
-  const pinnedCount = announcements.filter(a => a.pinned).length;
   const loading = (!currentSpace && !!localStorage.getItem('spaceId')) || spaceLoading;
 
   if (loading) {

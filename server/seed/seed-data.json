@@ -5,6 +5,14 @@
     "password": "demo1234",
     "role": "rep"
   },
+  "extra_users": [
+    {
+      "name": "Amara Obi",
+      "email": "student@classspace.app",
+      "password": "demo1234",
+      "role": "member"
+    }
+  ],
   "space": {
     "id": "abc123",
     "name": "300L Production Engineering",

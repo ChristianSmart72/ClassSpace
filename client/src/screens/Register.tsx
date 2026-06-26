@@ -47,7 +47,8 @@ export function Register() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Your name"
-              className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-dm text-sm placeholder:text-app-text-faint focus:border-app-accent transition-colors"
+              autoComplete="name"
+              className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-dm text-sm placeholder:text-app-text-faint focus:border-app-accent focus:outline-none transition-colors"
               required
             />
           </div>
@@ -61,7 +62,8 @@ export function Register() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@uniben.edu"
-              className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-dm text-sm placeholder:text-app-text-faint focus:border-app-accent transition-colors"
+              autoComplete="email"
+              className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-dm text-sm placeholder:text-app-text-faint focus:border-app-accent focus:outline-none transition-colors"
               required
             />
           </div>
@@ -75,7 +77,8 @@ export function Register() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Min 6 characters"
-              className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-dm text-sm placeholder:text-app-text-faint focus:border-app-accent transition-colors"
+              autoComplete="new-password"
+              className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-dm text-sm placeholder:text-app-text-faint focus:border-app-accent focus:outline-none transition-colors"
               required
               minLength={6}
             />

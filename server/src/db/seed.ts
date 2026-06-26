@@ -9,6 +9,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 interface SeedData {
   user: { name: string; email: string; password: string; role: string };
+  extra_users?: { name: string; email: string; password: string; role: string }[];
   space: { id: string; name: string; dept: string; level: string; uni: string; invite_code: string };
   courses: { name: string; code: string; icon: string; color_index: number }[];
   timetable: {
@@ -66,12 +67,23 @@ export async function seedDatabase(): Promise<void> {
     'INSERT INTO timetable (space_id, course_id, day, start_time, end_time, venue, lecturer) VALUES (?, ?, ?, ?, ?, ?, ?)'
   );
 
+  const extraHashes: string[] = [];
+  for (const u of (data.extra_users || [])) {
+    extraHashes.push(await hashPassword(u.password));
+  }
+
   const tx = db.transaction(() => {
     const userResult = insertUser.run(data.user.name, data.user.email, passwordHash, data.user.role);
     const userId = userResult.lastInsertRowid as number;
 
     insertSpace.run(data.space.id, data.space.name, data.space.dept, data.space.level, data.space.uni, userId, data.space.invite_code);
     insertMember.run(data.space.id, userId, 'rep');
+
+    for (let i = 0; i < (data.extra_users || []).length; i++) {
+      const u = data.extra_users![i];
+      const res = insertUser.run(u.name, u.email, extraHashes[i], u.role);
+      insertMember.run(data.space.id, res.lastInsertRowid as number, 'member');
+    }
 
     const courseIds: number[] = [];
     for (const course of data.courses) {
