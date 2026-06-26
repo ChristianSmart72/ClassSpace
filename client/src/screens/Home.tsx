@@ -24,7 +24,7 @@ export function Home() {
     }
   }, [currentSpace]);
 
-  const totalFiles = courses.length;
+  const courseCount = courses.length;
   const loading = (!currentSpace && localStorage.getItem('spaceId')) || spaceLoading;
 
   if (loading) {
@@ -72,33 +72,43 @@ export function Home() {
         <p className="text-app-text-dim text-sm font-dm">{currentSpace.uni}</p>
       </div>
 
-      {/* Stats */}
+      {/* Stats — first card highlighted in accent */}
       <div className="grid grid-cols-2 gap-3 mb-5">
-        <div className="bg-app-surface rounded-2xl p-4 border border-app-border">
+        <div className="rounded-2xl p-4 border" style={{ background: '#e8ff47', borderColor: '#e8ff47' }}>
           <span className="text-2xl mb-1 block">📢</span>
-          <p className="text-app-text font-syne font-bold text-lg">{announcements.length}</p>
-          <p className="text-app-text-dim text-xs font-dm">Announcements</p>
+          <p className="font-syne font-extrabold text-2xl" style={{ color: '#0f0f11' }}>{announcements.length}</p>
+          <p className="text-xs font-dm" style={{ color: '#3a3a1a' }}>Announcements</p>
         </div>
         <div className="bg-app-surface rounded-2xl p-4 border border-app-border">
-          <span className="text-2xl mb-1 block">📁</span>
-          <p className="text-app-text font-syne font-bold text-lg">{totalFiles}</p>
-          <p className="text-app-text-dim text-xs font-dm">Files</p>
+          <span className="text-2xl mb-1 block">📚</span>
+          <p className="text-app-text font-syne font-extrabold text-2xl">{courseCount}</p>
+          <p className="text-app-text-dim text-xs font-dm">Courses</p>
         </div>
       </div>
 
-      {/* My Space Card */}
+      {/* My Space Card — with icon box like the original */}
       <button
         onClick={() => navigate(`/space/${currentSpace.id}`)}
-        className="w-full bg-app-surface rounded-2xl p-4 border border-app-border text-left mb-5 active:scale-[0.99] transition-all duration-200 relative overflow-hidden"
+        className="w-full bg-app-surface rounded-2xl border border-app-border text-left mb-5 active:scale-[0.99] transition-all duration-200 relative overflow-hidden"
+        style={{ padding: '18px' }}
       >
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-app-accent" />
-        <div className="pl-4">
-          <p className="text-app-text font-syne font-bold text-base">{currentSpace.name}</p>
-          <p className="text-app-text-dim text-xs font-dm mt-0.5">Rep: {currentSpace.rep || 'You'}</p>
-          <div className="flex gap-2 mt-2">
-            <span className="text-[10px] bg-app-accent/10 text-app-accent font-syne font-semibold px-2 py-0.5 rounded-md">{courses.length} courses</span>
-            <span className="text-[10px] bg-app-surface-2 text-app-text-dim font-syne font-semibold px-2 py-0.5 rounded-md">{currentSpace.level}</span>
+        <div className="absolute left-0 top-0 bottom-0 w-1" style={{ background: '#e8ff47' }} />
+        <div className="flex items-center gap-4 pl-3 mb-3">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0" style={{ background: 'rgba(232,255,71,0.10)' }}>
+            🏛️
           </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-app-text font-syne font-extrabold text-base leading-tight">{currentSpace.name}</p>
+            <p className="text-app-text-dim text-xs font-dm mt-1 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-app-green inline-block" />
+              Class Rep: {currentSpace.rep || user?.name?.split(' ')[0] || 'You'}
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2 pl-3">
+          <span className="text-[11px] bg-app-accent/10 text-app-accent font-syne font-semibold px-2.5 py-1 rounded-full">{courses.length} courses</span>
+          <span className="text-[11px] bg-app-surface-2 text-app-text-dim font-syne font-semibold px-2.5 py-1 rounded-full">{currentSpace.level}</span>
+          <span className="text-[11px] bg-app-surface-2 text-app-text-dim font-syne font-semibold px-2.5 py-1 rounded-full">{currentSpace.uni.split(' ').at(-1)}</span>
         </div>
       </button>
 

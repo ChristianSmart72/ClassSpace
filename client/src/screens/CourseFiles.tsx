@@ -1,23 +1,37 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSpaceStore } from '../store/spaceStore';
 import { useContentStore } from '../store/contentStore';
-import { TopBar } from '../components/layout';
+import { TopBar, Fab } from '../components/layout';
 import { Skeleton, EmptyState } from '../components/ui/Shared';
+import { UploadMaterialSheet } from '../components/sheets/UploadMaterial';
 import { FILE_ICONS, FILE_COLORS, MATERIAL_CATEGORIES } from '../types';
 import type { Material } from '../types';
 
 export function CourseFiles() {
   const { id: spaceId, cid } = useParams<{ id: string; cid: string }>();
   const navigate = useNavigate();
-  const { courses } = useSpaceStore();
-  const { materials, matLoading, fetchMaterials } = useContentStore();
+  const { courses, memberRole } = useSpaceStore();
+  const { materials, matLoading, fetchMaterials, deleteMaterial } = useContentStore();
+  const [showUpload, setShowUpload] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const course = courses.find((c) => c.id === Number(cid));
+  const isRep = memberRole === 'rep';
 
   useEffect(() => {
     if (cid) fetchMaterials(Number(cid));
   }, [cid]);
+
+  const handleDelete = async (matId: number) => {
+    if (!confirm('Delete this material?')) return;
+    setDeletingId(matId);
+    try {
+      await deleteMaterial(matId);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const grouped = MATERIAL_CATEGORIES.map((cat) => ({
     category: cat,
@@ -47,25 +61,46 @@ export function CourseFiles() {
             </div>
           ))
         ) : materials.length === 0 ? (
-          <EmptyState icon="📁" title="No materials yet" subtitle="Upload the first file for this course" />
+          <EmptyState icon="📁" title="No materials yet" subtitle={isRep ? 'Tap + to upload the first file' : 'No files uploaded yet'} />
         ) : (
           grouped.map((group) => (
             <div key={group.category} className="mb-5">
               <h3 className="text-app-text-dim text-xs font-syne font-semibold uppercase tracking-wider mb-2">{group.category}</h3>
               <div className="flex flex-col gap-2">
                 {group.items.map((mat) => (
-                  <MaterialCard key={mat.id} material={mat} />
+                  <MaterialCard
+                    key={mat.id}
+                    material={mat}
+                    canDelete={isRep}
+                    deleting={deletingId === mat.id}
+                    onDelete={() => handleDelete(mat.id)}
+                  />
                 ))}
               </div>
             </div>
           ))
         )}
       </div>
+
+      {isRep && (
+        <Fab onClick={() => setShowUpload(true)} icon="+" />
+      )}
+
+      {showUpload && (
+        <UploadMaterialSheet courseId={Number(cid)} onClose={() => setShowUpload(false)} />
+      )}
     </div>
   );
 }
 
-function MaterialCard({ material: m }: { material: Material }) {
+function MaterialCard({
+  material: m, canDelete, deleting, onDelete,
+}: {
+  material: Material;
+  canDelete: boolean;
+  deleting: boolean;
+  onDelete: () => void;
+}) {
   return (
     <div className="bg-app-surface rounded-xl p-3 border border-app-border flex items-center gap-3 active:scale-[0.99] transition-all duration-200">
       <span className={`text-xl ${FILE_COLORS[m.file_type] || 'text-app-text-dim'}`}>
@@ -84,11 +119,20 @@ function MaterialCard({ material: m }: { material: Material }) {
       <a
         href={`/api/materials/${m.id}/download`}
         download
-        className="text-app-accent text-lg px-2 hover:scale-110 transition-transform"
+        className="text-app-accent text-lg px-1 hover:scale-110 transition-transform"
         onClick={(e) => { if (!m.file_data) { e.preventDefault(); alert('Demo file — download available when uploaded'); } }}
       >
         ⬇
       </a>
+      {canDelete && (
+        <button
+          onClick={onDelete}
+          disabled={deleting}
+          className="text-app-text-faint hover:text-app-red transition-colors text-sm px-1 disabled:opacity-40"
+        >
+          🗑
+        </button>
+      )}
     </div>
   );
 }

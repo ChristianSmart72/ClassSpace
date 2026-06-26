@@ -30,8 +30,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       const { user, space } = res as any;
       if (space) {
         localStorage.setItem('spaceId', space.id);
-        const { fetchSpace } = await import('./spaceStore');
-        fetchSpace(space.id);
+        const { useSpaceStore } = await import('./spaceStore');
+        useSpaceStore.getState().fetchSpace(space.id);
       }
       set({ user, token, initialized: true });
     } catch {

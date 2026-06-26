@@ -94,6 +94,26 @@ export function announcementRoutes(app: FastifyInstance) {
     return announcement;
   });
 
+  app.delete('/api/announcements/:id', { preHandler: authMiddleware }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const userId = request.user!.userId;
+    const db = getDb();
+
+    const ann = db.prepare('SELECT * FROM announcements WHERE id = ?').get(Number(id)) as any;
+    if (!ann) return reply.status(404).send({ error: 'Not found' });
+
+    const isRep = db.prepare(
+      'SELECT 1 FROM space_members WHERE space_id = ? AND user_id = ? AND role = ?'
+    ).get(ann.space_id, userId, 'rep');
+
+    if (ann.author_id !== userId && !isRep) {
+      return reply.status(403).send({ error: 'Not authorized' });
+    }
+
+    db.prepare('DELETE FROM announcements WHERE id = ?').run(Number(id));
+    return { success: true };
+  });
+
   app.get('/api/announcements/shared/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     const db = getDb();

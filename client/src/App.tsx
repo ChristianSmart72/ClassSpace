@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useAuthStore } from './store/authStore';
 import { useSpaceStore } from './store/spaceStore';
 import { MainLayout } from './components/layout/MainLayout';
@@ -28,6 +29,38 @@ function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AppRoutes() {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={location.pathname}
+        initial={{ opacity: 0, x: 28 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -14 }}
+        transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+        style={{ minHeight: '100dvh' }}
+      >
+        <Routes location={location}>
+          <Route path="/" element={<PublicOnlyRoute><Landing /></PublicOnlyRoute>} />
+          <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
+          <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
+          <Route path="/setup" element={<ProtectedRoute><SetupWizard /></ProtectedRoute>} />
+          <Route path="/join" element={<JoinInput />} />
+          <Route path="/join/:type/:id" element={<JoinPreview />} />
+          <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+            <Route path="/home" element={<Home />} />
+            <Route path="/space/:id" element={<Space />} />
+            <Route path="/space/:id/course/:cid" element={<CourseFiles />} />
+            <Route path="/profile" element={<Profile />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 export default function App() {
   const { init, initialized } = useAuthStore();
   const { fetchSpace } = useSpaceStore();
@@ -52,21 +85,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<PublicOnlyRoute><Landing /></PublicOnlyRoute>} />
-        <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
-        <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
-        <Route path="/setup" element={<ProtectedRoute><SetupWizard /></ProtectedRoute>} />
-        <Route path="/join" element={<JoinInput />} />
-        <Route path="/join/:type/:id" element={<JoinPreview />} />
-        <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-          <Route path="/home" element={<Home />} />
-          <Route path="/space/:id" element={<Space />} />
-          <Route path="/space/:id/course/:cid" element={<CourseFiles />} />
-          <Route path="/profile" element={<Profile />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <AppRoutes />
     </BrowserRouter>
   );
 }

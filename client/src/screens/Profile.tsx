@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useSpaceStore } from '../store/spaceStore';
 import { useNavigate } from 'react-router-dom';
+import { ShareSheet } from '../components/sheets/ShareSheet';
 
 export function Profile() {
   const { user, logout } = useAuthStore();
   const { currentSpace, leaveSpace } = useSpaceStore();
   const navigate = useNavigate();
+  const [showShare, setShowShare] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -57,15 +60,21 @@ export function Profile() {
 
       {/* Actions */}
       <div className="flex flex-col gap-2">
-        <button onClick={() => navigate('/join')} className="w-full bg-app-surface border border-app-border text-app-text font-syne font-semibold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200">
-          Share Space Link
-        </button>
+        {currentSpace && (
+          <button onClick={() => setShowShare(true)} className="w-full bg-app-surface border border-app-border text-app-text font-syne font-semibold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200">
+            Share Space Link
+          </button>
+        )}
         <button onClick={handleLogout} className="w-full bg-app-red/10 border border-app-red/30 text-app-red font-syne font-semibold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200">
           Sign Out
         </button>
       </div>
 
       <p className="text-app-text-faint text-xs font-dm text-center mt-8">ClassSpace v5 · Made for Nigerian students</p>
+
+      {showShare && currentSpace && (
+        <ShareSheet type="space" id={currentSpace.id} spaceId={currentSpace.id} onClose={() => setShowShare(false)} />
+      )}
     </div>
   );
 }

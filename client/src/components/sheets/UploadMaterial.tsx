@@ -1,11 +1,13 @@
 import { useState, useRef } from 'react';
 import { useSpaceStore } from '../../store/spaceStore';
+import { useContentStore } from '../../store/contentStore';
 import { MATERIAL_CATEGORIES, FILE_ICONS, FILE_COLORS } from '../../types';
 
 export function UploadMaterialSheet({ courseId: preselected, onClose }: {
   courseId?: number; onClose: () => void;
 }) {
   const { courses } = useSpaceStore();
+  const { uploadMaterial } = useContentStore();
   const [courseId, setCourseId] = useState<number>(preselected || courses[0]?.id || 0);
   const [name, setName] = useState('');
   const [category, setCategory] = useState('Notes');
@@ -46,8 +48,7 @@ export function UploadMaterialSheet({ courseId: preselected, onClose }: {
     setSubmitting(true);
     setError('');
     try {
-      const { default: api } = await import('../../api/client');
-      await api.post(`/courses/${courseId}/materials`, {
+      await uploadMaterial(courseId, {
         name,
         file_data: file.dataUrl,
         file_size: file.size,

@@ -12,16 +12,24 @@ export async function createAnnouncement(spaceId: string, ann: Partial<Announcem
   return data.announcement as Announcement;
 }
 
+export async function deleteAnnouncement(id: number) {
+  await api.delete(`/announcements/${id}`);
+}
+
 export async function getMaterials(courseId: number) {
   const { data } = await api.get(`/courses/${courseId}/materials`);
   return data.materials as Material[];
 }
 
-export async function uploadMaterial(courseId: number, formData: FormData) {
-  const { data } = await api.post(`/courses/${courseId}/materials`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+export async function uploadMaterial(courseId: number, payload: {
+  name: string; file_data: string; file_size: number; file_type: string; category: string;
+}) {
+  const { data } = await api.post(`/courses/${courseId}/materials`, payload);
   return data.material as Material;
+}
+
+export async function deleteMaterial(id: number) {
+  await api.delete(`/materials/${id}`);
 }
 
 export async function resetDemo() {

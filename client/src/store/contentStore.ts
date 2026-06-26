@@ -9,7 +9,10 @@ interface ContentState {
   matLoading: boolean;
   fetchAnnouncements: (spaceId: string, filter?: string) => Promise<void>;
   createAnnouncement: (spaceId: string, ann: Partial<Announcement>) => Promise<Announcement>;
+  deleteAnnouncement: (id: number) => Promise<void>;
   fetchMaterials: (courseId: number) => Promise<void>;
+  uploadMaterial: (courseId: number, payload: Parameters<typeof contentApi.uploadMaterial>[1]) => Promise<Material>;
+  deleteMaterial: (id: number) => Promise<void>;
   clearMaterials: () => void;
 }
 
@@ -35,6 +38,11 @@ export const useContentStore = create<ContentState>((set) => ({
     return announcement;
   },
 
+  deleteAnnouncement: async (id) => {
+    await contentApi.deleteAnnouncement(id);
+    set((state) => ({ announcements: state.announcements.filter((a) => a.id !== id) }));
+  },
+
   fetchMaterials: async (courseId) => {
     set({ matLoading: true });
     try {
@@ -43,6 +51,17 @@ export const useContentStore = create<ContentState>((set) => ({
     } catch {
       set({ matLoading: false });
     }
+  },
+
+  uploadMaterial: async (courseId, payload) => {
+    const material = await contentApi.uploadMaterial(courseId, payload);
+    set((state) => ({ materials: [material, ...state.materials] }));
+    return material;
+  },
+
+  deleteMaterial: async (id) => {
+    await contentApi.deleteMaterial(id);
+    set((state) => ({ materials: state.materials.filter((m) => m.id !== id) }));
   },
 
   clearMaterials: () => set({ materials: [] }),

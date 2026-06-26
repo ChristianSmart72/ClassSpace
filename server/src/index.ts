@@ -1,6 +1,9 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
+import staticFiles from '@fastify/static';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { authRoutes } from './routes/auth.js';
 import { spaceRoutes } from './routes/spaces.js';
 import { announcementRoutes } from './routes/announcements.js';
@@ -11,8 +14,10 @@ import { createTables } from './db/schema.js';
 import { seedDatabase } from './db/seed.js';
 import { getDb } from './db/connection.js';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 3001;
 const HOST = process.env.HOST || '0.0.0.0';
+const IS_PROD = process.env.NODE_ENV === 'production';
 
 async function main() {
   const app = Fastify({ logger: true });
@@ -39,6 +44,17 @@ async function main() {
 
   // Health check
   app.get('/api/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
+
+  // Serve built frontend in production
+  if (IS_PROD) {
+    const clientDist = path.join(__dirname, '../../client/dist');
+    await app.register(staticFiles, { root: clientDist, prefix: '/' });
+
+    // SPA fallback — any non-API route serves index.html
+    app.setNotFoundHandler(async (_request, reply) => {
+      return reply.sendFile('index.html');
+    });
+  }
 
   try {
     await app.listen({ port: PORT, host: HOST });

@@ -84,6 +84,26 @@ export function materialRoutes(app: FastifyInstance) {
     return reply.send(buffer);
   });
 
+  app.delete('/api/materials/:id', { preHandler: authMiddleware }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const userId = request.user!.userId;
+    const db = getDb();
+
+    const mat = db.prepare('SELECT * FROM materials WHERE id = ?').get(Number(id)) as any;
+    if (!mat) return reply.status(404).send({ error: 'Not found' });
+
+    const isRep = db.prepare(
+      'SELECT 1 FROM space_members WHERE space_id = ? AND user_id = ? AND role = ?'
+    ).get(mat.space_id, userId, 'rep');
+
+    if (mat.uploader_id !== userId && !isRep) {
+      return reply.status(403).send({ error: 'Not authorized' });
+    }
+
+    db.prepare('DELETE FROM materials WHERE id = ?').run(Number(id));
+    return { success: true };
+  });
+
   app.get('/api/materials/shared/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     const db = getDb();

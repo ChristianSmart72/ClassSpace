@@ -1,25 +1,27 @@
 import { NavLink, useLocation } from 'react-router-dom';
-
-const tabs = [
-  { path: '/home', icon: '🏠', label: 'Home' },
-  { path: '/space', icon: '📋', label: 'Space' },
-  { path: '/profile', icon: '👤', label: 'Profile' },
-];
+import { useSpaceStore } from '../../store/spaceStore';
 
 export function BottomNav() {
   const location = useLocation();
+  const { currentSpace } = useSpaceStore();
 
-  const isActive = (path: string) => {
-    if (path === '/space') return location.pathname.startsWith('/space');
-    if (path === '/home') return location.pathname === '/home';
-    return location.pathname === path;
+  const tabs = [
+    { path: '/home', icon: '🏠', label: 'Home' },
+    { path: currentSpace ? `/space/${currentSpace.id}` : '/home', icon: '📋', label: 'Space', matchPrefix: '/space' },
+    { path: '/profile', icon: '👤', label: 'Profile' },
+  ];
+
+  const isActive = (tab: typeof tabs[0]) => {
+    if ('matchPrefix' in tab) return location.pathname.startsWith(tab.matchPrefix as string);
+    if (tab.path === '/home') return location.pathname === '/home';
+    return location.pathname === tab.path;
   };
 
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-app-bg/95 backdrop-blur-lg border-t border-app-border z-40 pb-safe">
       <div className="flex items-center justify-around h-16">
         {tabs.map((tab) => {
-          const active = isActive(tab.path);
+          const active = isActive(tab);
           return (
             <NavLink
               key={tab.path}
