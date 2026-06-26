@@ -15,18 +15,18 @@
   ],
   "space": {
     "id": "abc123",
-    "name": "300L Production Engineering",
+    "name": "PRE220 — 300L Production Engineering",
     "dept": "Production Engineering",
     "level": "300 Level",
     "uni": "University of Benin (UNIBEN)",
-    "invite_code": "PRE-420"
+    "invite_code": "PRE-220"
   },
   "courses": [
-    { "name": "Fluid Mechanics I", "code": "PEG 301", "icon": "💧", "color_index": 0 },
-    { "name": "Thermodynamics II", "code": "PEG 303", "icon": "🔥", "color_index": 1 },
-    { "name": "Manufacturing Processes I", "code": "PEG 305", "icon": "⚙️", "color_index": 2 },
-    { "name": "Engineering Mathematics III", "code": "MTH 301", "icon": "∑", "color_index": 3 },
-    { "name": "Use of English", "code": "GNS 301", "icon": "✍️", "color_index": 4 }
+    { "name": "Fluid Mechanics I", "code": "PRE 311", "icon": "💧", "color_index": 0 },
+    { "name": "Engineering Thermodynamics II", "code": "PRE 321", "icon": "🔥", "color_index": 1 },
+    { "name": "Manufacturing Technology I", "code": "PRE 331", "icon": "⚙️", "color_index": 2 },
+    { "name": "Engineering Mathematics III", "code": "MTH 311", "icon": "∑", "color_index": 3 },
+    { "name": "Communication Skills I", "code": "GNS 311", "icon": "✍️", "color_index": 4 }
   ],
   "timetable": [
     { "course_index": 0, "day": "Monday", "start_time": "08:00", "end_time": "10:00", "venue": "Lecture Hall A", "lecturer": "Dr. C.O. Eze" },
@@ -66,7 +66,7 @@
     {
       "course_index": 1,
       "title": "Thermodynamics II CA Test — Confirmed for Friday",
-      "body": "The CA test for PEG 303 has been confirmed for this Friday at 10:00am sharp. Coverage is Chapters 6–9 (Entropy, Power Cycles, and Refrigeration). Bring your calculators, a formula sheet (one A4 page, handwritten only), and your student ID.",
+      "body": "The CA test for PRE 321 has been confirmed for this Friday at 10:00am sharp. Coverage is Chapters 6–9 (Entropy, Power Cycles, and Refrigeration). Bring your calculators, a formula sheet (one A4 page, handwritten only), and your student ID.",
       "type": "test",
       "urgent": false,
       "pinned": true,
@@ -76,7 +76,7 @@
     {
       "course_index": 2,
       "title": "Makeup Class — Manufacturing Processes Saturday",
-      "body": "Mandatory makeup class for PEG 305 this Saturday at 9:00am. We will cover CNC Machining and Additive Manufacturing topics missed during the strike. Attendance counted toward continuous assessment.",
+      "body": "Mandatory makeup class for PRE 331 this Saturday at 9:00am. We will cover CNC Machining and Additive Manufacturing topics missed during the strike. Attendance counted toward continuous assessment.",
       "type": "meeting",
       "urgent": false,
       "pinned": false,
@@ -95,7 +95,7 @@
     },
     {
       "course_index": 4,
-      "title": "GNS 301 Report Format Updated — Download Now",
+      "title": "GNS 311 Report Format Updated — Download Now",
       "body": "The Use of English unit has released an updated format for the technical report assignment. The new template includes additional sections on Abstract and Literature Review. Submissions using the old format will be rejected.",
       "type": "announcement",
       "urgent": false,
@@ -103,7 +103,7 @@
     },
     {
       "course_index": 3,
-      "title": "MTH 301 Peer Tutorial — Thursday 4pm",
+      "title": "MTH 311 Peer Tutorial — Thursday 4pm",
       "body": "Peer-led tutorial session for Engineering Mathematics III this Thursday at 4pm. Topics: Double Integrals, Green's Theorem, and Series Solutions. Student-organised but lecturer-approved. Practice problems have been uploaded to the Materials section.",
       "type": "meeting",
       "urgent": false,
@@ -113,7 +113,7 @@
     },
     {
       "course_index": 0,
-      "title": "PEG 301 Week 7 Slides Uploaded",
+      "title": "PRE 311 Week 7 Slides Uploaded",
       "body": "Week 7 lecture slides (Bernoulli's Equation and Applications) are now in the Materials section. Slides include worked examples from Monday's class. We continue from slide 34 in Thursday's lab.",
       "type": "announcement",
       "urgent": false,
@@ -161,7 +161,7 @@
     { "course_index": 3, "name": "Past Questions 2022–2024 Compiled", "file_type": "pdf", "category": "Past Questions", "file_size": 650000 },
     { "course_index": 4, "name": "Updated Technical Report Template (June 2026)", "file_type": "doc", "category": "Templates", "file_size": 148480 },
     { "course_index": 4, "name": "Sample Technical Report (A-Grade)", "file_type": "doc", "category": "Templates", "file_size": 327680 },
-    { "course_index": 4, "name": "GNS 301 Course Outline & Assessment Guide", "file_type": "pdf", "category": "Notes", "file_size": 210000 }
+    { "course_index": 4, "name": "GNS 311 Course Outline & Assessment Guide", "file_type": "pdf", "category": "Notes", "file_size": 210000 }
   ],
   "polls": [
     {
@@ -170,12 +170,12 @@
       "closes_at": "2026-06-28T23:59:00"
     },
     {
-      "question": "Which topic should the MTH 301 peer tutorial cover first?",
+      "question": "Which topic should the MTH 311 peer tutorial cover first?",
       "options": ["Double Integrals", "Green's Theorem", "Series Solutions", "Laplace Transforms"],
       "closes_at": null
     },
     {
-      "question": "Are you ready for the PEG 303 CA test on Friday?",
+      "question": "Are you ready for the PRE 321 CA test on Friday?",
       "options": ["Yes, fully prepared 💪", "Somewhat ready", "Need more time to study", "Not at all 😅"],
       "closes_at": "2026-06-27T23:59:00"
     }
