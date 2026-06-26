@@ -42,7 +42,7 @@
     margin: 0;
     -webkit-tap-highlight-color: transparent;
   }
-  #root { @apply min-h-dvh max-w-[430px] mx-auto relative overflow-x-hidden; }
+  #root { @apply min-h-dvh max-w-[430px] lg:max-w-none mx-auto relative overflow-x-hidden; }
   ::-webkit-scrollbar { display: none; }
   input, textarea, select { @apply outline-none; }
   a { @apply no-underline text-inherit; }
