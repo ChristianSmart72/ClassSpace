@@ -10,20 +10,20 @@ const FEATURES = [
 ];
 
 const DEMO_ANNOUNCEMENTS = [
-  { type: 'assignment', label: 'Assignment', color: '#ffb347', icon: '📝', title: 'Lab Report Deadline — Friday', course: 'PEG 301', urgent: true },
-  { type: 'test', label: 'Test', color: '#ff5252', icon: '🧪', title: 'Thermodynamics II CA Test — Confirmed', course: 'PEG 303' },
+  { type: 'assignment', label: 'Assignment', color: '#ffb347', icon: '📝', title: 'Lab Report Deadline — Friday 5pm', course: 'PRE 311', urgent: true },
+  { type: 'test', label: 'Test', color: '#ff5252', icon: '🧪', title: 'Thermodynamics II CA Test — Confirmed', course: 'PRE 321' },
   { type: 'update', label: 'Update', color: '#5b6af0', icon: '📡', title: 'No lectures Wednesday ⚠️', urgent: true },
-  { type: 'assignment', label: 'Assignment', color: '#ffb347', icon: '📝', title: 'Material Balance Take-Home — Submit by 5pm', course: 'PEG 305', urgent: false },
-  { type: 'meeting', label: 'Meeting', color: '#4ade80', icon: '🤝', title: 'Class Rep Meeting — Faculty Board Room', course: 'General' },
-  { type: 'update', label: 'Update', color: '#5b6af0', icon: '📡', title: 'PEG 307 Practical rescheduled to Thursday', course: 'PEG 307' },
+  { type: 'assignment', label: 'Assignment', color: '#ffb347', icon: '📝', title: 'Manufacturing Take-Home — Submit by 5pm', course: 'PRE 331', urgent: false },
+  { type: 'meeting', label: 'Meeting', color: '#4ade80', icon: '🤝', title: 'Departmental Meeting — Faculty Auditorium' },
+  { type: 'update', label: 'Update', color: '#5b6af0', icon: '📡', title: 'SIWES Forms out — deadline July 15' },
 ];
 
 const DEMO_COURSES = [
-  { code: 'PEG 301', name: 'Fluid Mechanics', icon: '💧' },
-  { code: 'PEG 303', name: 'Thermodynamics II', icon: '🔥' },
-  { code: 'PEG 305', name: 'Material & Energy Balance', icon: '⚗️' },
-  { code: 'PEG 307', name: 'Production Practicals', icon: '🔧' },
-  { code: 'PEG 309', name: 'Engineering Mathematics', icon: '📐' },
+  { code: 'PRE 311', name: 'Fluid Mechanics I', icon: '💧' },
+  { code: 'PRE 321', name: 'Engineering Thermodynamics II', icon: '🔥' },
+  { code: 'PRE 331', name: 'Manufacturing Technology I', icon: '⚙️' },
+  { code: 'MTH 311', name: 'Engineering Mathematics III', icon: '∑' },
+  { code: 'GNS 311', name: 'Communication Skills I', icon: '✍️' },
 ];
 
 type DemoView = 'announcements' | 'materials' | 'timetable';
@@ -35,9 +35,9 @@ const DEMO_VIEWS: { key: DemoView; label: string; icon: string }[] = [
 ];
 
 const DEMO_TIMETABLE = [
-  { time: '8:00am – 10:00am', course: 'Fluid Mechanics', code: 'PEG 301', venue: 'LT 1', icon: '💧', color: '#5b6af0' },
-  { time: '10:00am – 12:00pm', course: 'Thermodynamics II', code: 'PEG 303', venue: 'Lab A', icon: '🔥', color: '#ff5252' },
-  { time: '2:00pm – 4:00pm', course: 'Material & Energy Balance', code: 'PEG 305', venue: 'LT 2', icon: '⚗️', color: '#ffb347' },
+  { time: '8:00am – 10:00am', course: 'Fluid Mechanics I', code: 'PRE 311', venue: 'LT 1', icon: '💧', color: '#5b6af0' },
+  { time: '10:00am – 12:00pm', course: 'Engineering Thermodynamics II', code: 'PRE 321', venue: 'Lab A', icon: '🔥', color: '#ff5252' },
+  { time: '2:00pm – 4:00pm', course: 'Manufacturing Technology I', code: 'PRE 331', venue: 'Workshop W4', icon: '⚙️', color: '#ffb347' },
 ];
 
 function DemoCard() {
@@ -49,7 +49,7 @@ function DemoCard() {
       <div className="px-4 pt-3 pb-2 border-b border-app-border flex items-center gap-2">
         <div className="w-8 h-8 rounded-xl bg-app-accent/10 flex items-center justify-center text-sm">🏛️</div>
         <div className="flex-1 min-w-0">
-          <p className="text-app-text font-syne font-bold text-sm truncate">300L Production Engineering</p>
+          <p className="text-app-text font-syne font-bold text-sm truncate">PRE220 — Your Class Space</p>
           <p className="text-app-text-faint text-[10px] font-dm">University of Benin · 5 courses</p>
         </div>
       </div>
