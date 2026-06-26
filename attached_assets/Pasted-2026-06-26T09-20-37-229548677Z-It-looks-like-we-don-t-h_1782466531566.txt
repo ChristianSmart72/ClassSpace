@@ -1,0 +1,29 @@
+2026-06-26T09:20:37.229548677Z ==> It looks like we don't have access to your repo, but we'll try to clone it anyway.
+2026-06-26T09:20:37.22958808Z ==> Cloning from https://github.com/ChristianSmart72/ClassSpace
+2026-06-26T09:20:37.930366384Z ==> Checking out commit 97d4370b61d5138825b01dec85fbd930d5e8fa1a in branch main
+2026-06-26T09:20:55.135065414Z ==> Using Node.js version 24.14.1 (default)
+2026-06-26T09:20:55.135078645Z ==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+2026-06-26T09:20:55.201752513Z ==> Running build command 'npm install; npm run build'...
+2026-06-26T09:20:57.513930743Z 
+2026-06-26T09:20:57.513952455Z added 25 packages, and audited 28 packages in 2s
+2026-06-26T09:20:57.513965265Z 
+2026-06-26T09:20:57.515448496Z 6 packages are looking for funding
+2026-06-26T09:20:57.515459797Z   run `npm fund` for details
+2026-06-26T09:20:57.515464398Z 
+2026-06-26T09:20:57.515469288Z found 0 vulnerabilities
+2026-06-26T09:20:57.738759582Z 
+2026-06-26T09:20:57.738782354Z > classspace@5.0.0 build
+2026-06-26T09:20:57.738787674Z > cd client && npm run build
+2026-06-26T09:20:57.738791634Z 
+2026-06-26T09:20:57.855625655Z 
+2026-06-26T09:20:57.855651837Z > client@0.0.0 build
+2026-06-26T09:20:57.855657097Z > tsc -b && vite build
+2026-06-26T09:20:57.855661167Z 
+2026-06-26T09:20:58.694470487Z error TS2688: Cannot find type definition file for 'vite/client'.
+2026-06-26T09:20:58.694490389Z   The file is in the program because:
+2026-06-26T09:20:58.694495709Z     Entry point of type library 'vite/client' specified in compilerOptions
+2026-06-26T09:20:58.706900957Z error TS2688: Cannot find type definition file for 'node'.
+2026-06-26T09:20:58.706919358Z   The file is in the program because:
+2026-06-26T09:20:58.706923969Z     Entry point of type library 'node' specified in compilerOptions
+2026-06-26T09:20:58.885972373Z ==> Build failed 😞
+2026-06-26T09:20:58.885995685Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
