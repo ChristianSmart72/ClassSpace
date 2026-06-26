@@ -5,6 +5,9 @@ export async function resetDatabase(): Promise<{ success: boolean }> {
   const db = getDb();
   db.exec(`
     PRAGMA foreign_keys = OFF;
+    DROP TABLE IF EXISTS poll_votes;
+    DROP TABLE IF EXISTS poll_options;
+    DROP TABLE IF EXISTS polls;
     DROP TABLE IF EXISTS reactions;
     DROP TABLE IF EXISTS timetable;
     DROP TABLE IF EXISTS materials;

@@ -94,11 +94,39 @@ export function createTables(): void {
       lecturer TEXT
     );
 
+    CREATE TABLE IF NOT EXISTS polls (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      space_id TEXT NOT NULL REFERENCES spaces(id),
+      author_id INTEGER NOT NULL REFERENCES users(id),
+      question TEXT NOT NULL,
+      closes_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS poll_options (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      poll_id INTEGER NOT NULL REFERENCES polls(id) ON DELETE CASCADE,
+      text TEXT NOT NULL,
+      display_order INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS poll_votes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      poll_id INTEGER NOT NULL REFERENCES polls(id) ON DELETE CASCADE,
+      option_id INTEGER NOT NULL REFERENCES poll_options(id),
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      voted_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(poll_id, user_id)
+    );
+
     CREATE INDEX IF NOT EXISTS idx_ann_space ON announcements(space_id);
     CREATE INDEX IF NOT EXISTS idx_ann_course ON announcements(course_id);
     CREATE INDEX IF NOT EXISTS idx_mat_course ON materials(course_id);
     CREATE INDEX IF NOT EXISTS idx_mat_space ON materials(space_id);
     CREATE INDEX IF NOT EXISTS idx_reactions_ann ON reactions(announcement_id);
     CREATE INDEX IF NOT EXISTS idx_timetable_space ON timetable(space_id);
+    CREATE INDEX IF NOT EXISTS idx_polls_space ON polls(space_id);
+    CREATE INDEX IF NOT EXISTS idx_poll_options_poll ON poll_options(poll_id);
+    CREATE INDEX IF NOT EXISTS idx_poll_votes_poll ON poll_votes(poll_id);
   `);
 }
