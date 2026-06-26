@@ -553,8 +553,6 @@ function AnnouncementCard({
   const downvotes = localReactions['downvote'] ?? demo.down;
   const views = demo.views;
 
-  const hasExtraDetail = !!(ann.instructions || ann.submission_method || ann.venue || ann.deadline);
-
   return (
     <div className={`bg-app-surface rounded-2xl border overflow-hidden transition-all duration-200 ${
       ann.urgent ? 'border-app-red/40' : ann.pinned ? 'border-app-accent/30' : 'border-app-border'

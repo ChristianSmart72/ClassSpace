@@ -1,0 +1,31 @@
+2026-06-26T14:03:38.605062088Z ==> It looks like we don't have access to your repo, but we'll try to clone it anyway.
+2026-06-26T14:03:38.605104496Z ==> Cloning from https://github.com/ChristianSmart72/ClassSpace
+2026-06-26T14:03:39.340781842Z ==> Checking out commit 8e90b160c4aa76b39e7a4e024fcf7fbdf5a8a0e3 in branch main
+2026-06-26T14:03:40.644012907Z ==> Using Node.js version 24.14.1 (default)
+2026-06-26T14:03:40.644032638Z ==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+2026-06-26T14:03:40.696405212Z ==> Running build command 'npm install; npm run build'...
+2026-06-26T14:03:42.681422874Z 
+2026-06-26T14:03:42.6814461Z added 25 packages, and audited 28 packages in 2s
+2026-06-26T14:03:42.681468028Z 
+2026-06-26T14:03:42.681590224Z 6 packages are looking for funding
+2026-06-26T14:03:42.681649521Z   run `npm fund` for details
+2026-06-26T14:03:42.682674552Z 
+2026-06-26T14:03:42.682680505Z found 0 vulnerabilities
+2026-06-26T14:03:42.951978623Z 
+2026-06-26T14:03:42.952001345Z > classspace@5.0.0 build
+2026-06-26T14:03:42.952005156Z > cd client && npm install && npm run build && cd ../server && npm install && npm run build
+2026-06-26T14:03:42.95200902Z 
+2026-06-26T14:03:46.498224792Z 
+2026-06-26T14:03:46.498244455Z added 87 packages, and audited 88 packages in 3s
+2026-06-26T14:03:46.498347247Z 
+2026-06-26T14:03:46.498516339Z 18 packages are looking for funding
+2026-06-26T14:03:46.498656062Z   run `npm fund` for details
+2026-06-26T14:03:46.500217775Z 
+2026-06-26T14:03:46.500225304Z found 0 vulnerabilities
+2026-06-26T14:03:46.65582456Z 
+2026-06-26T14:03:46.655847842Z > client@0.0.0 build
+2026-06-26T14:03:46.655851047Z > tsc -b && vite build
+2026-06-26T14:03:46.655853445Z 
+2026-06-26T14:03:50.384247318Z src/screens/Space.tsx(556,9): error TS6133: 'hasExtraDetail' is declared but its value is never read.
+2026-06-26T14:03:51.030539016Z ==> Build failed 😞
+2026-06-26T14:03:51.030577299Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deployshttps://drive.google.com/drive/folders/1Of7_uo2-d04SWpHo_i1Ppo6P7_ff2dmr
