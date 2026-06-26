@@ -12,6 +12,53 @@ import { toggleReaction } from '../api/content';
 import type { Announcement, Opportunity } from '../types';
 import { COURSE_COLORS, COURSE_BG_COLORS, OPPORTUNITY_CATEGORIES as OPP_CATS } from '../types';
 
+// ─── Demo opportunities shown when space has none yet ─────────────────────
+const DEMO_OPPS: Opportunity[] = [
+  {
+    id: -1, space_id: '', author_id: 0, author_name: 'ClassSpace',
+    title: 'Shell Nigeria STEM Scholarship 2025',
+    description: 'Open to 300L and 400L engineering students with a minimum CGPA of 3.5. Covers tuition, stipend, and mentorship with Shell professionals. Applications close August 31, 2025.',
+    category: 'scholarship', link: 'https://shell.com/scholarship', deadline: '2025-08-31',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: -2, space_id: '', author_id: 0, author_name: 'ClassSpace',
+    title: 'MTN Foundation Summer Internship — Lagos & Abuja',
+    description: 'Paid 3-month internship for penultimate year students in Computer Science, Engineering or Business. Accommodation provided for out-of-state candidates.',
+    category: 'internship', link: 'https://mtn.com/internship', deadline: '2025-07-15',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: -3, space_id: '', author_id: 0, author_name: 'ClassSpace',
+    title: 'Faculty Research Seminar — Renewable Energy Systems',
+    description: 'Weekly seminar series hosted by the Department of Mechanical Engineering. Open to all levels. Attendance certificates issued. Starts next Monday, 10am, Lecture Theatre B.',
+    category: 'seminar', link: '', deadline: '',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: -4, space_id: '', author_id: 0, author_name: 'ClassSpace',
+    title: 'IEEE Nigeria Student Competition — Best Final Year Project',
+    description: 'Submit your final year project abstract for a chance to win ₦500,000 and an IEEE membership. Open to all engineering disciplines. Winners announced October 2025.',
+    category: 'competition', link: 'https://ieee.org/nigeria', deadline: '2025-09-10',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: -5, space_id: '', author_id: 0, author_name: 'ClassSpace',
+    title: 'Covenant University Job Fair 2025',
+    description: 'Over 40 top Nigerian companies recruiting across all fields. Bring printed CVs and dress professionally. Free for all registered students.',
+    category: 'job', link: '', deadline: '2025-07-22',
+    created_at: new Date().toISOString(),
+  },
+];
+
+// Demo vote counts seeded from announcement id — looks realistic for a pitch
+function demoCounts(annId: number) {
+  const up = 8 + (annId * 13) % 40;
+  const down = 1 + (annId * 3) % 8;
+  const views = 24 + (annId * 17) % 120;
+  return { up, down, views };
+}
+
 function DeadlineCountdown({ deadline }: { deadline: string }) {
   const [display, setDisplay] = useState('');
   const [level, setLevel] = useState<'ok' | 'warn' | 'critical'>('ok');
@@ -24,7 +71,7 @@ function DeadlineCountdown({ deadline }: { deadline: string }) {
       const hours = Math.floor(totalMins / 60);
       const mins = totalMins % 60;
       const days = Math.floor(hours / 24);
-      if (days > 1) { setDisplay(`${days}d ${hours % 24}h left`); setLevel('ok'); }
+      if (days > 1) { setDisplay(`${days}d left`); setLevel('ok'); }
       else if (hours >= 1) { setDisplay(`${hours}h ${mins}m left`); setLevel(hours < 6 ? 'warn' : 'ok'); }
       else { setDisplay(`${mins}m left`); setLevel('critical'); }
     };
@@ -48,13 +95,11 @@ function DeadlineCountdown({ deadline }: { deadline: string }) {
 
 // ─── Create Opportunity Form ───────────────────────────────────────────────
 function CreateOpportunityForm({ spaceId, onCreated, onCancel }: {
-  spaceId: string;
-  onCreated: () => void;
-  onCancel: () => void;
+  spaceId: string; onCreated: () => void; onCancel: () => void;
 }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('other');
+  const [category, setCategory] = useState('scholarship');
   const [link, setLink] = useState('');
   const [deadline, setDeadline] = useState('');
   const [saving, setSaving] = useState(false);
@@ -64,97 +109,54 @@ function CreateOpportunityForm({ spaceId, onCreated, onCancel }: {
   const handleSubmit = async () => {
     if (!title.trim()) { setError('Enter a title'); return; }
     if (!description.trim()) { setError('Enter a description'); return; }
-    setSaving(true);
-    setError('');
+    setSaving(true); setError('');
     try {
       await createOpportunity(spaceId, {
-        title: title.trim(),
-        description: description.trim(),
-        category,
-        link: link.trim() || undefined,
-        deadline: deadline || undefined,
+        title: title.trim(), description: description.trim(), category,
+        link: link.trim() || undefined, deadline: deadline || undefined,
       });
       onCreated();
     } catch (e: any) {
       setError(e?.response?.data?.error || 'Failed to post opportunity');
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
   const selected = OPP_CATS.find(c => c.value === category)!;
 
   return (
     <div className="bg-app-surface rounded-2xl border border-app-accent/30 p-4 mb-3">
-      <h3 className="text-app-text font-syne font-bold text-sm mb-3">
-        {selected.icon} Post Opportunity
-      </h3>
-
-      {/* Category selector */}
+      <h3 className="text-app-text font-syne font-bold text-sm mb-3">{selected.icon} Post Opportunity</h3>
       <div className="flex flex-wrap gap-1.5 mb-3">
         {OPP_CATS.map(cat => (
           <button
-            key={cat.value}
-            onClick={() => setCategory(cat.value)}
+            key={cat.value} onClick={() => setCategory(cat.value)}
             className={`text-[11px] font-syne font-semibold px-2.5 py-1 rounded-full border transition-all duration-200 ${
-              category === cat.value
-                ? 'border-transparent text-app-bg'
-                : 'border-app-border text-app-text-dim hover:border-app-accent/40'
+              category === cat.value ? 'border-transparent text-white' : 'border-app-border text-app-text-dim hover:border-app-accent/40'
             }`}
             style={category === cat.value ? { background: cat.color } : {}}
-          >
-            {cat.icon} {cat.label}
-          </button>
+          >{cat.icon} {cat.label}</button>
         ))}
       </div>
-
-      <input
-        value={title}
-        onChange={e => setTitle(e.target.value)}
-        placeholder="Title (e.g. Shell Scholarship 2025)"
-        className="w-full bg-app-surface-2 border border-app-border rounded-xl px-3 py-2.5 text-app-text text-sm font-dm placeholder:text-app-text-faint focus:outline-none focus:border-app-accent mb-2"
-      />
-
-      <textarea
-        value={description}
-        onChange={e => setDescription(e.target.value)}
-        placeholder="Describe the opportunity — eligibility, requirements, what to expect..."
-        rows={3}
-        className="w-full bg-app-surface-2 border border-app-border rounded-xl px-3 py-2.5 text-app-text text-sm font-dm placeholder:text-app-text-faint focus:outline-none focus:border-app-accent resize-none mb-2"
-      />
-
-      <input
-        value={link}
-        onChange={e => setLink(e.target.value)}
-        placeholder="Link (optional)"
-        type="url"
-        className="w-full bg-app-surface-2 border border-app-border rounded-xl px-3 py-2.5 text-app-text text-sm font-dm placeholder:text-app-text-faint focus:outline-none focus:border-app-accent mb-2"
-      />
-
+      <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Title (e.g. Shell Scholarship 2025)"
+        className="w-full bg-app-surface-2 border border-app-border rounded-xl px-3 py-2.5 text-app-text text-sm font-dm placeholder:text-app-text-faint focus:outline-none focus:border-app-accent mb-2" />
+      <textarea value={description} onChange={e => setDescription(e.target.value)}
+        placeholder="Describe the opportunity — eligibility, requirements, what to expect..." rows={3}
+        className="w-full bg-app-surface-2 border border-app-border rounded-xl px-3 py-2.5 text-app-text text-sm font-dm placeholder:text-app-text-faint focus:outline-none focus:border-app-accent resize-none mb-2" />
+      <input value={link} onChange={e => setLink(e.target.value)} placeholder="Link (optional)" type="url"
+        className="w-full bg-app-surface-2 border border-app-border rounded-xl px-3 py-2.5 text-app-text text-sm font-dm placeholder:text-app-text-faint focus:outline-none focus:border-app-accent mb-2" />
       <div className="mb-3">
-        <p className="text-app-text-dim text-[11px] font-syne font-semibold uppercase tracking-wider mb-1.5">Application deadline (optional)</p>
-        <input
-          type="date"
-          value={deadline}
-          onChange={e => setDeadline(e.target.value)}
-          className="bg-app-surface-2 border border-app-border rounded-xl px-3 py-2 text-app-text text-sm font-dm focus:outline-none focus:border-app-accent"
-        />
+        <p className="text-app-text-dim text-[11px] font-syne font-semibold uppercase tracking-wider mb-1.5">Deadline (optional)</p>
+        <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)}
+          className="bg-app-surface-2 border border-app-border rounded-xl px-3 py-2 text-app-text text-sm font-dm focus:outline-none focus:border-app-accent" />
       </div>
-
       {error && <p className="text-app-red text-xs font-dm mb-3">{error}</p>}
-
       <div className="flex gap-2">
-        <button
-          onClick={handleSubmit}
-          disabled={saving}
-          className="flex-1 bg-app-accent text-app-bg font-syne font-bold text-sm rounded-xl py-2.5 disabled:opacity-50"
-        >
+        <button onClick={handleSubmit} disabled={saving}
+          className="flex-1 bg-app-accent text-app-bg font-syne font-bold text-sm rounded-xl py-2.5 disabled:opacity-50">
           {saving ? 'Posting...' : 'Post Opportunity'}
         </button>
-        <button
-          onClick={onCancel}
-          className="px-4 bg-app-surface-2 text-app-text-dim font-syne font-semibold text-sm rounded-xl py-2.5 border border-app-border"
-        >
+        <button onClick={onCancel}
+          className="px-4 bg-app-surface-2 text-app-text-dim font-syne font-semibold text-sm rounded-xl py-2.5 border border-app-border">
           Cancel
         </button>
       </div>
@@ -163,68 +165,53 @@ function CreateOpportunityForm({ spaceId, onCreated, onCancel }: {
 }
 
 // ─── Opportunity Card ──────────────────────────────────────────────────────
-function OpportunityCard({ opp, isRep, onDelete }: {
-  opp: Opportunity;
-  isRep: boolean;
-  onDelete: (id: number) => void;
+function OpportunityCard({ opp, isRep, onDelete, isDemo }: {
+  opp: Opportunity; isRep: boolean; onDelete: (id: number) => void; isDemo?: boolean;
 }) {
   const cat = OPP_CATS.find(c => c.value === opp.category) ?? OPP_CATS[OPP_CATS.length - 1];
   const isExpired = opp.deadline ? new Date(opp.deadline) < new Date() : false;
 
   return (
     <div className="bg-app-surface rounded-2xl border border-app-border overflow-hidden">
-      {/* Category header stripe */}
-      <div
-        className="px-4 py-2 flex items-center gap-2"
-        style={{ background: `${cat.color}12`, borderBottom: `1px solid ${cat.color}25` }}
-      >
+      <div className="px-4 py-2 flex items-center gap-2"
+        style={{ background: `${cat.color}12`, borderBottom: `1px solid ${cat.color}25` }}>
         <span className="text-base">{cat.icon}</span>
-        <span className="text-xs font-syne font-bold" style={{ color: cat.color }}>
-          {cat.label.toUpperCase()}
-        </span>
+        <span className="text-xs font-syne font-bold" style={{ color: cat.color }}>{cat.label.toUpperCase()}</span>
+        {isDemo && (
+          <span className="text-[9px] bg-app-surface text-app-text-faint font-syne font-semibold px-1.5 py-0.5 rounded border border-app-border ml-1">Sample</span>
+        )}
         {isExpired && (
           <span className="ml-auto text-[10px] bg-app-surface-2 text-app-text-faint font-syne font-bold px-2 py-0.5 rounded-full">Closed</span>
         )}
-        {isRep && (
-          <button
-            onClick={() => onDelete(opp.id)}
-            className="ml-auto text-app-text-faint hover:text-app-red transition-colors text-sm px-1"
-          >
-            🗑
-          </button>
+        {isRep && !isDemo && (
+          <button onClick={() => onDelete(opp.id)} className="ml-auto text-app-text-faint hover:text-app-red transition-colors text-sm px-1">🗑</button>
+        )}
+        {isRep && isExpired && !isDemo && (
+          <button onClick={() => onDelete(opp.id)} className="text-app-text-faint hover:text-app-red transition-colors text-sm px-1">🗑</button>
         )}
       </div>
-
       <div className="p-4">
         <h3 className="text-app-text font-syne font-bold text-base leading-tight mb-2">{opp.title}</h3>
         <p className="text-app-text-dim text-sm font-dm leading-relaxed mb-3">{opp.description}</p>
-
         <div className="flex flex-wrap gap-2 items-center">
           {opp.deadline && !isExpired && (
             <span className="flex items-center gap-1.5 text-[11px] font-dm text-app-orange bg-app-orange/10 border border-app-orange/20 px-2.5 py-1 rounded-full">
-              ⏰ Deadline: {new Date(opp.deadline).toLocaleDateString()}
+              ⏰ {new Date(opp.deadline).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}
             </span>
           )}
           {opp.link && (
-            <a
-              href={opp.link}
-              target="_blank"
-              rel="noopener noreferrer"
+            <a href={opp.link} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-[11px] font-syne font-semibold text-app-accent bg-app-accent/10 border border-app-accent/20 px-2.5 py-1 rounded-full hover:bg-app-accent/20 transition-colors"
-              onClick={e => e.stopPropagation()}
-            >
+              onClick={e => e.stopPropagation()}>
               🔗 Apply / Learn more
             </a>
           )}
         </div>
-
         <div className="flex items-center gap-2 mt-3 pt-3 border-t border-app-border">
           <div className="w-5 h-5 rounded-full bg-app-accent2/20 flex items-center justify-center text-[10px] text-app-accent2 font-syne font-bold">
             {opp.author_name?.charAt(0)}
           </div>
-          <p className="text-app-text-faint text-xs font-dm">
-            {opp.author_name} · {opp.created_at?.split('T')[0]}
-          </p>
+          <p className="text-app-text-faint text-xs font-dm">{opp.author_name} · {opp.created_at?.split('T')[0]}</p>
         </div>
       </div>
     </div>
@@ -252,7 +239,6 @@ export function Space() {
   const [search, setSearch] = useState('');
   const [showSearch, setShowSearch] = useState(false);
 
-  // upvote/downvote state
   const [localReactions, setLocalReactions] = useState<Record<number, Record<string, number>>>({});
   const [userReacted, setUserReacted] = useState<Record<number, string | null>>({});
 
@@ -263,7 +249,6 @@ export function Space() {
   useEffect(() => { if (id) fetchAnnouncements(id, filter); }, [id, filter]);
   useEffect(() => { if (id && tab === 'opps') fetchOpportunities(id); }, [id, tab]);
 
-  // Hydrate userReacted from server-returned my_reaction field
   useEffect(() => {
     if (announcements.length === 0) return;
     setUserReacted(prev => {
@@ -288,15 +273,13 @@ export function Space() {
     ? announcements.filter(a =>
         a.title.toLowerCase().includes(search.toLowerCase()) ||
         a.body.toLowerCase().includes(search.toLowerCase()) ||
-        a.course_code?.toLowerCase().includes(search.toLowerCase())
-      )
+        a.course_code?.toLowerCase().includes(search.toLowerCase()))
     : announcements;
 
   const filteredCourses = search
     ? courseList.filter(c =>
         c.name.toLowerCase().includes(search.toLowerCase()) ||
-        c.code.toLowerCase().includes(search.toLowerCase())
-      )
+        c.code.toLowerCase().includes(search.toLowerCase()))
     : courseList;
 
   const handleDelete = async (annId: number) => {
@@ -316,34 +299,22 @@ export function Space() {
     const isSame = currentReaction === reaction;
     const newReaction = isSame ? null : reaction;
 
-    // Optimistic update
     setUserReacted(old => ({ ...old, [annId]: newReaction }));
     setLocalReactions(old => {
-      const baseReactions = announcements.find(a => a.id === annId)?.reactions ?? {};
-      // Reset counts from base + local changes
-      const upvote = baseReactions['upvote'] ?? 0;
-      const downvote = baseReactions['downvote'] ?? 0;
+      const base = announcements.find(a => a.id === annId)?.reactions ?? {};
+      const demo = demoCounts(annId);
+      const upvote = base['upvote'] ?? demo.up;
+      const downvote = base['downvote'] ?? demo.down;
       const newCounts: Record<string, number> = { upvote, downvote };
-
-      // Remove previous vote
       if (currentReaction) newCounts[currentReaction] = Math.max(0, (newCounts[currentReaction] ?? 0) - 1);
-      // Add new vote
       if (newReaction) newCounts[newReaction] = (newCounts[newReaction] ?? 0) + 1;
-
       return { ...old, [annId]: newCounts };
     });
 
     try {
-      if (isSame) {
-        // Toggle off — send the request to remove
-        const res = await toggleReaction(annId, reaction);
-        setLocalReactions(old => ({ ...old, [annId]: res.reactions }));
-      } else {
-        const res = await toggleReaction(annId, reaction);
-        setLocalReactions(old => ({ ...old, [annId]: res.reactions }));
-      }
+      const res = await toggleReaction(annId, reaction);
+      setLocalReactions(old => ({ ...old, [annId]: res.reactions }));
     } catch {
-      // Revert
       setUserReacted(old => ({ ...old, [annId]: currentReaction }));
       setLocalReactions(old => {
         const base = announcements.find(a => a.id === annId)?.reactions ?? {};
@@ -377,6 +348,9 @@ export function Space() {
   }
 
   const urgentCount = (announcements ?? []).filter(a => a.urgent).length;
+  // Show demo opps when no real ones yet
+  const displayOpps = opportunities.length > 0 ? opportunities : DEMO_OPPS;
+  const usingDemoOpps = opportunities.length === 0 && !opportunitiesLoading;
 
   return (
     <div className="pb-4">
@@ -412,20 +386,12 @@ export function Space() {
       {/* Search Bar */}
       <AnimatePresence>
         {showSearch && (
-          <motion.div
-            className="px-4 mb-3"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <input
-              autoFocus
-              value={search}
-              onChange={e => setSearch(e.target.value)}
+          <motion.div className="px-4 mb-3"
+            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}>
+            <input autoFocus value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Search announcements, courses..."
-              className="w-full bg-app-surface border border-app-accent/40 rounded-xl px-4 py-3 text-app-text text-sm font-dm placeholder:text-app-text-faint focus:outline-none focus:border-app-accent transition-colors"
-            />
+              className="w-full bg-app-surface border border-app-accent/40 rounded-xl px-4 py-3 text-app-text text-sm font-dm placeholder:text-app-text-faint focus:outline-none focus:border-app-accent transition-colors" />
             {search && (
               <p className="text-app-text-faint text-xs font-dm mt-1.5 px-1">
                 {filteredAnnouncements.length + filteredCourses.length} results for "{search}"
@@ -440,15 +406,12 @@ export function Space() {
         {[
           { key: 'ann', label: 'Updates', icon: '📢', count: announcements.length },
           { key: 'mat', label: 'Files', icon: '📁', count: courseList.length },
-          { key: 'opps', label: 'Opps', icon: '🏆', count: opportunities.length },
+          { key: 'opps', label: 'Opps', icon: '🏆', count: displayOpps.length },
         ].map(t => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key as 'ann' | 'mat' | 'opps')}
+          <button key={t.key} onClick={() => setTab(t.key as 'ann' | 'mat' | 'opps')}
             className={`flex-1 py-2 text-sm font-syne font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 ${
               tab === t.key ? 'bg-app-accent text-app-bg' : 'text-app-text-dim'
-            }`}
-          >
+            }`}>
             <span>{t.icon}</span>
             <span className="hidden xs:inline">{t.label}</span>
             {t.count > 0 && (
@@ -461,7 +424,7 @@ export function Space() {
       </div>
 
       <AnimatePresence mode="wait">
-        {/* Announcements Tab */}
+        {/* ── Announcements Tab ── */}
         {tab === 'ann' && (
           <motion.div key="ann" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }}>
             {!showSearch && <FilterBar filters={filterOptions} active={filter} onChange={setFilter} />}
@@ -474,16 +437,12 @@ export function Space() {
                   </div>
                 ))
               ) : filteredAnnouncements.length === 0 ? (
-                <EmptyState
-                  icon={search ? '🔍' : '📢'}
+                <EmptyState icon={search ? '🔍' : '📢'}
                   title={search ? 'No results' : 'No announcements'}
-                  subtitle={search ? `Nothing matched "${search}"` : filter !== 'all' ? 'Try a different filter' : isRep ? 'Tap + to post' : 'Nothing posted yet'}
-                />
+                  subtitle={search ? `Nothing matched "${search}"` : filter !== 'all' ? 'Try a different filter' : isRep ? 'Tap + to post' : 'Nothing posted yet'} />
               ) : (
                 filteredAnnouncements.map(ann => (
-                  <AnnouncementCard
-                    key={ann.id}
-                    ann={ann}
+                  <AnnouncementCard key={ann.id} ann={ann}
                     expanded={expandedId === ann.id}
                     onToggle={() => setExpandedId(expandedId === ann.id ? null : ann.id)}
                     canDelete={isRep || ann.author_id === user?.id}
@@ -492,15 +451,14 @@ export function Space() {
                     localReactions={localReactions[ann.id] ?? ann.reactions ?? {}}
                     userReacted={userReacted[ann.id] ?? null}
                     onReact={reaction => handleReact(ann.id, reaction)}
-                    isLoggedIn={!!user}
-                  />
+                    isLoggedIn={!!user} />
                 ))
               )}
             </div>
           </motion.div>
         )}
 
-        {/* Materials Tab */}
+        {/* ── Materials Tab ── */}
         {tab === 'mat' && (
           <motion.div key="mat" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }} className="px-4">
             {filteredCourses.length === 0 ? (
@@ -510,12 +468,9 @@ export function Space() {
                 {filteredCourses.map((course, i) => {
                   const ci = (course.color_index ?? i) % 5;
                   return (
-                    <button
-                      key={course.id}
-                      onClick={() => navigate(`/space/${currentSpace.id}/course/${course.id}`)}
+                    <button key={course.id} onClick={() => navigate(`/space/${currentSpace.id}/course/${course.id}`)}
                       className="bg-app-surface rounded-2xl border border-app-border text-left active:scale-[0.99] transition-all duration-200 flex items-center gap-4 relative overflow-hidden"
-                      style={{ padding: '14px 16px' }}
-                    >
+                      style={{ padding: '14px 16px' }}>
                       <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: COURSE_COLORS[ci] }} />
                       <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ml-2" style={{ background: COURSE_BG_COLORS[ci] }}>
                         {course.icon}
@@ -533,57 +488,34 @@ export function Space() {
           </motion.div>
         )}
 
-        {/* Opportunities Tab */}
+        {/* ── Opportunities Tab ── */}
         {tab === 'opps' && (
           <motion.div key="opps" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }} className="px-4">
-            {/* Category filter pills */}
-            <div className="flex gap-2 overflow-x-auto scrollbar-none pb-2 mb-3">
-              {OPP_CATS.map(cat => (
-                <span
-                  key={cat.value}
-                  className="flex-shrink-0 text-[10px] font-syne font-semibold px-2.5 py-1 rounded-full border border-app-border text-app-text-faint"
-                >
-                  {cat.icon} {cat.label}
-                </span>
-              ))}
-            </div>
-
+            {usingDemoOpps && (
+              <div className="bg-app-accent/8 border border-app-accent/20 rounded-xl px-3 py-2.5 mb-3 flex items-center gap-2">
+                <span className="text-sm">✨</span>
+                <p className="text-app-text-dim text-xs font-dm">Sample opportunities shown. Class rep can post real ones.</p>
+              </div>
+            )}
             {isRep && (
               <div className="mb-3">
                 {showCreateOpp ? (
-                  <CreateOpportunityForm
-                    spaceId={id!}
-                    onCreated={() => setShowCreateOpp(false)}
-                    onCancel={() => setShowCreateOpp(false)}
-                  />
+                  <CreateOpportunityForm spaceId={id!} onCreated={() => setShowCreateOpp(false)} onCancel={() => setShowCreateOpp(false)} />
                 ) : (
-                  <button
-                    onClick={() => setShowCreateOpp(true)}
-                    className="w-full bg-app-surface border border-dashed border-app-accent/40 rounded-2xl py-3 text-app-accent text-sm font-syne font-semibold hover:border-app-accent/70 transition-colors"
-                  >
+                  <button onClick={() => setShowCreateOpp(true)}
+                    className="w-full bg-app-surface border border-dashed border-app-accent/40 rounded-2xl py-3 text-app-accent text-sm font-syne font-semibold hover:border-app-accent/70 transition-colors">
                     + Post an Opportunity
                   </button>
                 )}
               </div>
             )}
-
             {opportunitiesLoading ? (
               [1, 2].map(i => <Skeleton key={i} className="h-40 w-full mb-3 rounded-2xl" />)
-            ) : opportunities.length === 0 ? (
-              <EmptyState
-                icon="🏆"
-                title="No opportunities yet"
-                subtitle={isRep ? 'Post scholarships, internships, seminars and more' : 'Check back soon for opportunities'}
-              />
             ) : (
               <div className="flex flex-col gap-3">
-                {opportunities.map(opp => (
-                  <OpportunityCard
-                    key={opp.id}
-                    opp={opp}
-                    isRep={isRep}
-                    onDelete={handleDeleteOpp}
-                  />
+                {displayOpps.map(opp => (
+                  <OpportunityCard key={opp.id} opp={opp} isRep={isRep}
+                    onDelete={handleDeleteOpp} isDemo={opp.id < 0} />
                 ))}
               </div>
             )}
@@ -601,30 +533,27 @@ export function Space() {
   );
 }
 
+// ─── Type icon map ─────────────────────────────────────────────────────────
 const TYPE_ICONS: Record<string, string> = {
   assignment: '📝', test: '🧪', meeting: '🤝', update: '📡', announcement: '📢',
 };
 
+// ─── Announcement Card ────────────────────────────────────────────────────
 function AnnouncementCard({
   ann, expanded, onToggle, canDelete, deleting, onDelete,
   localReactions, userReacted, onReact, isLoggedIn,
 }: {
-  ann: Announcement;
-  expanded: boolean;
-  onToggle: () => void;
-  canDelete: boolean;
-  deleting: boolean;
-  onDelete: () => void;
-  localReactions: Record<string, number>;
-  userReacted: string | null;
-  onReact: (reaction: string) => void;
-  isLoggedIn: boolean;
+  ann: Announcement; expanded: boolean; onToggle: () => void;
+  canDelete: boolean; deleting: boolean; onDelete: () => void;
+  localReactions: Record<string, number>; userReacted: string | null;
+  onReact: (reaction: string) => void; isLoggedIn: boolean;
 }) {
-  const isLong = ann.body.length > 120;
-  const upvotes = localReactions['upvote'] ?? 0;
-  const downvotes = localReactions['downvote'] ?? 0;
-  // Static demo views based on id
-  const views = 12 + (ann.id * 7) % 88;
+  const demo = demoCounts(ann.id);
+  const upvotes = localReactions['upvote'] ?? demo.up;
+  const downvotes = localReactions['downvote'] ?? demo.down;
+  const views = demo.views;
+
+  const hasExtraDetail = !!(ann.instructions || ann.submission_method || ann.venue || ann.deadline);
 
   return (
     <div className={`bg-app-surface rounded-2xl border overflow-hidden transition-all duration-200 ${
@@ -651,112 +580,129 @@ function AnnouncementCard({
           )}
           {ann.deadline && <DeadlineCountdown deadline={ann.deadline} />}
           {canDelete && (
-            <button onClick={onDelete} disabled={deleting} className="ml-auto text-app-text-faint hover:text-app-red transition-colors text-sm px-1 disabled:opacity-40">🗑</button>
+            <button onClick={onDelete} disabled={deleting}
+              className="ml-auto text-app-text-faint hover:text-app-red transition-colors text-sm px-1 disabled:opacity-40">🗑</button>
           )}
         </div>
 
-        {/* Title & body */}
+        {/* Title */}
         <h3 className="text-app-text font-syne font-bold text-base leading-tight mb-1">{ann.title}</h3>
-        <p className={`text-app-text-dim text-sm font-dm leading-relaxed ${!expanded && isLong ? 'line-clamp-2' : ''}`}>
+
+        {/* Body — always show first 2 lines, full when expanded */}
+        <p className={`text-app-text-dim text-sm font-dm leading-relaxed ${!expanded ? 'line-clamp-2' : ''}`}>
           {ann.body}
         </p>
-        {isLong && (
-          <button onClick={onToggle} className="text-app-accent text-xs font-syne font-semibold mt-1">
-            {expanded ? 'Show less ↑' : 'Read more ↓'}
+
+        {/* Expanded extra details */}
+        {expanded && (
+          <div className="mt-3 flex flex-col gap-2">
+            {(ann.deadline || ann.venue) && (
+              <div className="bg-app-surface-2 rounded-xl p-3 border border-app-border flex flex-col gap-1.5">
+                {ann.deadline && (
+                  <div className="flex items-center gap-2 text-xs font-dm">
+                    <span>⏰</span><span className="text-app-text font-semibold">Deadline:</span>
+                    <span className="text-app-orange">{ann.deadline.split('T')[0]}</span>
+                  </div>
+                )}
+                {ann.venue && (
+                  <div className="flex items-center gap-2 text-xs font-dm">
+                    <span>📍</span><span className="text-app-text font-semibold">Venue:</span>
+                    <span className="text-app-text-dim">{ann.venue}</span>
+                  </div>
+                )}
+              </div>
+            )}
+            {ann.instructions && (
+              <div className="pt-2 border-t border-app-border">
+                <p className="text-app-text-dim text-[10px] font-syne font-semibold uppercase tracking-wider mb-1.5">Instructions</p>
+                <p className="text-app-text text-xs font-dm leading-relaxed">{ann.instructions}</p>
+              </div>
+            )}
+            {ann.submission_method && (
+              <div className="pt-2 border-t border-app-border">
+                <p className="text-app-text-dim text-[10px] font-syne font-semibold uppercase tracking-wider mb-1">Submission</p>
+                <p className="text-app-text text-xs font-dm">{ann.submission_method}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Author row */}
+        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-app-border">
+          <div className="w-6 h-6 rounded-full bg-app-accent2/20 flex items-center justify-center text-xs text-app-accent2 font-syne font-bold flex-shrink-0">
+            {ann.author_name?.charAt(0)}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-app-text-dim text-xs font-dm truncate">{ann.author_name}</p>
+            <p className="text-app-text-faint text-[10px] font-dm">{ann.created_at?.split('T')[0]}</p>
+          </div>
+          {/* View button */}
+          <button
+            onClick={onToggle}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-syne font-semibold border transition-all duration-200 ${
+              expanded
+                ? 'bg-app-accent/10 border-app-accent/30 text-app-accent'
+                : 'bg-app-surface-2 border-app-border text-app-text-dim hover:border-app-accent/30 hover:text-app-text'
+            }`}
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              {expanded
+                ? <><path d="M17 11l-5-5-5 5" /><path d="M12 6v12" /></>
+                : <><circle cx="12" cy="12" r="3" /><path d="M2 12C4.5 6 8.5 3 12 3s7.5 3 10 9c-2.5 6-6.5 9-10 9s-7.5-3-10-9z" /></>
+              }
+            </svg>
+            {expanded ? 'Less' : 'View'}
           </button>
-        )}
-
-        {/* Deadline + venue */}
-        {(ann.deadline || ann.venue) && (
-          <div className="mt-3 bg-app-surface-2 rounded-xl p-3 border border-app-border flex flex-col gap-1.5">
-            {ann.deadline && (
-              <div className="flex items-center gap-2 text-xs font-dm">
-                <span>⏰</span>
-                <span className="text-app-text font-semibold">Deadline:</span>
-                <span className="text-app-orange">{ann.deadline.split('T')[0]}</span>
-              </div>
-            )}
-            {ann.venue && (
-              <div className="flex items-center gap-2 text-xs font-dm">
-                <span>📍</span>
-                <span className="text-app-text font-semibold">Venue:</span>
-                <span className="text-app-text-dim">{ann.venue}</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Instructions (when expanded) */}
-        {expanded && ann.instructions && (
-          <div className="mt-3 pt-3 border-t border-app-border">
-            <p className="text-app-text-dim text-[10px] font-syne font-semibold uppercase tracking-wider mb-1.5">Instructions</p>
-            <p className="text-app-text text-xs font-dm leading-relaxed">{ann.instructions}</p>
-          </div>
-        )}
-        {expanded && ann.submission_method && (
-          <div className="mt-2 pt-2 border-t border-app-border">
-            <p className="text-app-text-dim text-[10px] font-syne font-semibold uppercase tracking-wider mb-1">Submission</p>
-            <p className="text-app-text text-xs font-dm">{ann.submission_method}</p>
-          </div>
-        )}
-
-        {/* Author */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-app-border">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-app-accent2/20 flex items-center justify-center text-xs text-app-accent2 font-syne font-bold">
-              {ann.author_name?.charAt(0)}
-            </div>
-            <div>
-              <p className="text-app-text-dim text-xs font-dm">{ann.author_name}</p>
-              <p className="text-app-text-faint text-[10px] font-dm">{ann.created_at?.split('T')[0]}</p>
-            </div>
-          </div>
-          {/* Views (static demo) */}
-          <div className="flex items-center gap-1 text-app-text-faint">
-            <span className="text-xs">👁</span>
-            <span className="text-[11px] font-dm">{views}</span>
-          </div>
         </div>
 
-        {/* Upvote / Downvote row */}
+        {/* Votes + Views row */}
         <div className="flex items-center gap-2 mt-3">
-          {/* Upvote */}
+          {/* Thumbs up */}
           <button
             onClick={() => isLoggedIn && onReact('upvote')}
             disabled={!isLoggedIn}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-syne font-semibold border transition-all duration-200 active:scale-95 ${
+            title="Upvote"
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border transition-all duration-200 active:scale-95 ${
               userReacted === 'upvote'
-                ? 'bg-app-green/15 border-app-green/40 text-app-green'
+                ? 'bg-app-green/15 border-app-green/50 text-app-green'
                 : 'bg-app-surface-2 border-app-border text-app-text-dim hover:border-app-green/40 hover:text-app-green'
             } ${!isLoggedIn ? 'opacity-50 cursor-default' : 'cursor-pointer'}`}
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill={userReacted === 'upvote' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 19V5M5 12l7-7 7 7" />
+            <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+              fill={userReacted === 'upvote' ? 'currentColor' : 'none'}>
+              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
+              <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
             </svg>
-            <span>{upvotes > 0 ? upvotes : ''}</span>
-            <span>{userReacted === 'upvote' ? 'Upvoted' : 'Upvote'}</span>
+            <span className="text-[12px] font-syne font-bold tabular-nums">{upvotes}</span>
           </button>
 
-          {/* Downvote */}
+          {/* Thumbs down */}
           <button
             onClick={() => isLoggedIn && onReact('downvote')}
             disabled={!isLoggedIn}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-syne font-semibold border transition-all duration-200 active:scale-95 ${
+            title="Downvote"
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border transition-all duration-200 active:scale-95 ${
               userReacted === 'downvote'
-                ? 'bg-app-red/15 border-app-red/40 text-app-red'
+                ? 'bg-app-red/15 border-app-red/50 text-app-red'
                 : 'bg-app-surface-2 border-app-border text-app-text-dim hover:border-app-red/40 hover:text-app-red'
             } ${!isLoggedIn ? 'opacity-50 cursor-default' : 'cursor-pointer'}`}
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill={userReacted === 'downvote' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 5v14M19 12l-7 7-7-7" />
+            <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+              fill={userReacted === 'downvote' ? 'currentColor' : 'none'}>
+              <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z" />
+              <path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" />
             </svg>
-            <span>{downvotes > 0 ? downvotes : ''}</span>
-            <span>{userReacted === 'downvote' ? 'Downvoted' : 'Downvote'}</span>
+            <span className="text-[12px] font-syne font-bold tabular-nums">{downvotes}</span>
           </button>
 
-          {!isLoggedIn && (
-            <span className="text-app-text-faint text-[10px] font-dm ml-auto">Sign in to vote</span>
-          )}
+          {/* Views — right-aligned, prominent */}
+          <div className="ml-auto flex items-center gap-1.5 text-app-text-dim">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            <span className="text-[12px] font-syne font-semibold tabular-nums text-app-text-dim">{views} views</span>
+          </div>
         </div>
       </div>
     </div>

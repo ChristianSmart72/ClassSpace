@@ -32,7 +32,7 @@ const FEED_ITEMS = [
     type: 'opportunity',
     icon: '🏆',
     title: 'Shell Scholarship 2025 — Applications Open',
-    course: 'Opportunity',
+    course: null,
     badge: 'Scholarship',
     badgeColor: '#e8ff47',
     time: '3h ago',
@@ -55,12 +55,6 @@ const FEED_ITEMS = [
     badgeColor: '#52ffa0',
     time: 'Yesterday',
   },
-];
-
-const STATS = [
-  { value: '2,400+', label: 'Students', color: '#e8ff47' },
-  { value: '180+', label: 'Classes', color: '#5b6af0' },
-  { value: '100%', label: 'Free', color: '#52ffa0' },
 ];
 
 function FeedPreview() {
@@ -118,9 +112,6 @@ function FeedPreview() {
             transition={{ duration: 0.3, delay: i < 3 ? i * 0.08 : 0 }}
             className="px-4 py-3 flex items-center gap-3"
           >
-            {item.type === 'urgent' && (
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-app-red" />
-            )}
             <div
               className="w-8 h-8 rounded-xl flex items-center justify-center text-sm flex-shrink-0"
               style={{ background: `${item.badgeColor}14` }}
@@ -136,7 +127,7 @@ function FeedPreview() {
                 >
                   {item.badge}
                 </span>
-                {item.course && item.course !== 'Opportunity' && (
+                {item.course && (
                   <span className="text-app-text-faint text-[9px] font-dm">{item.course}</span>
                 )}
               </div>
@@ -147,7 +138,7 @@ function FeedPreview() {
       </div>
 
       {/* Bottom bar */}
-      <div className="px-4 py-2.5 border-t border-app-border flex items-center justify-between" style={{ background: 'rgba(0,0,0,0.2)' }}>
+      <div className="px-4 py-2.5 border-t border-app-border flex items-center justify-between" style={{ background: 'rgba(0,0,0,0.1)' }}>
         <div className="flex items-center gap-1.5">
           <div className="w-1.5 h-1.5 rounded-full bg-app-accent animate-pulse" />
           <span className="text-[10px] text-app-text-faint font-dm">42 members · 5 courses</span>
@@ -162,7 +153,7 @@ export function Landing() {
   return (
     <div
       className="min-h-dvh flex flex-col overflow-x-hidden"
-      style={{ background: 'radial-gradient(ellipse at 65% -10%, #1a1a24 0%, #0f0f11 60%)' }}
+      style={{ background: 'var(--landing-bg, radial-gradient(ellipse at 65% -10%, #1a1a24 0%, #0f0f11 60%))' }}
     >
       {/* Subtle top glow */}
       <div
@@ -188,7 +179,7 @@ export function Landing() {
         </div>
 
         {/* Hero content */}
-        <div className="flex-1 flex flex-col px-5 pt-2 pb-6">
+        <div className="flex-1 flex flex-col px-5 pt-2 pb-20">
           {/* Badge */}
           <motion.div
             className="inline-flex items-center gap-2 self-start bg-app-accent/10 border border-app-accent/20 rounded-full px-3 py-1.5 mb-4"
@@ -258,21 +249,6 @@ export function Landing() {
             </Link>
           </motion.div>
 
-          {/* Stats row */}
-          <motion.div
-            className="flex gap-3 mb-5"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.26 }}
-          >
-            {STATS.map(s => (
-              <div key={s.label} className="flex-1 bg-app-surface border border-app-border rounded-xl p-3 text-center">
-                <p className="font-syne font-extrabold text-base" style={{ color: s.color }}>{s.value}</p>
-                <p className="text-app-text-faint text-[10px] font-dm">{s.label}</p>
-              </div>
-            ))}
-          </motion.div>
-
           {/* Features grid */}
           <motion.div
             className="grid grid-cols-2 gap-2 mb-5"
@@ -307,9 +283,9 @@ export function Landing() {
           </div>
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-4 text-app-text-faint text-sm font-syne font-semibold">
-              <span>Features</span>
-              <span>How it works</span>
-              <span>About</span>
+              <span className="hover:text-app-text transition-colors cursor-pointer">Features</span>
+              <span className="hover:text-app-text transition-colors cursor-pointer">How it works</span>
+              <span className="hover:text-app-text transition-colors cursor-pointer">About</span>
             </div>
             <div className="w-px h-4 bg-app-border" />
             <Link to="/login" className="text-app-text-dim font-syne font-semibold text-sm hover:text-app-text transition-colors">
@@ -378,7 +354,7 @@ export function Landing() {
 
               {/* CTAs */}
               <motion.div
-                className="flex items-center gap-3 flex-wrap mb-8"
+                className="flex items-center gap-3 flex-wrap"
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.42 }}
@@ -397,16 +373,6 @@ export function Landing() {
                   Join with Code
                 </Link>
               </motion.div>
-
-              {/* Stats */}
-              <div className="flex gap-6">
-                {STATS.map(s => (
-                  <div key={s.label}>
-                    <p className="font-syne font-extrabold text-2xl" style={{ color: s.color }}>{s.value}</p>
-                    <p className="text-app-text-faint text-xs font-dm">{s.label}</p>
-                  </div>
-                ))}
-              </div>
             </motion.div>
 
             {/* Right col — app preview */}
