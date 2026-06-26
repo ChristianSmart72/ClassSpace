@@ -19,7 +19,7 @@
     "dept": "Production Engineering",
     "level": "300 Level",
     "uni": "University of Benin (UNIBEN)",
-    "invite_code": "UNIBEN01"
+    "invite_code": "PRE-420"
   },
   "courses": [
     { "name": "Fluid Mechanics I", "code": "PEG 301", "icon": "💧", "color_index": 0 },
@@ -104,7 +104,7 @@
     {
       "course_index": 3,
       "title": "MTH 301 Peer Tutorial — Thursday 4pm",
-      "body": "Peer-led tutorial session for Engineering Mathematics III this Thursday at 4pm. Topics: Double Integrals, Green's Theorem, and Series Solutions. Student-organised but lecturer-approved. Practice problems will be shared beforehand via WhatsApp.",
+      "body": "Peer-led tutorial session for Engineering Mathematics III this Thursday at 4pm. Topics: Double Integrals, Green's Theorem, and Series Solutions. Student-organised but lecturer-approved. Practice problems have been uploaded to the Materials section.",
       "type": "meeting",
       "urgent": false,
       "pinned": false,
@@ -162,5 +162,22 @@
     { "course_index": 4, "name": "Updated Technical Report Template (June 2026)", "file_type": "doc", "category": "Templates", "file_size": 148480 },
     { "course_index": 4, "name": "Sample Technical Report (A-Grade)", "file_type": "doc", "category": "Templates", "file_size": 327680 },
     { "course_index": 4, "name": "GNS 301 Course Outline & Assessment Guide", "file_type": "pdf", "category": "Notes", "file_size": 210000 }
+  ],
+  "polls": [
+    {
+      "question": "When should we hold the Thermodynamics II CA revision session?",
+      "options": ["Wednesday evening (6–8pm)", "Thursday after lectures (4–6pm)", "Saturday morning (10am–12pm)", "Sunday afternoon (2–4pm)"],
+      "closes_at": "2026-06-28T23:59:00"
+    },
+    {
+      "question": "Which topic should the MTH 301 peer tutorial cover first?",
+      "options": ["Double Integrals", "Green's Theorem", "Series Solutions", "Laplace Transforms"],
+      "closes_at": null
+    },
+    {
+      "question": "Are you ready for the PEG 303 CA test on Friday?",
+      "options": ["Yes, fully prepared 💪", "Somewhat ready", "Need more time to study", "Not at all 😅"],
+      "closes_at": "2026-06-27T23:59:00"
+    }
   ]
 }

@@ -168,3 +168,24 @@ export const COURSE_BG_COLORS = [
 ];
 
 export const REACTION_EMOJIS = ['👍', '❤️', '👀', '🔥'] as const;
+
+export interface PollOption {
+  id: number;
+  poll_id?: number;
+  text: string;
+  display_order: number;
+  votes: number;
+}
+
+export interface Poll {
+  id: number;
+  space_id: string;
+  author_id: number;
+  author_name: string;
+  question: string;
+  closes_at: string | null;
+  created_at: string;
+  options: PollOption[];
+  total_votes: number;
+  my_vote?: number | null;
+}

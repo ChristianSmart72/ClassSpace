@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, Component, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { useSpaceStore } from './store/spaceStore';
@@ -14,6 +14,30 @@ import { Space } from './screens/Space';
 import { CourseFiles } from './screens/CourseFiles';
 import { Profile } from './screens/Profile';
 import { Timetable } from './screens/Timetable';
+
+class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null };
+  static getDerivedStateFromError(error: Error) { return { error }; }
+  componentDidCatch(err: Error, info: unknown) { console.error('App error:', err, info); }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="min-h-dvh bg-app-bg flex flex-col items-center justify-center px-6 text-center">
+          <span className="text-5xl mb-4">⚠️</span>
+          <h2 className="text-app-text font-syne font-bold text-lg mb-2">Something went wrong</h2>
+          <p className="text-app-text-dim text-sm font-dm mb-6">The page hit an unexpected error. Refresh to try again.</p>
+          <button
+            onClick={() => { this.setState({ error: null }); window.location.reload(); }}
+            className="bg-app-accent text-app-bg font-syne font-bold text-sm rounded-xl px-6 py-3"
+          >
+            Refresh page
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token, initialized } = useAuthStore();
@@ -74,8 +98,10 @@ export default function App() {
   }
 
   return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }

@@ -34,6 +34,11 @@ interface SeedData {
     format?: string;
   }[];
   materials: { course_index: number; name: string; file_type: string; category: string; file_size: number }[];
+  polls?: {
+    question: string;
+    options: string[];
+    closes_at: string | null;
+  }[];
 }
 
 export async function seedDatabase(): Promise<void> {
@@ -65,6 +70,12 @@ export async function seedDatabase(): Promise<void> {
   );
   const insertTimetable = db.prepare(
     'INSERT INTO timetable (space_id, course_id, day, start_time, end_time, venue, lecturer) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  );
+  const insertPoll = db.prepare(
+    'INSERT INTO polls (space_id, author_id, question, closes_at) VALUES (?, ?, ?, ?)'
+  );
+  const insertPollOption = db.prepare(
+    'INSERT INTO poll_options (poll_id, text, display_order) VALUES (?, ?, ?)'
   );
 
   const extraHashes: string[] = [];
@@ -112,10 +123,16 @@ export async function seedDatabase(): Promise<void> {
       const courseId = courseIds[mat.course_index];
       insertMaterial.run(data.space.id, courseId, mat.name, mat.file_type, mat.category, mat.file_size, userId);
     }
+
+    for (const poll of (data.polls || [])) {
+      const res = insertPoll.run(data.space.id, userId, poll.question, poll.closes_at || null);
+      const pollId = res.lastInsertRowid as number;
+      poll.options.forEach((text, i) => insertPollOption.run(pollId, text, i));
+    }
   });
 
   tx();
-  console.log('Database seeded successfully with timetable!');
+  console.log('Database seeded successfully!');
 }
 
 if (process.argv[1] && (process.argv[1].includes('seed') || process.argv[1].endsWith('seed.ts'))) {

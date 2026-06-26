@@ -7,6 +7,16 @@ export function pollRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
+    let userId: number | null = null;
+    try {
+      const auth = request.headers.authorization;
+      if (auth) {
+        const { verifyToken } = await import('../lib/jwt.js');
+        const payload = verifyToken(auth.replace('Bearer ', ''));
+        if (payload) userId = (payload as any).userId;
+      }
+    } catch { /* no auth — fine */ }
+
     const polls = db.prepare(`
       SELECT p.*, u.name as author_name
       FROM polls p
@@ -28,7 +38,13 @@ export function pollRoutes(app: FastifyInstance) {
 
       const totalVotes = options.reduce((s: number, o: any) => s + o.votes, 0);
 
-      return { ...poll, options, total_votes: totalVotes };
+      let myVote: number | null = null;
+      if (userId) {
+        const vote = db.prepare('SELECT option_id FROM poll_votes WHERE poll_id = ? AND user_id = ?').get(poll.id, userId) as any;
+        if (vote) myVote = vote.option_id;
+      }
+
+      return { ...poll, options, total_votes: totalVotes, my_vote: myVote };
     });
 
     return { polls: enriched };
@@ -74,7 +90,7 @@ export function pollRoutes(app: FastifyInstance) {
       FROM poll_options po WHERE po.poll_id = ? ORDER BY po.display_order
     `).all(pollId) as any[];
 
-    return { poll: { ...poll, options, total_votes: 0 } };
+    return { poll: { ...poll, options, total_votes: 0, my_vote: null } };
   });
 
   app.post('/api/polls/:id/vote', { preHandler: authMiddleware }, async (request, reply) => {
