@@ -1,0 +1,31 @@
+2026-06-26T10:11:31.862047462Z ==> It looks like we don't have access to your repo, but we'll try to clone it anyway.
+2026-06-26T10:11:31.862068183Z ==> Cloning from https://github.com/ChristianSmart72/ClassSpace
+2026-06-26T10:11:32.492051658Z ==> Checking out commit ea31994db48191159ceabb4301577b56125d4faa in branch main
+2026-06-26T10:11:33.960164302Z ==> Using Node.js version 24.14.1 (default)
+2026-06-26T10:11:33.960177233Z ==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+2026-06-26T10:11:34.008016165Z ==> Running build command 'npm install; npm run build'...
+2026-06-26T10:11:35.745487478Z 
+2026-06-26T10:11:35.745504359Z added 25 packages, and audited 28 packages in 2s
+2026-06-26T10:11:35.745512079Z 
+2026-06-26T10:11:35.745620975Z 6 packages are looking for funding
+2026-06-26T10:11:35.745675768Z   run `npm fund` for details
+2026-06-26T10:11:35.746541082Z 
+2026-06-26T10:11:35.746550183Z found 0 vulnerabilities
+2026-06-26T10:11:35.934537537Z 
+2026-06-26T10:11:35.934553658Z > classspace@5.0.0 build
+2026-06-26T10:11:35.934556558Z > cd client && npm install && npm run build && cd ../server && npm install && npm run build
+2026-06-26T10:11:35.934560878Z 
+2026-06-26T10:11:38.203298364Z 
+2026-06-26T10:11:38.203331975Z added 87 packages, and audited 88 packages in 2s
+2026-06-26T10:11:38.203343666Z 
+2026-06-26T10:11:38.203450192Z 18 packages are looking for funding
+2026-06-26T10:11:38.203604069Z   run `npm fund` for details
+2026-06-26T10:11:38.204566159Z 
+2026-06-26T10:11:38.20457582Z found 0 vulnerabilities
+2026-06-26T10:11:38.351323063Z 
+2026-06-26T10:11:38.351347764Z > client@0.0.0 build
+2026-06-26T10:11:38.351352354Z > tsc -b && vite build
+2026-06-26T10:11:38.351354834Z 
+2026-06-26T10:11:40.431288282Z src/screens/Timetable.tsx(79,9): error TS6133: 'todayName' is declared but its value is never read.
+2026-06-26T10:11:40.913560853Z ==> Build failed 😞
+2026-06-26T10:11:40.913580394Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys

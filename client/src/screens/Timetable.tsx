@@ -76,7 +76,6 @@ export function Timetable() {
   const [selectedDay, setSelectedDay] = useState(getTodayIndex());
 
   const todayIndex = getTodayIndex();
-  const todayName = DAYS[todayIndex];
 
   const load = useCallback(async () => {
     if (!currentSpace) { setLoading(false); return; }
