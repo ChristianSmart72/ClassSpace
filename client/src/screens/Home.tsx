@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../store/authStore';
 import { useSpaceStore } from '../store/spaceStore';
 import { useContentStore } from '../store/contentStore';
@@ -25,6 +25,8 @@ export function Home() {
     }
   }, [currentSpace]);
 
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+
   const courseList = courses ?? [];
   const courseCount = courseList.length;
   const urgentCount = announcements.filter(a => a.urgent).length;
@@ -35,8 +37,7 @@ export function Home() {
       <div className="px-4 pt-6 lg:px-8 lg:pt-8">
         <Skeleton className="h-8 w-48 mb-2" />
         <Skeleton className="h-4 w-32 mb-6" />
-        <div className="grid grid-cols-3 gap-3 mb-5">
-          <Skeleton className="h-24 rounded-2xl" />
+        <div className="grid grid-cols-2 gap-3 mb-5">
           <Skeleton className="h-24 rounded-2xl" />
           <Skeleton className="h-24 rounded-2xl" />
         </div>
@@ -72,7 +73,6 @@ export function Home() {
   const STAT_CARDS = [
     { icon: '📢', value: announcements.length, label: 'Announcements', accent: true },
     { icon: '📚', value: courseCount, label: 'Courses', accent: false },
-    { icon: '🔴', value: urgentCount, label: 'Urgent', accent: false, highlight: urgentCount > 0 },
   ];
 
   return (
@@ -99,7 +99,7 @@ export function Home() {
         <div>
           {/* Stats */}
           <motion.div
-            className="grid grid-cols-3 gap-3 mb-5"
+            className="grid grid-cols-2 gap-3 mb-5"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.05 }}
@@ -108,20 +108,16 @@ export function Home() {
               <div
                 key={i}
                 className={`rounded-2xl p-4 border flex flex-col ${
-                  card.accent
-                    ? 'border-app-accent'
-                    : card.highlight
-                    ? 'bg-app-red/10 border-app-red/30'
-                    : 'bg-app-surface border-app-border'
+                  card.accent ? 'border-app-accent' : 'bg-app-surface border-app-border'
                 }`}
-                style={card.accent ? { background: '#e8ff47', borderColor: '#e8ff47' } : {}}
+                style={card.accent ? { background: 'var(--app-accent)', borderColor: 'var(--app-accent)' } : {}}
               >
                 <span className="text-2xl mb-1">{card.icon}</span>
-                <p className="font-syne font-extrabold text-2xl" style={card.accent ? { color: '#0f0f11' } : {}}>
-                  <span className={card.highlight ? 'text-app-red' : card.accent ? '' : 'text-app-text'}>{card.value}</span>
+                <p className="font-syne font-extrabold text-2xl" style={card.accent ? { color: 'var(--app-on-accent)' } : {}}>
+                  <span className={card.accent ? '' : 'text-app-text'}>{card.value}</span>
                 </p>
-                <p className="text-[11px] font-dm" style={card.accent ? { color: '#3a3a1a' } : {}}>
-                  <span className={card.highlight ? 'text-app-red/80' : card.accent ? '' : 'text-app-text-dim'}>{card.label}</span>
+                <p className="text-[11px] font-dm" style={card.accent ? { color: 'var(--app-on-accent)', opacity: 0.75 } : {}}>
+                  <span className={card.accent ? '' : 'text-app-text-dim'}>{card.label}</span>
                 </p>
               </div>
             ))}
@@ -136,7 +132,7 @@ export function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
           >
-            <div className="absolute left-0 top-0 bottom-0 w-1" style={{ background: '#e8ff47' }} />
+            <div className="absolute left-0 top-0 bottom-0 w-1" style={{ background: 'var(--app-accent)' }} />
             <div className="flex items-center gap-4 pl-3 mb-3">
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0" style={{ background: 'rgba(232,255,71,0.10)' }}>
                 🏛️
@@ -207,33 +203,81 @@ export function Home() {
             </div>
           ) : (
             <div className="flex flex-col gap-2">
-              {announcements.slice(0, 8).map((ann) => (
-                <button
-                  key={ann.id}
-                  onClick={() => navigate(`/space/${currentSpace.id}`)}
-                  className="w-full bg-app-surface rounded-xl p-3.5 border border-app-border text-left active:scale-[0.99] transition-all duration-200 relative overflow-hidden"
-                >
-                  {ann.urgent && <div className="absolute left-0 top-0 bottom-0 w-1 bg-app-red" />}
-                  {ann.pinned && !ann.urgent && <div className="absolute left-0 top-0 bottom-0 w-1 bg-app-accent" />}
-                  <div className={`${ann.urgent || ann.pinned ? 'pl-3' : ''}`}>
-                    <div className="flex items-start gap-2 mb-1 flex-wrap">
-                      {ann.urgent && <Badge variant="urgent">Urgent</Badge>}
-                      {ann.pinned && !ann.urgent && <Badge variant="pin">Pinned</Badge>}
-                      {ann.course_code && (
-                        <span className="text-[10px] bg-app-accent2/10 text-app-accent2 font-syne font-semibold px-1.5 py-0.5 rounded">{ann.course_code}</span>
-                      )}
-                      <span className={`ml-auto text-[10px] font-syne px-1.5 py-0.5 rounded capitalize ${
-                        ann.type === 'assignment' ? 'bg-app-orange/10 text-app-orange' :
-                        ann.type === 'test' ? 'bg-app-red/10 text-app-red' :
-                        ann.type === 'meeting' ? 'bg-app-accent2/10 text-app-accent2' :
-                        'bg-app-surface-2 text-app-text-faint'
-                      }`}>{ann.type}</span>
+              {announcements.slice(0, 8).map((ann) => {
+                const isExpanded = expandedId === ann.id;
+                return (
+                  <div
+                    key={ann.id}
+                    className={`bg-app-surface rounded-xl border text-left transition-all duration-200 relative overflow-hidden ${
+                      ann.urgent ? 'border-app-red/40' : ann.pinned ? 'border-app-accent/30' : 'border-app-border'
+                    }`}
+                  >
+                    {ann.urgent && <div className="absolute left-0 top-0 bottom-0 w-1 bg-app-red" />}
+                    {ann.pinned && !ann.urgent && <div className="absolute left-0 top-0 bottom-0 w-1" style={{ background: 'var(--app-accent)' }} />}
+                    <div className={`p-3.5 ${ann.urgent || ann.pinned ? 'pl-4' : ''}`}>
+                      <div className="flex items-start gap-2 mb-1 flex-wrap">
+                        {ann.urgent && <Badge variant="urgent">Urgent</Badge>}
+                        {ann.pinned && !ann.urgent && <Badge variant="pin">Pinned</Badge>}
+                        {ann.course_code && (
+                          <span className="text-[10px] bg-app-accent2/10 text-app-accent2 font-syne font-semibold px-1.5 py-0.5 rounded">{ann.course_code}</span>
+                        )}
+                        <span className={`ml-auto text-[10px] font-syne px-1.5 py-0.5 rounded capitalize ${
+                          ann.type === 'assignment' ? 'bg-app-orange/10 text-app-orange' :
+                          ann.type === 'test' ? 'bg-app-red/10 text-app-red' :
+                          ann.type === 'meeting' ? 'bg-app-accent2/10 text-app-accent2' :
+                          'bg-app-surface-2 text-app-text-faint'
+                        }`}>{ann.type}</span>
+                      </div>
+                      <p className="text-app-text font-dm text-sm font-medium leading-snug">{ann.title}</p>
+
+                      {/* Expanded body */}
+                      <AnimatePresence initial={false}>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <p className="text-app-text-dim text-xs font-dm leading-relaxed mt-2">{ann.body}</p>
+                            {ann.deadline && (
+                              <div className="flex items-center gap-1.5 mt-2 text-[11px] font-dm text-app-orange">
+                                <span>⏰</span><span>Due: {ann.deadline.split('T')[0]}</span>
+                              </div>
+                            )}
+                            {ann.venue && (
+                              <div className="flex items-center gap-1.5 mt-1 text-[11px] font-dm text-app-text-dim">
+                                <span>📍</span><span>{ann.venue}</span>
+                              </div>
+                            )}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      {/* Footer row: author + View button */}
+                      <div className="flex items-center justify-between mt-2">
+                        <p className="text-app-text-dim text-xs font-dm">{ann.author_name} · {ann.created_at?.split('T')[0]}</p>
+                        <button
+                          onClick={() => setExpandedId(isExpanded ? null : ann.id)}
+                          className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-syne font-semibold border transition-all duration-200 ${
+                            isExpanded
+                              ? 'bg-app-accent/10 border-app-accent/30 text-app-accent'
+                              : 'bg-app-surface-2 border-app-border text-app-text-dim hover:border-app-accent/30 hover:text-app-text'
+                          }`}
+                        >
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            {isExpanded
+                              ? <><path d="M17 11l-5-5-5 5"/><path d="M12 6v12"/></>
+                              : <><circle cx="12" cy="12" r="3"/><path d="M2 12C4.5 6 8.5 3 12 3s7.5 3 10 9c-2.5 6-6.5 9-10 9s-7.5-3-10-9z"/></>
+                            }
+                          </svg>
+                          {isExpanded ? 'Less' : 'View'}
+                        </button>
+                      </div>
                     </div>
-                    <p className="text-app-text font-dm text-sm font-medium leading-snug line-clamp-1">{ann.title}</p>
-                    <p className="text-app-text-dim text-xs font-dm mt-0.5">{ann.author_name} · {ann.created_at?.split('T')[0]}</p>
                   </div>
-                </button>
-              ))}
+                );
+              })}
             </div>
           )}
         </motion.div>

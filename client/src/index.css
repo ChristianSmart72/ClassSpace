@@ -56,41 +56,47 @@
 /* ── Light theme ── */
 [data-theme="light"] {
   /* Core surfaces — clear layered hierarchy */
-  --app-bg: #f0f0f5;
+  --app-bg: #f2f3f8;
   --app-surface: #ffffff;
-  --app-surface-2: #e8e8f0;
-  --app-border: #c8c8dc;
+  --app-surface-2: #eaebf4;
+  --app-border: #d0d1e8;
 
-  /* Accent — deep indigo so it reads clearly on white */
+  /* Accent — deep indigo reads clearly on white */
   --app-accent: #4f46e5;
   --app-accent2: #7c3aed;
+  --app-on-accent: #ffffff;
 
   /* Text — strong contrast stack */
-  --app-text: #0d0d14;
-  --app-text-dim: #44445a;
-  --app-text-faint: #7878a0;
+  --app-text: #0a0a14;
+  --app-text-dim: #3a3a58;
+  --app-text-faint: #6868a0;
 
-  /* Semantic colours — darker so they show up on light surfaces */
+  /* Semantic colours — vivid enough on light surfaces */
   --app-red: #dc2626;
   --app-green: #16a34a;
   --app-orange: #d97706;
 
-  --landing-bg: linear-gradient(135deg, #eef2ff 0%, #f5f5fa 60%);
+  --landing-bg: linear-gradient(135deg, #eef0ff 0%, #f5f5fb 60%);
 
   /* Override Tailwind theme tokens */
-  --color-app-bg: #f0f0f5;
+  --color-app-bg: #f2f3f8;
   --color-app-surface: #ffffff;
-  --color-app-surface-2: #e8e8f0;
-  --color-app-border: #c8c8dc;
+  --color-app-surface-2: #eaebf4;
+  --color-app-border: #d0d1e8;
   --color-app-accent: #4f46e5;
   --color-app-accent-2: #7c3aed;
   --color-app-accent2: #7c3aed;
-  --color-app-text: #0d0d14;
-  --color-app-text-dim: #44445a;
-  --color-app-text-faint: #7878a0;
+  --color-app-text: #0a0a14;
+  --color-app-text-dim: #3a3a58;
+  --color-app-text-faint: #6868a0;
   --color-app-red: #dc2626;
   --color-app-green: #16a34a;
   --color-app-orange: #d97706;
+}
+
+/* ── Dark theme on-accent text ── */
+:root, [data-theme="dark"] {
+  --app-on-accent: #0f0f11;
 }
 
 @layer base {

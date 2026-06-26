@@ -656,24 +656,24 @@ function AnnouncementCard({
         </div>
 
         {/* Votes + Views row */}
-        <div className="flex items-center gap-2 mt-3">
+        <div className="flex items-center gap-1.5 mt-3">
           {/* Thumbs up */}
           <button
             onClick={() => isLoggedIn && onReact('upvote')}
             disabled={!isLoggedIn}
             title="Upvote"
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border transition-all duration-200 active:scale-95 ${
+            className={`flex items-center gap-1 px-2 py-1.5 rounded-full border transition-all duration-200 active:scale-95 ${
               userReacted === 'upvote'
                 ? 'bg-app-green/15 border-app-green/50 text-app-green'
                 : 'bg-app-surface-2 border-app-border text-app-text-dim hover:border-app-green/40 hover:text-app-green'
             } ${!isLoggedIn ? 'opacity-50 cursor-default' : 'cursor-pointer'}`}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+            <svg width="13" height="13" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
               fill={userReacted === 'upvote' ? 'currentColor' : 'none'}>
               <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
               <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
             </svg>
-            <span className="text-[12px] font-syne font-bold tabular-nums">{upvotes}</span>
+            <span className="text-[11px] font-syne font-bold tabular-nums">{upvotes}</span>
           </button>
 
           {/* Thumbs down */}
@@ -681,27 +681,30 @@ function AnnouncementCard({
             onClick={() => isLoggedIn && onReact('downvote')}
             disabled={!isLoggedIn}
             title="Downvote"
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border transition-all duration-200 active:scale-95 ${
+            className={`flex items-center gap-1 px-2 py-1.5 rounded-full border transition-all duration-200 active:scale-95 ${
               userReacted === 'downvote'
                 ? 'bg-app-red/15 border-app-red/50 text-app-red'
                 : 'bg-app-surface-2 border-app-border text-app-text-dim hover:border-app-red/40 hover:text-app-red'
             } ${!isLoggedIn ? 'opacity-50 cursor-default' : 'cursor-pointer'}`}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+            <svg width="13" height="13" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
               fill={userReacted === 'downvote' ? 'currentColor' : 'none'}>
               <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z" />
               <path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" />
             </svg>
-            <span className="text-[12px] font-syne font-bold tabular-nums">{downvotes}</span>
+            <span className="text-[11px] font-syne font-bold tabular-nums">{downvotes}</span>
           </button>
 
-          {/* Views — right-aligned, prominent */}
-          <div className="ml-auto flex items-center gap-1.5 text-app-text-dim">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          {/* Divider */}
+          <div className="w-px h-4 bg-app-border mx-0.5" />
+
+          {/* Views — inline right after divider, no ml-auto */}
+          <div className="flex items-center gap-1 text-app-text-faint">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
               <circle cx="12" cy="12" r="3" />
             </svg>
-            <span className="text-[12px] font-syne font-semibold tabular-nums text-app-text-dim">{views} views</span>
+            <span className="text-[11px] font-syne font-semibold tabular-nums">{views}</span>
           </div>
         </div>
       </div>
