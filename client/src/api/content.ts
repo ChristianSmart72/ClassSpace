@@ -32,6 +32,11 @@ export async function deleteMaterial(id: number) {
   await api.delete(`/materials/${id}`);
 }
 
+export async function getAnnouncement(id: number) {
+  const { data } = await api.get(`/announcements/${id}`);
+  return data as import('../types').Announcement & { course_name?: string; course_code?: string; course_icon?: string; space_name?: string };
+}
+
 export async function toggleReaction(announcementId: number, emoji: string) {
   const { data } = await api.post(`/announcements/${announcementId}/react`, { emoji });
   return data as { reactions: Record<string, number>; userReacted: boolean; emoji: string };

@@ -234,7 +234,6 @@ export function Space() {
   const [showPost, setShowPost] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [showCreateOpp, setShowCreateOpp] = useState(false);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [showSearch, setShowSearch] = useState(false);
@@ -443,8 +442,8 @@ export function Space() {
               ) : (
                 filteredAnnouncements.map(ann => (
                   <AnnouncementCard key={ann.id} ann={ann}
-                    expanded={expandedId === ann.id}
-                    onToggle={() => setExpandedId(expandedId === ann.id ? null : ann.id)}
+                    expanded={false}
+                    onToggle={() => navigate(`/space/${currentSpace.id}/announcement/${ann.id}`)}
                     canDelete={isRep || ann.author_id === user?.id}
                     deleting={deletingId === ann.id}
                     onDelete={() => handleDelete(ann.id)}
