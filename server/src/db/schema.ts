@@ -74,9 +74,31 @@ export function createTables(): void {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
+    CREATE TABLE IF NOT EXISTS reactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      announcement_id INTEGER NOT NULL REFERENCES announcements(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      emoji TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(announcement_id, user_id, emoji)
+    );
+
+    CREATE TABLE IF NOT EXISTS timetable (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      space_id TEXT NOT NULL REFERENCES spaces(id),
+      course_id INTEGER NOT NULL REFERENCES courses(id),
+      day TEXT NOT NULL,
+      start_time TEXT NOT NULL,
+      end_time TEXT NOT NULL,
+      venue TEXT,
+      lecturer TEXT
+    );
+
     CREATE INDEX IF NOT EXISTS idx_ann_space ON announcements(space_id);
     CREATE INDEX IF NOT EXISTS idx_ann_course ON announcements(course_id);
     CREATE INDEX IF NOT EXISTS idx_mat_course ON materials(course_id);
     CREATE INDEX IF NOT EXISTS idx_mat_space ON materials(space_id);
+    CREATE INDEX IF NOT EXISTS idx_reactions_ann ON reactions(announcement_id);
+    CREATE INDEX IF NOT EXISTS idx_timetable_space ON timetable(space_id);
   `);
 }

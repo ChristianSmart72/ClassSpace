@@ -32,6 +32,11 @@ export async function deleteMaterial(id: number) {
   await api.delete(`/materials/${id}`);
 }
 
+export async function toggleReaction(announcementId: number, emoji: string) {
+  const { data } = await api.post(`/announcements/${announcementId}/react`, { emoji });
+  return data as { reactions: Record<string, number>; userReacted: boolean; emoji: string };
+}
+
 export async function resetDemo() {
   const { data } = await api.post('/demo/reset');
   return data;

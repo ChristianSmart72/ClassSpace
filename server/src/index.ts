@@ -10,6 +10,8 @@ import { announcementRoutes } from './routes/announcements.js';
 import { materialRoutes } from './routes/materials.js';
 import { shareRoutes } from './routes/share.js';
 import { demoRoutes } from './routes/demo.js';
+import { reactionRoutes } from './routes/reactions.js';
+import { timetableRoutes } from './routes/timetable.js';
 import { createTables } from './db/schema.js';
 import { seedDatabase } from './db/seed.js';
 import { getDb } from './db/connection.js';
@@ -25,7 +27,6 @@ async function main() {
   await app.register(cors, { origin: true });
   await app.register(multipart, { limits: { fileSize: 50 * 1024 * 1024 } });
 
-  // Init DB
   const db = getDb();
   createTables();
   const userCount = (db.prepare('SELECT COUNT(*) as count FROM users').get() as any).count;
@@ -34,23 +35,20 @@ async function main() {
     await seedDatabase();
   }
 
-  // Routes
   authRoutes(app);
   spaceRoutes(app);
   announcementRoutes(app);
   materialRoutes(app);
   shareRoutes(app);
   demoRoutes(app);
+  reactionRoutes(app);
+  timetableRoutes(app);
 
-  // Health check
   app.get('/api/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
 
-  // Serve built frontend in production
   if (IS_PROD) {
     const clientDist = path.join(__dirname, '../../client/dist');
     await app.register(staticFiles, { root: clientDist, prefix: '/' });
-
-    // SPA fallback — any non-API route serves index.html
     app.setNotFoundHandler(async (_request, reply) => {
       return reply.sendFile('index.html');
     });

@@ -8,6 +8,7 @@ export function BottomNav() {
   const tabs = [
     { path: '/home', icon: '🏠', label: 'Home' },
     { path: currentSpace ? `/space/${currentSpace.id}` : '/setup', icon: '📋', label: 'Space', matchPrefix: '/space' },
+    { path: '/timetable', icon: '📅', label: 'Timetable', matchPrefix: '/timetable' },
     { path: '/profile', icon: '👤', label: 'Profile' },
   ];
 
@@ -24,13 +25,11 @@ export function BottomNav() {
           const active = isActive(tab);
           return (
             <NavLink
-              key={tab.path}
+              key={tab.label}
               to={tab.path}
-              className={`flex flex-col items-center gap-0.5 px-4 py-1 transition-all duration-200 ${
-                active ? 'scale-100' : 'scale-100'
-              }`}
+              className="flex flex-col items-center gap-0.5 px-3 py-1 transition-all duration-200"
             >
-              <span className={`text-xl transition-all duration-200 ${active ? 'scale-110' : 'opacity-50'}`}>
+              <span className={`text-xl transition-all duration-200 ${active ? 'scale-110' : 'opacity-40'}`}>
                 {tab.icon}
               </span>
               <span className={`text-[10px] font-syne font-semibold transition-all duration-200 ${
@@ -76,9 +75,7 @@ export function Fab({ onClick, icon = '+' }: { onClick: () => void; icon?: strin
 }
 
 export function FilterBar({
-  filters,
-  active,
-  onChange,
+  filters, active, onChange,
 }: {
   filters: { value: string; label: string }[];
   active: string;

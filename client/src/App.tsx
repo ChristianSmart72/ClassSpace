@@ -14,6 +14,7 @@ import { Home } from './screens/Home';
 import { Space } from './screens/Space';
 import { CourseFiles } from './screens/CourseFiles';
 import { Profile } from './screens/Profile';
+import { Timetable } from './screens/Timetable';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token, initialized } = useAuthStore();
@@ -52,6 +53,7 @@ function AppRoutes() {
             <Route path="/home" element={<Home />} />
             <Route path="/space/:id" element={<Space />} />
             <Route path="/space/:id/course/:cid" element={<CourseFiles />} />
+            <Route path="/timetable" element={<Timetable />} />
             <Route path="/profile" element={<Profile />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

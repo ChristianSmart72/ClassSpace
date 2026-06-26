@@ -50,6 +50,7 @@ export interface Announcement {
   course_name?: string;
   course_code?: string;
   course_icon?: string;
+  reactions?: Record<string, number>;
 }
 
 export interface Material {
@@ -66,6 +67,21 @@ export interface Material {
   created_at: string;
   course_name?: string;
   course_code?: string;
+}
+
+export interface TimetableEntry {
+  id: number;
+  space_id: string;
+  course_id: number;
+  day: string;
+  start_time: string;
+  end_time: string;
+  venue: string | null;
+  lecturer: string | null;
+  course_name: string;
+  course_code: string;
+  course_icon: string;
+  color_index: number;
 }
 
 export interface SharedSpace {
@@ -142,3 +158,13 @@ export const FILE_COLORS: Record<string, string> = {
   pdf: 'text-app-red', doc: 'text-app-accent2', ppt: 'text-app-orange',
   xls: 'text-app-green', img: 'text-app-accent2', video: 'text-app-red', other: 'text-app-text-dim',
 };
+
+export const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+export const COURSE_COLORS = ['#e8ff47', '#5b6af0', '#52ffa0', '#ffb347', '#ff5252'];
+export const COURSE_BG_COLORS = [
+  'rgba(232,255,71,0.12)', 'rgba(91,106,240,0.12)',
+  'rgba(82,255,160,0.12)', 'rgba(255,179,71,0.12)', 'rgba(255,82,82,0.12)',
+];
+
+export const REACTION_EMOJIS = ['👍', '❤️', '👀', '🔥'] as const;

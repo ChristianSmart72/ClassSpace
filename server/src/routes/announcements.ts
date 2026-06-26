@@ -23,7 +23,13 @@ export function announcementRoutes(app: FastifyInstance) {
     const db = getDb();
 
     let sql = `
-      SELECT a.*, u.name as author_name, c.name as course_name, c.code as course_code, c.icon as course_icon
+      SELECT a.*,
+        u.name as author_name,
+        c.name as course_name, c.code as course_code, c.icon as course_icon,
+        COALESCE((SELECT COUNT(*) FROM reactions WHERE announcement_id = a.id AND emoji = '👍'), 0) as react_like,
+        COALESCE((SELECT COUNT(*) FROM reactions WHERE announcement_id = a.id AND emoji = '❤️'), 0) as react_heart,
+        COALESCE((SELECT COUNT(*) FROM reactions WHERE announcement_id = a.id AND emoji = '👀'), 0) as react_eyes,
+        COALESCE((SELECT COUNT(*) FROM reactions WHERE announcement_id = a.id AND emoji = '🔥'), 0) as react_fire
       FROM announcements a
       JOIN users u ON a.author_id = u.id
       LEFT JOIN courses c ON a.course_id = c.id
@@ -31,9 +37,9 @@ export function announcementRoutes(app: FastifyInstance) {
     `;
     const params: any[] = [id];
 
-    if (query.filter && query.filter === 'urgent') {
+    if (query.filter === 'urgent') {
       sql += ' AND a.urgent = 1';
-    } else if (query.filter && query.filter === 'pinned') {
+    } else if (query.filter === 'pinned') {
       sql += ' AND a.pinned = 1';
     } else if (query.filter && query.filter !== 'all') {
       sql += ' AND c.code = ?';
@@ -42,7 +48,18 @@ export function announcementRoutes(app: FastifyInstance) {
 
     sql += ' ORDER BY a.pinned DESC, a.urgent DESC, a.created_at DESC';
 
-    const announcements = db.prepare(sql).all(...params) as any[];
+    const rows = db.prepare(sql).all(...params) as any[];
+    const announcements = rows.map((r) => ({
+      ...r,
+      urgent: Boolean(r.urgent),
+      pinned: Boolean(r.pinned),
+      reactions: {
+        '👍': r.react_like,
+        '❤️': r.react_heart,
+        '👀': r.react_eyes,
+        '🔥': r.react_fire,
+      },
+    }));
     return { announcements };
   });
 
@@ -66,32 +83,31 @@ export function announcementRoutes(app: FastifyInstance) {
       body.submission_method || null, body.format || null
     );
 
-    const announcement = db.prepare(`
+    const ann = db.prepare(`
       SELECT a.*, u.name as author_name
       FROM announcements a JOIN users u ON a.author_id = u.id
       WHERE a.id = ?
     `).get(result.lastInsertRowid) as any;
 
-    return { announcement };
+    return { announcement: { ...ann, urgent: Boolean(ann.urgent), pinned: Boolean(ann.pinned), reactions: { '👍': 0, '❤️': 0, '👀': 0, '🔥': 0 } } };
   });
 
   app.get('/api/announcements/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const announcement = db.prepare(`
-      SELECT a.*, u.name as author_name, c.name as course_name, c.code as course_code, c.icon as course_icon
+    const ann = db.prepare(`
+      SELECT a.*, u.name as author_name, c.name as course_name, c.code as course_code, c.icon as course_icon,
+        s.name as space_name, s.id as space_id
       FROM announcements a
       JOIN users u ON a.author_id = u.id
       LEFT JOIN courses c ON a.course_id = c.id
+      JOIN spaces s ON a.space_id = s.id
       WHERE a.id = ?
     `).get(id) as any;
 
-    if (!announcement) {
-      return reply.status(404).send({ error: 'Announcement not found' });
-    }
-
-    return announcement;
+    if (!ann) return reply.status(404).send({ error: 'Announcement not found' });
+    return ann;
   });
 
   app.delete('/api/announcements/:id', { preHandler: authMiddleware }, async (request, reply) => {
@@ -128,10 +144,7 @@ export function announcementRoutes(app: FastifyInstance) {
       WHERE a.id = ?
     `).get(id) as any;
 
-    if (!announcement) {
-      return reply.status(404).send({ error: 'Announcement not found' });
-    }
-
+    if (!announcement) return reply.status(404).send({ error: 'Announcement not found' });
     return announcement;
   });
 }
