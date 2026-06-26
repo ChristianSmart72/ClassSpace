@@ -119,6 +119,18 @@ export function createTables(): void {
       UNIQUE(poll_id, user_id)
     );
 
+    CREATE TABLE IF NOT EXISTS opportunities (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      space_id TEXT NOT NULL REFERENCES spaces(id),
+      author_id INTEGER NOT NULL REFERENCES users(id),
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      category TEXT NOT NULL DEFAULT 'other',
+      link TEXT,
+      deadline TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE INDEX IF NOT EXISTS idx_ann_space ON announcements(space_id);
     CREATE INDEX IF NOT EXISTS idx_ann_course ON announcements(course_id);
     CREATE INDEX IF NOT EXISTS idx_mat_course ON materials(course_id);
@@ -128,5 +140,6 @@ export function createTables(): void {
     CREATE INDEX IF NOT EXISTS idx_polls_space ON polls(space_id);
     CREATE INDEX IF NOT EXISTS idx_poll_options_poll ON poll_options(poll_id);
     CREATE INDEX IF NOT EXISTS idx_poll_votes_poll ON poll_votes(poll_id);
+    CREATE INDEX IF NOT EXISTS idx_opportunities_space ON opportunities(space_id);
   `);
 }

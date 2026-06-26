@@ -22,14 +22,23 @@ export function announcementRoutes(app: FastifyInstance) {
     const query = request.query as { filter?: string };
     const db = getDb();
 
+    // Try to get userId from token (optional auth)
+    let userId: number | null = null;
+    try {
+      const auth = request.headers.authorization;
+      if (auth?.startsWith('Bearer ')) {
+        const { verifyToken } = await import('../lib/jwt.js');
+        const payload = verifyToken(auth.substring(7));
+        if (payload) userId = (payload as any).userId;
+      }
+    } catch { /* no auth — fine */ }
+
     let sql = `
       SELECT a.*,
         u.name as author_name,
         c.name as course_name, c.code as course_code, c.icon as course_icon,
-        COALESCE((SELECT COUNT(*) FROM reactions WHERE announcement_id = a.id AND emoji = '👍'), 0) as react_like,
-        COALESCE((SELECT COUNT(*) FROM reactions WHERE announcement_id = a.id AND emoji = '❤️'), 0) as react_heart,
-        COALESCE((SELECT COUNT(*) FROM reactions WHERE announcement_id = a.id AND emoji = '👀'), 0) as react_eyes,
-        COALESCE((SELECT COUNT(*) FROM reactions WHERE announcement_id = a.id AND emoji = '🔥'), 0) as react_fire
+        COALESCE((SELECT COUNT(*) FROM reactions WHERE announcement_id = a.id AND emoji = 'upvote'), 0) as react_upvote,
+        COALESCE((SELECT COUNT(*) FROM reactions WHERE announcement_id = a.id AND emoji = 'downvote'), 0) as react_downvote
       FROM announcements a
       JOIN users u ON a.author_id = u.id
       LEFT JOIN courses c ON a.course_id = c.id
@@ -49,17 +58,27 @@ export function announcementRoutes(app: FastifyInstance) {
     sql += ' ORDER BY a.pinned DESC, a.urgent DESC, a.created_at DESC';
 
     const rows = db.prepare(sql).all(...params) as any[];
-    const announcements = rows.map((r) => ({
-      ...r,
-      urgent: Boolean(r.urgent),
-      pinned: Boolean(r.pinned),
-      reactions: {
-        '👍': r.react_like,
-        '❤️': r.react_heart,
-        '👀': r.react_eyes,
-        '🔥': r.react_fire,
-      },
-    }));
+    const announcements = rows.map((r) => {
+      // Get this user's reaction for this announcement
+      let myReaction: string | null = null;
+      if (userId) {
+        const vote = db.prepare(
+          'SELECT emoji FROM reactions WHERE announcement_id = ? AND user_id = ?'
+        ).get(r.id, userId) as any;
+        if (vote) myReaction = vote.emoji;
+      }
+
+      return {
+        ...r,
+        urgent: Boolean(r.urgent),
+        pinned: Boolean(r.pinned),
+        reactions: {
+          upvote: r.react_upvote,
+          downvote: r.react_downvote,
+        },
+        my_reaction: myReaction,
+      };
+    });
     return { announcements };
   });
 
@@ -89,7 +108,15 @@ export function announcementRoutes(app: FastifyInstance) {
       WHERE a.id = ?
     `).get(result.lastInsertRowid) as any;
 
-    return { announcement: { ...ann, urgent: Boolean(ann.urgent), pinned: Boolean(ann.pinned), reactions: { '👍': 0, '❤️': 0, '👀': 0, '🔥': 0 } } };
+    return {
+      announcement: {
+        ...ann,
+        urgent: Boolean(ann.urgent),
+        pinned: Boolean(ann.pinned),
+        reactions: { upvote: 0, downvote: 0 },
+        my_reaction: null,
+      }
+    };
   });
 
   app.get('/api/announcements/:id', async (request, reply) => {

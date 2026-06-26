@@ -1,15 +1,18 @@
 import { create } from 'zustand';
-import type { Announcement, Material, Poll } from '../types';
+import type { Announcement, Material, Poll, Opportunity } from '../types';
 import * as contentApi from '../api/content';
 import * as pollsApi from '../api/polls';
+import * as opportunitiesApi from '../api/opportunities';
 
 interface ContentState {
   announcements: Announcement[];
   materials: Material[];
   polls: Poll[];
+  opportunities: Opportunity[];
   loading: boolean;
   matLoading: boolean;
   pollsLoading: boolean;
+  opportunitiesLoading: boolean;
   fetchAnnouncements: (spaceId: string, filter?: string) => Promise<void>;
   createAnnouncement: (spaceId: string, ann: Partial<Announcement>) => Promise<Announcement>;
   deleteAnnouncement: (id: number) => Promise<void>;
@@ -21,15 +24,20 @@ interface ContentState {
   createPoll: (spaceId: string, payload: { question: string; options: string[]; closes_at?: string }) => Promise<Poll>;
   votePoll: (pollId: number, optionId: number) => Promise<void>;
   deletePoll: (pollId: number) => Promise<void>;
+  fetchOpportunities: (spaceId: string) => Promise<void>;
+  createOpportunity: (spaceId: string, payload: Parameters<typeof opportunitiesApi.createOpportunity>[1]) => Promise<Opportunity>;
+  deleteOpportunity: (id: number) => Promise<void>;
 }
 
 export const useContentStore = create<ContentState>((set) => ({
   announcements: [],
   materials: [],
   polls: [],
+  opportunities: [],
   loading: false,
   matLoading: false,
   pollsLoading: false,
+  opportunitiesLoading: false,
 
   fetchAnnouncements: async (spaceId, filter) => {
     set({ loading: true });
@@ -105,5 +113,26 @@ export const useContentStore = create<ContentState>((set) => ({
   deletePoll: async (pollId) => {
     await pollsApi.deletePoll(pollId);
     set((state) => ({ polls: state.polls.filter((p) => p.id !== pollId) }));
+  },
+
+  fetchOpportunities: async (spaceId) => {
+    set({ opportunitiesLoading: true });
+    try {
+      const opportunities = await opportunitiesApi.getOpportunities(spaceId);
+      set({ opportunities, opportunitiesLoading: false });
+    } catch {
+      set({ opportunitiesLoading: false });
+    }
+  },
+
+  createOpportunity: async (spaceId, payload) => {
+    const opportunity = await opportunitiesApi.createOpportunity(spaceId, payload);
+    set((state) => ({ opportunities: [opportunity, ...state.opportunities] }));
+    return opportunity;
+  },
+
+  deleteOpportunity: async (id) => {
+    await opportunitiesApi.deleteOpportunity(id);
+    set((state) => ({ opportunities: state.opportunities.filter((o) => o.id !== id) }));
   },
 }));

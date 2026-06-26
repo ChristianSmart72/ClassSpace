@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import { useSpaceStore } from '../store/spaceStore';
 
 export function Register() {
   const [name, setName] = useState('');
@@ -8,6 +9,7 @@ export function Register() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { register, loading } = useAuthStore();
+  const { joinSpace } = useSpaceStore();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,6 +21,21 @@ export function Register() {
     }
     try {
       await register(name, email, password);
+
+      // After registration, check if there's a pending invite code to join
+      const pendingCode = localStorage.getItem('pendingInviteCode');
+      if (pendingCode) {
+        localStorage.removeItem('pendingInviteCode');
+        localStorage.removeItem('pendingSpaceId');
+        try {
+          const space = await joinSpace(pendingCode);
+          navigate(`/space/${space.id}`);
+          return;
+        } catch {
+          // If join fails, just go home
+        }
+      }
+
       navigate('/home');
     } catch (err: any) {
       setError(err.message);
@@ -26,10 +43,16 @@ export function Register() {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col px-6 py-12">
+    <div className="min-h-dvh flex flex-col bg-app-bg px-6 py-12">
       <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
-        <h1 className="text-2xl font-syne font-bold text-app-text mb-1">Join ClassSpace</h1>
-        <p className="text-app-text-dim text-sm font-dm mb-8">Create your account</p>
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">📚</span>
+            <span className="text-app-accent font-syne font-bold text-lg tracking-widest uppercase">ClassSpace</span>
+          </div>
+          <h1 className="text-2xl font-syne font-bold text-app-text mb-1">Create your account</h1>
+          <p className="text-app-text-dim text-sm font-dm">Join ClassSpace — free forever</p>
+        </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {error && (

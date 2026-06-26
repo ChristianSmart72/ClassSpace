@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import { useSpaceStore } from '../store/spaceStore';
 
 const DEMO_ACCOUNTS = [
   {
@@ -23,6 +24,7 @@ export function Login() {
   const [error, setError] = useState('');
   const [filled, setFilled] = useState<string | null>(null);
   const { login, loading } = useAuthStore();
+  const { joinSpace } = useSpaceStore();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,6 +32,21 @@ export function Login() {
     setError('');
     try {
       await login(email, password);
+
+      // Handle pending invite code
+      const pendingCode = localStorage.getItem('pendingInviteCode');
+      if (pendingCode) {
+        localStorage.removeItem('pendingInviteCode');
+        localStorage.removeItem('pendingSpaceId');
+        try {
+          const space = await joinSpace(pendingCode);
+          navigate(`/space/${space.id}`);
+          return;
+        } catch {
+          // Join failed — just go home
+        }
+      }
+
       navigate('/home');
     } catch (err: any) {
       setError(err.message);
@@ -44,7 +61,7 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col px-6 py-12">
+    <div className="min-h-dvh flex flex-col bg-app-bg px-6 py-12">
       <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-4">
@@ -107,7 +124,7 @@ export function Login() {
         </p>
 
         {/* Quick-fill demo buttons */}
-        <div className="mt-6">
+        <div className="mt-6 p-4 bg-app-surface border border-app-border rounded-2xl">
           <p className="text-app-text-faint text-[11px] font-syne font-semibold uppercase tracking-wider text-center mb-2.5">
             Try a demo account
           </p>
@@ -120,7 +137,7 @@ export function Login() {
                 className={`flex-1 rounded-xl border py-2.5 px-3 text-left transition-all duration-200 active:scale-[0.97] ${
                   filled === acc.label
                     ? 'border-app-accent bg-app-accent/10'
-                    : 'border-app-border bg-app-surface hover:border-app-accent/40'
+                    : 'border-app-border bg-app-surface-2 hover:border-app-accent/40'
                 }`}
               >
                 <p className={`text-xs font-syne font-bold ${filled === acc.label ? 'text-app-accent' : 'text-app-text'}`}>

@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { getDb } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
 
-const ALLOWED_EMOJIS = ['👍', '❤️', '👀', '🔥'];
+const ALLOWED_REACTIONS = ['upvote', 'downvote'];
 
 export function reactionRoutes(app: FastifyInstance) {
   app.post('/api/announcements/:id/react', { preHandler: authMiddleware }, async (request, reply) => {
@@ -10,8 +10,8 @@ export function reactionRoutes(app: FastifyInstance) {
     const { emoji } = request.body as { emoji: string };
     const userId = request.user!.userId;
 
-    if (!ALLOWED_EMOJIS.includes(emoji)) {
-      return reply.status(400).send({ error: 'Invalid emoji' });
+    if (!ALLOWED_REACTIONS.includes(emoji)) {
+      return reply.status(400).send({ error: 'Invalid reaction' });
     }
 
     const db = getDb();
@@ -30,6 +30,10 @@ export function reactionRoutes(app: FastifyInstance) {
         .run(annId, userId, emoji);
       userReacted = false;
     } else {
+      // If switching vote (upvote <-> downvote), remove the other one first
+      const opposite = emoji === 'upvote' ? 'downvote' : 'upvote';
+      db.prepare('DELETE FROM reactions WHERE announcement_id = ? AND user_id = ? AND emoji = ?')
+        .run(annId, userId, opposite);
       db.prepare('INSERT INTO reactions (announcement_id, user_id, emoji) VALUES (?, ?, ?)')
         .run(annId, userId, emoji);
       userReacted = true;

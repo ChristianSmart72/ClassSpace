@@ -1,0 +1,4 @@
+- [Reactions model](reactions-model.md) — changed from emoji reactions to upvote/downvote strings; announcements route must return my_reaction per user and use upvote/downvote keys.
+- [Opportunities tab](opportunities-tab.md) — Polls tab renamed to Opportunities; separate DB table + routes; frontend store/api fully wired.
+- [Theme system](theme-system.md) — CSS data-theme attribute on html element; light theme overrides Tailwind CSS vars in [data-theme="light"] selector.
+- [Auth/invite flow](auth-invite-flow.md) — pendingInviteCode in localStorage; unauthenticated join redirects to /register; invite code consumed post-auth in both Login and Register.

@@ -51,6 +51,7 @@ export interface Announcement {
   course_code?: string;
   course_icon?: string;
   reactions?: Record<string, number>;
+  my_reaction?: string | null;
 }
 
 export interface Material {
@@ -167,7 +168,12 @@ export const COURSE_BG_COLORS = [
   'rgba(82,255,160,0.12)', 'rgba(255,179,71,0.12)', 'rgba(255,82,82,0.12)',
 ];
 
-export const REACTION_EMOJIS = ['👍', '❤️', '👀', '🔥'] as const;
+// Reactions are now upvote/downvote
+export const REACTION_KEYS = ['upvote', 'downvote'] as const;
+export type ReactionKey = typeof REACTION_KEYS[number];
+
+// Legacy — kept for any imports that reference it
+export const REACTION_EMOJIS = ['upvote', 'downvote'] as const;
 
 export interface PollOption {
   id: number;
@@ -189,3 +195,26 @@ export interface Poll {
   total_votes: number;
   my_vote?: number | null;
 }
+
+export interface Opportunity {
+  id: number;
+  space_id: string;
+  author_id: number;
+  author_name: string;
+  title: string;
+  description: string;
+  category: string;
+  link: string | null;
+  deadline: string | null;
+  created_at: string;
+}
+
+export const OPPORTUNITY_CATEGORIES = [
+  { value: 'seminar', label: 'Seminar', icon: '🎓', color: '#5b6af0' },
+  { value: 'scholarship', label: 'Scholarship', icon: '🏆', color: '#e8ff47' },
+  { value: 'internship', label: 'Internship', icon: '💼', color: '#52ffa0' },
+  { value: 'job', label: 'Job', icon: '🧑‍💻', color: '#ffb347' },
+  { value: 'competition', label: 'Competition', icon: '🥇', color: '#ff5252' },
+  { value: 'event', label: 'Event', icon: '📅', color: '#a78bfa' },
+  { value: 'other', label: 'Other', icon: '📌', color: '#7a7a88' },
+] as const;

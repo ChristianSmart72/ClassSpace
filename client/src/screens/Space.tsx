@@ -9,8 +9,8 @@ import { Badge, EmptyState, Skeleton } from '../components/ui/Shared';
 import { PostAnnouncementSheet } from '../components/sheets/PostAnnouncement';
 import { UploadMaterialSheet } from '../components/sheets/UploadMaterial';
 import { toggleReaction } from '../api/content';
-import type { Announcement, Poll } from '../types';
-import { REACTION_EMOJIS, COURSE_COLORS, COURSE_BG_COLORS } from '../types';
+import type { Announcement, Opportunity } from '../types';
+import { COURSE_COLORS, COURSE_BG_COLORS, OPPORTUNITY_CATEGORIES as OPP_CATS } from '../types';
 
 function DeadlineCountdown({ deadline }: { deadline: string }) {
   const [display, setDisplay] = useState('');
@@ -46,76 +46,97 @@ function DeadlineCountdown({ deadline }: { deadline: string }) {
   );
 }
 
-function CreatePollForm({ spaceId, onCreated, onCancel }: {
+// ─── Create Opportunity Form ───────────────────────────────────────────────
+function CreateOpportunityForm({ spaceId, onCreated, onCancel }: {
   spaceId: string;
   onCreated: () => void;
   onCancel: () => void;
 }) {
-  const [question, setQuestion] = useState('');
-  const [options, setOptions] = useState(['', '']);
-  const [closesAt, setClosesAt] = useState('');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('other');
+  const [link, setLink] = useState('');
+  const [deadline, setDeadline] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const { createPoll } = useContentStore();
-
-  const addOption = () => { if (options.length < 6) setOptions([...options, '']); };
-  const removeOption = (i: number) => { if (options.length > 2) setOptions(options.filter((_, idx) => idx !== i)); };
-  const updateOption = (i: number, val: string) => setOptions(options.map((o, idx) => idx === i ? val : o));
+  const { createOpportunity } = useContentStore();
 
   const handleSubmit = async () => {
-    if (!question.trim()) { setError('Enter a question'); return; }
-    const filled = options.filter(o => o.trim());
-    if (filled.length < 2) { setError('At least 2 options required'); return; }
+    if (!title.trim()) { setError('Enter a title'); return; }
+    if (!description.trim()) { setError('Enter a description'); return; }
     setSaving(true);
     setError('');
     try {
-      await createPoll(spaceId, { question: question.trim(), options: filled, closes_at: closesAt || undefined });
+      await createOpportunity(spaceId, {
+        title: title.trim(),
+        description: description.trim(),
+        category,
+        link: link.trim() || undefined,
+        deadline: deadline || undefined,
+      });
       onCreated();
     } catch (e: any) {
-      setError(e?.response?.data?.error || 'Failed to create poll');
+      setError(e?.response?.data?.error || 'Failed to post opportunity');
     } finally {
       setSaving(false);
     }
   };
 
+  const selected = OPP_CATS.find(c => c.value === category)!;
+
   return (
-    <div className="bg-app-surface rounded-2xl border border-app-accent/30 p-4">
-      <h3 className="text-app-text font-syne font-bold text-sm mb-3">📊 New Poll</h3>
+    <div className="bg-app-surface rounded-2xl border border-app-accent/30 p-4 mb-3">
+      <h3 className="text-app-text font-syne font-bold text-sm mb-3">
+        {selected.icon} Post Opportunity
+      </h3>
 
-      <textarea
-        value={question}
-        onChange={e => setQuestion(e.target.value)}
-        placeholder="What do you want to ask the class?"
-        rows={2}
-        className="w-full bg-app-surface-2 border border-app-border rounded-xl px-3 py-2.5 text-app-text text-sm font-dm placeholder:text-app-text-faint focus:outline-none focus:border-app-accent resize-none mb-3"
-      />
-
-      <p className="text-app-text-dim text-[11px] font-syne font-semibold uppercase tracking-wider mb-2">Options</p>
-      <div className="flex flex-col gap-2 mb-3">
-        {options.map((opt, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <input
-              value={opt}
-              onChange={e => updateOption(i, e.target.value)}
-              placeholder={`Option ${i + 1}`}
-              className="flex-1 bg-app-surface-2 border border-app-border rounded-xl px-3 py-2 text-app-text text-sm font-dm placeholder:text-app-text-faint focus:outline-none focus:border-app-accent"
-            />
-            {options.length > 2 && (
-              <button onClick={() => removeOption(i)} className="text-app-text-faint hover:text-app-red text-lg leading-none">×</button>
-            )}
-          </div>
+      {/* Category selector */}
+      <div className="flex flex-wrap gap-1.5 mb-3">
+        {OPP_CATS.map(cat => (
+          <button
+            key={cat.value}
+            onClick={() => setCategory(cat.value)}
+            className={`text-[11px] font-syne font-semibold px-2.5 py-1 rounded-full border transition-all duration-200 ${
+              category === cat.value
+                ? 'border-transparent text-app-bg'
+                : 'border-app-border text-app-text-dim hover:border-app-accent/40'
+            }`}
+            style={category === cat.value ? { background: cat.color } : {}}
+          >
+            {cat.icon} {cat.label}
+          </button>
         ))}
-        {options.length < 6 && (
-          <button onClick={addOption} className="text-app-accent text-xs font-syne font-semibold text-left pl-1">+ Add option</button>
-        )}
       </div>
 
+      <input
+        value={title}
+        onChange={e => setTitle(e.target.value)}
+        placeholder="Title (e.g. Shell Scholarship 2025)"
+        className="w-full bg-app-surface-2 border border-app-border rounded-xl px-3 py-2.5 text-app-text text-sm font-dm placeholder:text-app-text-faint focus:outline-none focus:border-app-accent mb-2"
+      />
+
+      <textarea
+        value={description}
+        onChange={e => setDescription(e.target.value)}
+        placeholder="Describe the opportunity — eligibility, requirements, what to expect..."
+        rows={3}
+        className="w-full bg-app-surface-2 border border-app-border rounded-xl px-3 py-2.5 text-app-text text-sm font-dm placeholder:text-app-text-faint focus:outline-none focus:border-app-accent resize-none mb-2"
+      />
+
+      <input
+        value={link}
+        onChange={e => setLink(e.target.value)}
+        placeholder="Link (optional)"
+        type="url"
+        className="w-full bg-app-surface-2 border border-app-border rounded-xl px-3 py-2.5 text-app-text text-sm font-dm placeholder:text-app-text-faint focus:outline-none focus:border-app-accent mb-2"
+      />
+
       <div className="mb-3">
-        <p className="text-app-text-dim text-[11px] font-syne font-semibold uppercase tracking-wider mb-1.5">Close date (optional)</p>
+        <p className="text-app-text-dim text-[11px] font-syne font-semibold uppercase tracking-wider mb-1.5">Application deadline (optional)</p>
         <input
-          type="datetime-local"
-          value={closesAt}
-          onChange={e => setClosesAt(e.target.value)}
+          type="date"
+          value={deadline}
+          onChange={e => setDeadline(e.target.value)}
           className="bg-app-surface-2 border border-app-border rounded-xl px-3 py-2 text-app-text text-sm font-dm focus:outline-none focus:border-app-accent"
         />
       </div>
@@ -128,9 +149,12 @@ function CreatePollForm({ spaceId, onCreated, onCancel }: {
           disabled={saving}
           className="flex-1 bg-app-accent text-app-bg font-syne font-bold text-sm rounded-xl py-2.5 disabled:opacity-50"
         >
-          {saving ? 'Posting...' : 'Post Poll'}
+          {saving ? 'Posting...' : 'Post Opportunity'}
         </button>
-        <button onClick={onCancel} className="px-4 bg-app-surface-2 text-app-text-dim font-syne font-semibold text-sm rounded-xl py-2.5 border border-app-border">
+        <button
+          onClick={onCancel}
+          className="px-4 bg-app-surface-2 text-app-text-dim font-syne font-semibold text-sm rounded-xl py-2.5 border border-app-border"
+        >
           Cancel
         </button>
       </div>
@@ -138,145 +162,120 @@ function CreatePollForm({ spaceId, onCreated, onCancel }: {
   );
 }
 
-function PollCard({ poll, isRep, onVote, onDelete }: {
-  poll: Poll;
+// ─── Opportunity Card ──────────────────────────────────────────────────────
+function OpportunityCard({ opp, isRep, onDelete }: {
+  opp: Opportunity;
   isRep: boolean;
-  onVote: (pollId: number, optionId: number) => Promise<void>;
-  onDelete: (pollId: number) => void;
+  onDelete: (id: number) => void;
 }) {
-  const [voting, setVoting] = useState<number | null>(null);
-  const [myVote, setMyVote] = useState<number | null>(poll.my_vote ?? null);
-  const [localPoll, setLocalPoll] = useState(poll);
-  const isClosed = poll.closes_at ? new Date(poll.closes_at) < new Date() : false;
-  const hasVoted = myVote !== null;
-
-  const handleVote = async (optionId: number) => {
-    if (voting || isClosed) return;
-    setVoting(optionId);
-    try {
-      await onVote(poll.id, optionId);
-      setMyVote(optionId);
-    } finally {
-      setVoting(null);
-    }
-  };
-
-  useEffect(() => { setLocalPoll(poll); setMyVote(poll.my_vote ?? null); }, [poll]);
-
-  const total = localPoll.total_votes || 0;
+  const cat = OPP_CATS.find(c => c.value === opp.category) ?? OPP_CATS[OPP_CATS.length - 1];
+  const isExpired = opp.deadline ? new Date(opp.deadline) < new Date() : false;
 
   return (
     <div className="bg-app-surface rounded-2xl border border-app-border overflow-hidden">
-      {isClosed && (
-        <div className="bg-app-surface-2 border-b border-app-border px-4 py-1.5 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-app-text-faint" />
-          <span className="text-app-text-faint text-[11px] font-syne font-bold uppercase tracking-wider">Poll closed</span>
-        </div>
-      )}
+      {/* Category header stripe */}
+      <div
+        className="px-4 py-2 flex items-center gap-2"
+        style={{ background: `${cat.color}12`, borderBottom: `1px solid ${cat.color}25` }}
+      >
+        <span className="text-base">{cat.icon}</span>
+        <span className="text-xs font-syne font-bold" style={{ color: cat.color }}>
+          {cat.label.toUpperCase()}
+        </span>
+        {isExpired && (
+          <span className="ml-auto text-[10px] bg-app-surface-2 text-app-text-faint font-syne font-bold px-2 py-0.5 rounded-full">Closed</span>
+        )}
+        {isRep && (
+          <button
+            onClick={() => onDelete(opp.id)}
+            className="ml-auto text-app-text-faint hover:text-app-red transition-colors text-sm px-1"
+          >
+            🗑
+          </button>
+        )}
+      </div>
+
       <div className="p-4">
-        <div className="flex items-start justify-between gap-2 mb-3">
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <span className="text-lg flex-shrink-0">📊</span>
-            <p className="text-app-text font-syne font-bold text-sm leading-snug">{localPoll.question}</p>
-          </div>
-          {isRep && (
-            <button onClick={() => onDelete(poll.id)} className="text-app-text-faint hover:text-app-red transition-colors text-sm px-1 flex-shrink-0">🗑</button>
+        <h3 className="text-app-text font-syne font-bold text-base leading-tight mb-2">{opp.title}</h3>
+        <p className="text-app-text-dim text-sm font-dm leading-relaxed mb-3">{opp.description}</p>
+
+        <div className="flex flex-wrap gap-2 items-center">
+          {opp.deadline && !isExpired && (
+            <span className="flex items-center gap-1.5 text-[11px] font-dm text-app-orange bg-app-orange/10 border border-app-orange/20 px-2.5 py-1 rounded-full">
+              ⏰ Deadline: {new Date(opp.deadline).toLocaleDateString()}
+            </span>
+          )}
+          {opp.link && (
+            <a
+              href={opp.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-[11px] font-syne font-semibold text-app-accent bg-app-accent/10 border border-app-accent/20 px-2.5 py-1 rounded-full hover:bg-app-accent/20 transition-colors"
+              onClick={e => e.stopPropagation()}
+            >
+              🔗 Apply / Learn more
+            </a>
           )}
         </div>
 
-        <div className="flex flex-col gap-2">
-          {localPoll.options.map((opt) => {
-            const pct = total > 0 ? Math.round((opt.votes / total) * 100) : 0;
-            const isMyChoice = myVote === opt.id;
-            const showResults = hasVoted || isClosed;
-
-            return (
-              <button
-                key={opt.id}
-                onClick={() => !isClosed && handleVote(opt.id)}
-                disabled={!!voting || isClosed}
-                className={`relative w-full text-left rounded-xl border overflow-hidden transition-all duration-200 ${
-                  isMyChoice
-                    ? 'border-app-accent bg-app-accent/8'
-                    : showResults
-                    ? 'border-app-border bg-app-surface-2 cursor-default'
-                    : 'border-app-border bg-app-surface-2 hover:border-app-accent/50 active:scale-[0.99]'
-                } ${voting === opt.id ? 'opacity-60' : ''}`}
-                style={{ minHeight: '44px' }}
-              >
-                {showResults && (
-                  <div
-                    className={`absolute inset-y-0 left-0 transition-all duration-500 ${isMyChoice ? 'bg-app-accent/20' : 'bg-app-surface/60'}`}
-                    style={{ width: `${pct}%` }}
-                  />
-                )}
-                <div className="relative flex items-center justify-between px-3 py-2.5 gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    {isMyChoice && <span className="text-app-accent text-xs">✓</span>}
-                    <span className="text-app-text text-sm font-dm leading-tight truncate">{opt.text}</span>
-                  </div>
-                  {showResults && (
-                    <span className={`text-xs font-syne font-bold flex-shrink-0 ${isMyChoice ? 'text-app-accent' : 'text-app-text-dim'}`}>
-                      {pct}%
-                    </span>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-app-border">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-full bg-app-accent2/20 flex items-center justify-center text-[10px] text-app-accent2 font-syne font-bold">
-              {localPoll.author_name?.charAt(0)}
-            </div>
-            <p className="text-app-text-faint text-xs font-dm">{localPoll.author_name}</p>
+        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-app-border">
+          <div className="w-5 h-5 rounded-full bg-app-accent2/20 flex items-center justify-center text-[10px] text-app-accent2 font-syne font-bold">
+            {opp.author_name?.charAt(0)}
           </div>
-          <div className="flex items-center gap-2">
-            {localPoll.closes_at && !isClosed && (
-              <span className="text-app-text-faint text-[10px] font-dm">
-                closes {new Date(localPoll.closes_at).toLocaleDateString()}
-              </span>
-            )}
-            <span className="text-app-text-dim text-[10px] font-syne font-semibold bg-app-surface-2 px-2 py-0.5 rounded-full">
-              {total} vote{total !== 1 ? 's' : ''}
-            </span>
-          </div>
+          <p className="text-app-text-faint text-xs font-dm">
+            {opp.author_name} · {opp.created_at?.split('T')[0]}
+          </p>
         </div>
       </div>
     </div>
   );
 }
 
+// ─── Main Space screen ─────────────────────────────────────────────────────
 export function Space() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { currentSpace, courses, fetchSpace, memberRole, loading: spaceLoading, error: spaceError } = useSpaceStore();
   const {
     announcements, loading: annLoading, fetchAnnouncements, deleteAnnouncement,
-    polls, pollsLoading, fetchPolls, votePoll, deletePoll,
+    opportunities, opportunitiesLoading, fetchOpportunities, deleteOpportunity,
   } = useContentStore();
   const { user } = useAuthStore();
 
-  const [tab, setTab] = useState<'ann' | 'mat' | 'polls'>('ann');
+  const [tab, setTab] = useState<'ann' | 'mat' | 'opps'>('ann');
   const [filter, setFilter] = useState('all');
   const [showPost, setShowPost] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
-  const [showCreatePoll, setShowCreatePoll] = useState(false);
+  const [showCreateOpp, setShowCreateOpp] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [showSearch, setShowSearch] = useState(false);
+
+  // upvote/downvote state
   const [localReactions, setLocalReactions] = useState<Record<number, Record<string, number>>>({});
-  const [userReacted, setUserReacted] = useState<Record<number, Set<string>>>({});
+  const [userReacted, setUserReacted] = useState<Record<number, string | null>>({});
 
   const isRep = memberRole === 'rep';
   const courseList = courses ?? [];
 
   useEffect(() => { if (id) fetchSpace(id); }, [id]);
   useEffect(() => { if (id) fetchAnnouncements(id, filter); }, [id, filter]);
-  useEffect(() => { if (id && tab === 'polls') fetchPolls(id); }, [id, tab]);
+  useEffect(() => { if (id && tab === 'opps') fetchOpportunities(id); }, [id, tab]);
+
+  // Hydrate userReacted from server-returned my_reaction field
+  useEffect(() => {
+    if (announcements.length === 0) return;
+    setUserReacted(prev => {
+      const updated = { ...prev };
+      for (const ann of announcements) {
+        if (ann.my_reaction !== undefined && !(ann.id in prev)) {
+          updated[ann.id] = ann.my_reaction ?? null;
+        }
+      }
+      return updated;
+    });
+  }, [announcements]);
 
   const filterOptions = [
     { value: 'all', label: 'All' },
@@ -306,41 +305,52 @@ export function Space() {
     try { await deleteAnnouncement(annId); } finally { setDeletingId(null); }
   };
 
-  const handleDeletePoll = async (pollId: number) => {
-    if (!confirm('Delete this poll?')) return;
-    try { await deletePoll(pollId); } catch { /* ignore */ }
+  const handleDeleteOpp = async (oppId: number) => {
+    if (!confirm('Delete this opportunity?')) return;
+    try { await deleteOpportunity(oppId); } catch { /* ignore */ }
   };
 
-  const handleVotePoll = async (pollId: number, optionId: number) => {
-    await votePoll(pollId, optionId);
-  };
+  const handleReact = useCallback(async (annId: number, reaction: string) => {
+    if (!user) return;
+    const currentReaction = userReacted[annId] ?? null;
+    const isSame = currentReaction === reaction;
+    const newReaction = isSame ? null : reaction;
 
-  const handleReact = useCallback(async (annId: number, emoji: string) => {
-    const prev = userReacted[annId] ?? new Set<string>();
-    const alreadyReacted = prev.has(emoji);
-
-    setUserReacted(old => {
-      const s = new Set(old[annId] ?? []);
-      alreadyReacted ? s.delete(emoji) : s.add(emoji);
-      return { ...old, [annId]: s };
-    });
+    // Optimistic update
+    setUserReacted(old => ({ ...old, [annId]: newReaction }));
     setLocalReactions(old => {
-      const cur = old[annId] ?? {};
-      const prevCount = cur[emoji] ?? (announcements.find(a => a.id === annId)?.reactions?.[emoji] ?? 0);
-      return { ...old, [annId]: { ...cur, [emoji]: Math.max(0, prevCount + (alreadyReacted ? -1 : 1)) } };
+      const baseReactions = announcements.find(a => a.id === annId)?.reactions ?? {};
+      // Reset counts from base + local changes
+      const upvote = baseReactions['upvote'] ?? 0;
+      const downvote = baseReactions['downvote'] ?? 0;
+      const newCounts: Record<string, number> = { upvote, downvote };
+
+      // Remove previous vote
+      if (currentReaction) newCounts[currentReaction] = Math.max(0, (newCounts[currentReaction] ?? 0) - 1);
+      // Add new vote
+      if (newReaction) newCounts[newReaction] = (newCounts[newReaction] ?? 0) + 1;
+
+      return { ...old, [annId]: newCounts };
     });
 
     try {
-      const res = await toggleReaction(annId, emoji);
-      setLocalReactions(old => ({ ...old, [annId]: res.reactions }));
+      if (isSame) {
+        // Toggle off — send the request to remove
+        const res = await toggleReaction(annId, reaction);
+        setLocalReactions(old => ({ ...old, [annId]: res.reactions }));
+      } else {
+        const res = await toggleReaction(annId, reaction);
+        setLocalReactions(old => ({ ...old, [annId]: res.reactions }));
+      }
     } catch {
-      setUserReacted(old => {
-        const s = new Set(old[annId] ?? []);
-        alreadyReacted ? s.add(emoji) : s.delete(emoji);
-        return { ...old, [annId]: s };
+      // Revert
+      setUserReacted(old => ({ ...old, [annId]: currentReaction }));
+      setLocalReactions(old => {
+        const base = announcements.find(a => a.id === annId)?.reactions ?? {};
+        return { ...old, [annId]: base };
       });
     }
-  }, [announcements, userReacted]);
+  }, [announcements, userReacted, user]);
 
   if (spaceLoading) {
     return (
@@ -392,7 +402,9 @@ export function Space() {
             {urgentCount > 0 && (
               <span className="text-[10px] bg-app-red/10 text-app-red font-syne font-semibold px-2.5 py-1 rounded-full animate-pulse">⚠️ {urgentCount} urgent</span>
             )}
-            <span className="text-[10px] bg-app-surface-2 text-app-text-faint font-syne px-2.5 py-1 rounded-full">Code: <span className="text-app-accent">{currentSpace.invite_code}</span></span>
+            <span className="text-[10px] bg-app-surface-2 text-app-text-faint font-syne px-2.5 py-1 rounded-full">
+              Code: <span className="text-app-accent">{currentSpace.invite_code}</span>
+            </span>
           </div>
         </div>
       </div>
@@ -428,11 +440,11 @@ export function Space() {
         {[
           { key: 'ann', label: 'Updates', icon: '📢', count: announcements.length },
           { key: 'mat', label: 'Files', icon: '📁', count: courseList.length },
-          { key: 'polls', label: 'Polls', icon: '📊', count: polls.length },
+          { key: 'opps', label: 'Opps', icon: '🏆', count: opportunities.length },
         ].map(t => (
           <button
             key={t.key}
-            onClick={() => setTab(t.key as 'ann' | 'mat' | 'polls')}
+            onClick={() => setTab(t.key as 'ann' | 'mat' | 'opps')}
             className={`flex-1 py-2 text-sm font-syne font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 ${
               tab === t.key ? 'bg-app-accent text-app-bg' : 'text-app-text-dim'
             }`}
@@ -478,8 +490,8 @@ export function Space() {
                     deleting={deletingId === ann.id}
                     onDelete={() => handleDelete(ann.id)}
                     localReactions={localReactions[ann.id] ?? ann.reactions ?? {}}
-                    userReacted={userReacted[ann.id] ?? new Set()}
-                    onReact={emoji => handleReact(ann.id, emoji)}
+                    userReacted={userReacted[ann.id] ?? null}
+                    onReact={reaction => handleReact(ann.id, reaction)}
                     isLoggedIn={!!user}
                   />
                 ))
@@ -521,44 +533,56 @@ export function Space() {
           </motion.div>
         )}
 
-        {/* Polls Tab */}
-        {tab === 'polls' && (
-          <motion.div key="polls" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }} className="px-4">
+        {/* Opportunities Tab */}
+        {tab === 'opps' && (
+          <motion.div key="opps" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }} className="px-4">
+            {/* Category filter pills */}
+            <div className="flex gap-2 overflow-x-auto scrollbar-none pb-2 mb-3">
+              {OPP_CATS.map(cat => (
+                <span
+                  key={cat.value}
+                  className="flex-shrink-0 text-[10px] font-syne font-semibold px-2.5 py-1 rounded-full border border-app-border text-app-text-faint"
+                >
+                  {cat.icon} {cat.label}
+                </span>
+              ))}
+            </div>
+
             {isRep && (
               <div className="mb-3">
-                {showCreatePoll ? (
-                  <CreatePollForm
+                {showCreateOpp ? (
+                  <CreateOpportunityForm
                     spaceId={id!}
-                    onCreated={() => setShowCreatePoll(false)}
-                    onCancel={() => setShowCreatePoll(false)}
+                    onCreated={() => setShowCreateOpp(false)}
+                    onCancel={() => setShowCreateOpp(false)}
                   />
                 ) : (
                   <button
-                    onClick={() => setShowCreatePoll(true)}
+                    onClick={() => setShowCreateOpp(true)}
                     className="w-full bg-app-surface border border-dashed border-app-accent/40 rounded-2xl py-3 text-app-accent text-sm font-syne font-semibold hover:border-app-accent/70 transition-colors"
                   >
-                    + Create Poll
+                    + Post an Opportunity
                   </button>
                 )}
               </div>
             )}
-            {pollsLoading ? (
+
+            {opportunitiesLoading ? (
               [1, 2].map(i => <Skeleton key={i} className="h-40 w-full mb-3 rounded-2xl" />)
-            ) : polls.length === 0 ? (
+            ) : opportunities.length === 0 ? (
               <EmptyState
-                icon="📊"
-                title="No polls yet"
-                subtitle={isRep ? 'Create a poll to get the class voting' : 'The class rep hasn\'t posted any polls yet'}
+                icon="🏆"
+                title="No opportunities yet"
+                subtitle={isRep ? 'Post scholarships, internships, seminars and more' : 'Check back soon for opportunities'}
               />
             ) : (
               <div className="flex flex-col gap-3">
-                {polls.map(poll => (
-                  <PollCard
-                    key={poll.id}
-                    poll={poll}
+                {opportunities.map(opp => (
+                  <OpportunityCard
+                    key={opp.id}
+                    opp={opp}
                     isRep={isRep}
-                    onVote={handleVotePoll}
-                    onDelete={handleDeletePoll}
+                    onDelete={handleDeleteOpp}
                   />
                 ))}
               </div>
@@ -569,6 +593,7 @@ export function Space() {
 
       {isRep && tab === 'ann' && <Fab onClick={() => setShowPost(true)} icon="+" />}
       {isRep && tab === 'mat' && <Fab onClick={() => setShowUpload(true)} icon="+" />}
+      {isRep && tab === 'opps' && !showCreateOpp && <Fab onClick={() => setShowCreateOpp(true)} icon="+" />}
 
       {showPost && id && <PostAnnouncementSheet spaceId={id} onClose={() => setShowPost(false)} />}
       {showUpload && <UploadMaterialSheet onClose={() => setShowUpload(false)} />}
@@ -591,12 +616,15 @@ function AnnouncementCard({
   deleting: boolean;
   onDelete: () => void;
   localReactions: Record<string, number>;
-  userReacted: Set<string>;
-  onReact: (emoji: string) => void;
+  userReacted: string | null;
+  onReact: (reaction: string) => void;
   isLoggedIn: boolean;
 }) {
   const isLong = ann.body.length > 120;
-  const totalReactions = Object.values(localReactions).reduce((a, b) => a + b, 0);
+  const upvotes = localReactions['upvote'] ?? 0;
+  const downvotes = localReactions['downvote'] ?? 0;
+  // Static demo views based on id
+  const views = 12 + (ann.id * 7) % 88;
 
   return (
     <div className={`bg-app-surface rounded-2xl border overflow-hidden transition-all duration-200 ${
@@ -683,34 +711,52 @@ function AnnouncementCard({
               <p className="text-app-text-faint text-[10px] font-dm">{ann.created_at?.split('T')[0]}</p>
             </div>
           </div>
-          {totalReactions > 0 && (
-            <p className="text-app-text-faint text-[10px] font-dm">{totalReactions} reaction{totalReactions !== 1 ? 's' : ''}</p>
-          )}
+          {/* Views (static demo) */}
+          <div className="flex items-center gap-1 text-app-text-faint">
+            <span className="text-xs">👁</span>
+            <span className="text-[11px] font-dm">{views}</span>
+          </div>
         </div>
 
-        {/* Reactions */}
-        <div className="flex items-center gap-2 mt-3 flex-wrap">
-          {REACTION_EMOJIS.map(emoji => {
-            const count = localReactions[emoji] ?? 0;
-            const reacted = userReacted.has(emoji);
-            return (
-              <button
-                key={emoji}
-                onClick={() => isLoggedIn && onReact(emoji)}
-                disabled={!isLoggedIn}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-syne font-semibold border transition-all duration-200 active:scale-90 ${
-                  reacted
-                    ? 'bg-app-accent/15 border-app-accent/40 text-app-accent'
-                    : count > 0
-                    ? 'bg-app-surface-2 border-app-border text-app-text-dim hover:border-app-accent/30'
-                    : 'bg-transparent border-app-border/50 text-app-text-faint hover:border-app-border opacity-60'
-                } ${!isLoggedIn ? 'cursor-default' : 'cursor-pointer'}`}
-              >
-                <span>{emoji}</span>
-                {count > 0 && <span className={reacted ? 'text-app-accent' : 'text-app-text-dim'}>{count}</span>}
-              </button>
-            );
-          })}
+        {/* Upvote / Downvote row */}
+        <div className="flex items-center gap-2 mt-3">
+          {/* Upvote */}
+          <button
+            onClick={() => isLoggedIn && onReact('upvote')}
+            disabled={!isLoggedIn}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-syne font-semibold border transition-all duration-200 active:scale-95 ${
+              userReacted === 'upvote'
+                ? 'bg-app-green/15 border-app-green/40 text-app-green'
+                : 'bg-app-surface-2 border-app-border text-app-text-dim hover:border-app-green/40 hover:text-app-green'
+            } ${!isLoggedIn ? 'opacity-50 cursor-default' : 'cursor-pointer'}`}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill={userReacted === 'upvote' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 19V5M5 12l7-7 7 7" />
+            </svg>
+            <span>{upvotes > 0 ? upvotes : ''}</span>
+            <span>{userReacted === 'upvote' ? 'Upvoted' : 'Upvote'}</span>
+          </button>
+
+          {/* Downvote */}
+          <button
+            onClick={() => isLoggedIn && onReact('downvote')}
+            disabled={!isLoggedIn}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-syne font-semibold border transition-all duration-200 active:scale-95 ${
+              userReacted === 'downvote'
+                ? 'bg-app-red/15 border-app-red/40 text-app-red'
+                : 'bg-app-surface-2 border-app-border text-app-text-dim hover:border-app-red/40 hover:text-app-red'
+            } ${!isLoggedIn ? 'opacity-50 cursor-default' : 'cursor-pointer'}`}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill={userReacted === 'downvote' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14M19 12l-7 7-7-7" />
+            </svg>
+            <span>{downvotes > 0 ? downvotes : ''}</span>
+            <span>{userReacted === 'downvote' ? 'Downvoted' : 'Downvote'}</span>
+          </button>
+
+          {!isLoggedIn && (
+            <span className="text-app-text-faint text-[10px] font-dm ml-auto">Sign in to vote</span>
+          )}
         </div>
       </div>
     </div>
