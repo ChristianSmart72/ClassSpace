@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { getAnnouncement, getMaterials } from '../api/content';
 import type { Announcement, Material } from '../types';
 import { Skeleton } from '../components/ui/Shared';
+import { ShareSheet } from '../components/sheets/ShareSheet';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -101,8 +102,8 @@ function AttachmentCard({ mat, isDemo }: { mat: Material; isDemo: boolean }) {
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-app-text font-syne font-semibold text-sm leading-snug truncate">{mat.name}</p>
-        <p className="text-app-text-faint text-xs font-dm mt-0.5">{catLabel} · {size}</p>
+        <p className="text-app-text font-jakarta font-semibold text-sm leading-snug truncate">{mat.name}</p>
+        <p className="text-app-text-faint text-xs font-inter mt-0.5">{catLabel} · {size}</p>
       </div>
       {isDemo ? (
         <div className="w-9 h-9 rounded-xl bg-app-surface border border-app-border flex items-center justify-center text-app-text-faint flex-shrink-0">
@@ -138,8 +139,8 @@ function DetailRow({ icon, label, value, valueColor }: {
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-app-text-faint text-[10px] font-syne font-bold uppercase tracking-widest mb-0.5">{label}</p>
-        <p className="text-app-text font-dm text-sm font-medium" style={valueColor ? { color: valueColor } : {}}>{value}</p>
+        <p className="text-app-text-faint text-[10px] font-jakarta font-bold uppercase tracking-widest mb-0.5">{label}</p>
+        <p className="text-app-text font-inter text-sm font-medium" style={valueColor ? { color: valueColor } : {}}>{value}</p>
       </div>
     </div>
   );
@@ -147,12 +148,12 @@ function DetailRow({ icon, label, value, valueColor }: {
 
 // ─── Main screen ───────────────────────────────────────────────────────────
 export function AnnouncementDetail() {
-  const { annId } = useParams<{ id: string; annId: string }>();
+  const { id: spaceId, annId } = useParams<{ id: string; annId: string }>();
   const navigate = useNavigate();
   const [ann, setAnn] = useState<Announcement | null>(null);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
-  const [shared, setShared] = useState(false);
+  const [showShareSheet, setShowShareSheet] = useState(false);
 
   useEffect(() => {
     if (!annId) return;
@@ -171,15 +172,8 @@ export function AnnouncementDetail() {
       .finally(() => setLoading(false));
   }, [annId]);
 
-  const handleShare = async () => {
-    const url = window.location.href;
-    if (navigator.share) {
-      await navigator.share({ title: ann?.title, text: ann?.body?.slice(0, 120), url });
-    } else {
-      await navigator.clipboard.writeText(url);
-      setShared(true);
-      setTimeout(() => setShared(false), 2000);
-    }
+  const handleShare = () => {
+    setShowShareSheet(true);
   };
 
   if (loading) {
@@ -204,8 +198,8 @@ export function AnnouncementDetail() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
         <span className="text-5xl mb-4">📭</span>
-        <h2 className="text-app-text font-syne font-bold text-lg mb-2">Announcement not found</h2>
-        <button onClick={() => navigate(-1)} className="bg-app-accent text-app-bg font-syne font-bold text-sm rounded-xl px-6 py-3 mt-4" style={{ color: 'var(--app-on-accent)' }}>
+        <h2 className="text-app-text font-jakarta font-bold text-lg mb-2">Announcement not found</h2>
+        <button onClick={() => navigate(-1)} className="bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl px-6 py-3 mt-4" style={{ color: 'var(--app-on-accent)' }}>
           Go back
         </button>
       </div>
@@ -231,20 +225,16 @@ export function AnnouncementDetail() {
               <path d="M19 12H5" /><path d="M12 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="flex-1 text-app-text font-syne font-semibold text-base">Announcement</h1>
+          <h1 className="flex-1 text-app-text font-jakarta font-semibold text-base">Announcement</h1>
           <button
             onClick={handleShare}
-            className="flex items-center gap-1.5 text-app-accent font-syne font-semibold text-sm transition-opacity hover:opacity-80"
+            className="flex items-center gap-1.5 text-app-accent font-jakarta font-semibold text-sm transition-opacity hover:opacity-80"
           >
-            {shared ? (
-              <><span className="text-app-green">✓</span><span className="text-app-green text-xs">Copied!</span></>
-            ) : (
-              <><span>Share</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-              </svg></>
-            )}
+            <><span>Share</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            </svg></>
           </button>
         </div>
       </div>
@@ -254,14 +244,14 @@ export function AnnouncementDetail() {
         {ann.urgent && (
           <div className="bg-app-red/10 border border-app-red/30 rounded-xl px-4 py-2.5 flex items-center gap-2 mb-4">
             <span className="w-2 h-2 rounded-full bg-app-red animate-pulse flex-shrink-0" />
-            <span className="text-app-red text-xs font-syne font-bold uppercase tracking-wider">Urgent Alert</span>
+            <span className="text-app-red text-xs font-jakarta font-bold uppercase tracking-wider">Urgent Alert</span>
           </div>
         )}
 
         {/* ── Type badge ── */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
           <span
-            className="inline-flex items-center gap-1.5 text-xs font-syne font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-xl mb-3"
+            className="inline-flex items-center gap-1.5 text-xs font-jakarta font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-xl mb-3"
             style={{ background: meta.bg, color: meta.color }}
           >
             {ann.type === 'assignment' && '📝'}
@@ -275,7 +265,7 @@ export function AnnouncementDetail() {
 
         {/* ── Title ── */}
         <motion.h2
-          className="text-app-text font-syne font-extrabold text-[26px] leading-[1.15] mb-3"
+          className="text-app-text font-jakarta font-extrabold text-[26px] leading-[1.15] mb-3"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.04 }}
@@ -291,19 +281,19 @@ export function AnnouncementDetail() {
           transition={{ duration: 0.3, delay: 0.08 }}
         >
           {ann.course_code && (
-            <span className="text-[11px] bg-app-accent2/15 text-app-accent2 font-syne font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">
+            <span className="text-[11px] bg-app-accent2/15 text-app-accent2 font-jakarta font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">
               {ann.course_code}{ann.course_name ? ` — ${ann.course_name}` : ''}
             </span>
           )}
           {ann.pinned && (
-            <span className="text-[11px] bg-app-accent/15 text-app-accent font-syne font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+            <span className="text-[11px] bg-app-accent/15 text-app-accent font-jakarta font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
               📌 Pinned
             </span>
           )}
         </motion.div>
 
         {/* ── Timestamp ── */}
-        <p className="text-app-text-faint text-xs font-dm mb-5">{relativeTime(ann.created_at)}</p>
+        <p className="text-app-text-faint text-xs font-inter mb-5">{relativeTime(ann.created_at)}</p>
 
         {/* ── Key Details ── */}
         {hasKeyDetails && (
@@ -314,7 +304,7 @@ export function AnnouncementDetail() {
             transition={{ duration: 0.3, delay: 0.1 }}
           >
             <div className="px-4 pt-3 pb-1">
-              <p className="text-app-text-faint text-[10px] font-syne font-bold uppercase tracking-widest">Key Details</p>
+              <p className="text-app-text-faint text-[10px] font-jakarta font-bold uppercase tracking-widest">Key Details</p>
             </div>
             <div className="px-4 pb-2">
               {ann.deadline && (
@@ -346,11 +336,11 @@ export function AnnouncementDetail() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.14 }}
           >
-            <p className="text-app-text-faint text-[10px] font-syne font-bold uppercase tracking-widest mb-3">Instructions</p>
+            <p className="text-app-text-faint text-[10px] font-jakarta font-bold uppercase tracking-widest mb-3">Instructions</p>
             <div className="bg-app-surface rounded-2xl border border-app-border px-4 py-4">
-              <p className="text-app-text-dim font-dm text-sm leading-relaxed whitespace-pre-wrap">{ann.body}</p>
+              <p className="text-app-text-dim font-inter text-sm leading-relaxed whitespace-pre-wrap">{ann.body}</p>
               {ann.instructions && ann.instructions !== ann.body && (
-                <p className="text-app-text-dim font-dm text-sm leading-relaxed whitespace-pre-wrap mt-3 pt-3 border-t border-app-border">{ann.instructions}</p>
+                <p className="text-app-text-dim font-inter text-sm leading-relaxed whitespace-pre-wrap mt-3 pt-3 border-t border-app-border">{ann.instructions}</p>
               )}
             </div>
           </motion.div>
@@ -365,9 +355,9 @@ export function AnnouncementDetail() {
             transition={{ duration: 0.3, delay: 0.18 }}
           >
             <div className="flex items-center justify-between mb-3">
-              <p className="text-app-text-faint text-[10px] font-syne font-bold uppercase tracking-widest">Attachments</p>
+              <p className="text-app-text-faint text-[10px] font-jakarta font-bold uppercase tracking-widest">Attachments</p>
               {usingDemoMats && (
-                <span className="text-[10px] text-app-text-faint font-dm bg-app-surface-2 px-2 py-0.5 rounded-full border border-app-border">Sample</span>
+                <span className="text-[10px] text-app-text-faint font-inter bg-app-surface-2 px-2 py-0.5 rounded-full border border-app-border">Sample</span>
               )}
             </div>
             <div className="flex flex-col gap-2">
@@ -385,21 +375,29 @@ export function AnnouncementDetail() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.22 }}
         >
-          <div className="w-11 h-11 rounded-full bg-app-accent2/20 border border-app-accent2/30 flex items-center justify-center text-base text-app-accent2 font-syne font-bold flex-shrink-0">
+          <div className="w-11 h-11 rounded-full bg-app-accent2/20 border border-app-accent2/30 flex items-center justify-center text-base text-app-accent2 font-jakarta font-bold flex-shrink-0">
             {ann.author_name?.charAt(0)?.toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-app-text font-syne font-semibold text-sm">{ann.author_name}</p>
-            <p className="text-app-text-faint text-xs font-dm">Posted {relativeTime(ann.created_at)}</p>
+            <p className="text-app-text font-jakarta font-semibold text-sm">{ann.author_name}</p>
+            <p className="text-app-text-faint text-xs font-inter">Posted {relativeTime(ann.created_at)}</p>
           </div>
           {ann.deadline && isDueSoon(ann.deadline) && (
-            <span className="text-xs font-syne font-bold px-2.5 py-1 rounded-full flex-shrink-0"
+            <span className="text-xs font-jakarta font-bold px-2.5 py-1 rounded-full flex-shrink-0"
               style={{ background: '#d97706', color: '#fff' }}>
               Due Soon
             </span>
           )}
         </motion.div>
       </div>
+      {showShareSheet && annId && spaceId && (
+        <ShareSheet
+          type="ann"
+          id={annId}
+          spaceId={spaceId}
+          onClose={() => setShowShareSheet(false)}
+        />
+      )}
     </div>
   );
 }

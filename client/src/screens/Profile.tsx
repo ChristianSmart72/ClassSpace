@@ -43,8 +43,8 @@ export function Profile() {
     <div className="pb-8">
       {/* Page header */}
       <div className="px-4 pt-6 pb-4 lg:px-8 lg:pt-8 border-b border-app-border mb-5">
-        <h1 className="text-app-text font-syne font-bold text-xl lg:text-2xl">Profile</h1>
-        <p className="text-app-text-dim text-sm font-dm mt-0.5">Manage your account and space settings</p>
+        <h1 className="text-app-text font-jakarta font-bold text-xl lg:text-2xl">Profile</h1>
+        <p className="text-app-text-dim text-sm font-inter mt-0.5">Manage your account and space settings</p>
       </div>
 
       <div className="px-4 lg:px-8">
@@ -61,7 +61,7 @@ export function Profile() {
             >
               <div className="flex items-center gap-4">
                 <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-syne font-bold flex-shrink-0"
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-jakarta font-bold flex-shrink-0"
                   style={{
                     background: 'linear-gradient(135deg, rgba(91,106,240,0.25) 0%, rgba(232,255,71,0.08) 100%)',
                     color: '#5b6af0',
@@ -71,9 +71,9 @@ export function Profile() {
                   {avatarLetter}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-app-text font-syne font-bold text-base leading-tight truncate">{user.name}</h2>
-                  <p className="text-app-text-dim text-xs font-dm mt-0.5 truncate">{user.email}</p>
-                  <span className={`mt-2 inline-flex items-center gap-1 text-[11px] font-syne font-bold px-2.5 py-1 rounded-lg ${
+                  <h2 className="text-app-text font-jakarta font-bold text-base leading-tight truncate">{user.name}</h2>
+                  <p className="text-app-text-dim text-xs font-inter mt-0.5 truncate">{user.email}</p>
+                  <span className={`mt-2 inline-flex items-center gap-1 text-[11px] font-jakarta font-bold px-2.5 py-1 rounded-lg ${
                     isRep
                       ? 'bg-app-accent/15 text-app-accent border border-app-accent/25'
                       : 'bg-app-surface-2 text-app-text-dim border border-app-border'
@@ -94,28 +94,28 @@ export function Profile() {
               >
                 <div className="px-4 py-3 border-b border-app-border flex items-center gap-2">
                   <span>🏛️</span>
-                  <p className="text-app-text-dim text-xs font-syne font-semibold uppercase tracking-wider">Your Space</p>
+                  <p className="text-app-text-dim text-xs font-jakarta font-semibold uppercase tracking-wider">Your Space</p>
                 </div>
                 <div className="p-4">
-                  <p className="text-app-text font-syne font-bold text-sm leading-tight">{currentSpace.name}</p>
-                  <p className="text-app-text-dim text-xs font-dm mt-0.5">{currentSpace.uni}</p>
+                  <p className="text-app-text font-jakarta font-bold text-sm leading-tight">{currentSpace.name}</p>
+                  <p className="text-app-text-dim text-xs font-inter mt-0.5">{currentSpace.uni}</p>
                   <div className="flex items-center gap-2 mt-3 flex-wrap">
-                    <span className="text-[11px] bg-app-accent/10 text-app-accent font-syne font-semibold px-2.5 py-1 rounded-full border border-app-accent/15">
+                    <span className="text-[11px] bg-app-accent/10 text-app-accent font-jakarta font-semibold px-2.5 py-1 rounded-full border border-app-accent/15">
                       {currentSpace.level}
                     </span>
-                    <span className="text-[11px] bg-app-surface-2 text-app-text-dim font-syne font-semibold px-2.5 py-1 rounded-full border border-app-border">
+                    <span className="text-[11px] bg-app-surface-2 text-app-text-dim font-jakarta font-semibold px-2.5 py-1 rounded-full border border-app-border">
                       {courses.length} courses
                     </span>
                   </div>
 
                   {/* Invite code */}
                   <div className="mt-4 bg-app-bg rounded-xl p-3 border border-app-border">
-                    <p className="text-app-text-dim text-[10px] font-syne font-bold uppercase tracking-widest mb-1">Invite Code</p>
+                    <p className="text-app-text-dim text-[10px] font-jakarta font-bold uppercase tracking-widest mb-1">Invite Code</p>
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-app-accent font-syne font-extrabold text-xl tracking-[0.2em]">{currentSpace.invite_code}</p>
+                      <p className="text-app-accent font-jakarta font-extrabold text-xl tracking-[0.2em]">{currentSpace.invite_code}</p>
                       <button
                         onClick={copyInviteCode}
-                        className={`text-xs font-syne font-semibold px-3 py-1.5 rounded-lg transition-all duration-200 flex-shrink-0 ${
+                        className={`text-xs font-jakarta font-semibold px-3 py-1.5 rounded-lg transition-all duration-200 flex-shrink-0 ${
                           copied
                             ? 'bg-app-green/15 text-app-green border border-app-green/25'
                             : 'bg-app-surface border border-app-border text-app-text-dim hover:text-app-text hover:border-app-border/80'
@@ -139,7 +139,7 @@ export function Profile() {
               {currentSpace && (
                 <button
                   onClick={() => setShowShare(true)}
-                  className="w-full bg-app-surface border border-app-border text-app-text font-syne font-semibold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 hover:border-app-border/70"
+                  className="w-full bg-app-surface border border-app-border text-app-text font-jakarta font-semibold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 hover:border-app-border/70"
                 >
                   🔗 Share Space Link
                 </button>
@@ -147,7 +147,7 @@ export function Profile() {
               <button
                 onClick={handleLogout}
                 disabled={signingOut}
-                className="w-full bg-app-red/10 border border-app-red/25 text-app-red font-syne font-bold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200 disabled:opacity-60"
+                className="w-full bg-app-red/10 border border-app-red/25 text-app-red font-jakarta font-bold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200 disabled:opacity-60"
               >
                 {signingOut ? 'Signing out…' : 'Sign Out'}
               </button>
@@ -164,7 +164,7 @@ export function Profile() {
             >
               <div className="px-4 py-3.5 border-b border-app-border flex items-center gap-2">
                 <span>🔔</span>
-                <p className="text-app-text font-syne font-semibold text-sm">Notifications</p>
+                <p className="text-app-text font-jakarta font-semibold text-sm">Notifications</p>
               </div>
               <div className="divide-y divide-app-border">
                 <ToggleRow label="All announcements" desc="New posts from your class rep" defaultOn />
@@ -174,7 +174,7 @@ export function Profile() {
               </div>
             </motion.div>
 
-            <p className="text-app-text-dim text-xs font-dm text-center mt-6 lg:text-left opacity-50">
+            <p className="text-app-text-dim text-xs font-inter text-center mt-6 lg:text-left opacity-50">
               ClassSpace · Made for Nigerian students 🇳🇬
             </p>
           </div>
@@ -192,8 +192,8 @@ function ToggleRow({ label, desc, defaultOn }: { label: string; desc: string; de
   return (
     <div className="flex items-center justify-between px-4 py-3.5 gap-3">
       <div className="flex-1 min-w-0">
-        <span className="text-app-text font-dm text-sm block">{label}</span>
-        <span className="text-app-text-dim text-xs font-dm block mt-0.5 opacity-70">{desc}</span>
+        <span className="text-app-text font-inter text-sm block">{label}</span>
+        <span className="text-app-text-dim text-xs font-inter block mt-0.5 opacity-70">{desc}</span>
       </div>
       <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
         <input type="checkbox" defaultChecked={defaultOn} className="sr-only peer" />

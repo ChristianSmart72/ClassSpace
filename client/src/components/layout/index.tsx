@@ -63,7 +63,7 @@ function NavItem({ tab }: { tab: ReturnType<typeof useNavTabs>[0] }) {
       <span className={`text-xl transition-all duration-200 ${active ? 'scale-110' : 'opacity-40'}`}>
         {tab.icon}
       </span>
-      <span className={`text-[10px] font-syne font-semibold transition-all duration-200 ${
+      <span className={`text-[10px] font-jakarta font-semibold transition-all duration-200 ${
         active ? 'text-app-accent' : 'text-app-text-faint'
       }`}>
         {tab.label}
@@ -77,7 +77,7 @@ export function BottomNav() {
   const { theme, toggle } = useThemeStore();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 lg:hidden bg-app-bg/95 backdrop-blur-lg border-t border-app-border z-40 pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 lg:hidden bg-app-bg border-t border-app-border z-40" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
       <div className="flex items-center justify-around h-16 max-w-[430px] mx-auto px-2">
         {tabs.map((tab) => (
           <NavItem key={tab.label} tab={tab} />
@@ -91,7 +91,7 @@ export function BottomNav() {
           <span className="text-xl opacity-40 hover:opacity-70 transition-opacity">
             {theme === 'dark' ? '☀️' : '🌙'}
           </span>
-          <span className="text-[10px] font-syne font-semibold text-app-text-faint">
+          <span className="text-[10px] font-jakarta font-semibold text-app-text-faint">
             {theme === 'dark' ? 'Light' : 'Dark'}
           </span>
         </button>
@@ -116,7 +116,7 @@ export function SideNav() {
     <aside className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-56 bg-app-bg border-r border-app-border z-40">
       {/* Logo */}
       <div className="px-5 py-6 border-b border-app-border">
-        <div className="font-syne font-extrabold text-[10px] tracking-[0.24em] uppercase text-app-accent flex items-center gap-2">
+        <div className="font-jakarta font-extrabold text-[10px] tracking-[0.24em] uppercase text-app-accent flex items-center gap-2">
           <span className="text-xl">📚</span>
           ClassSpace
         </div>
@@ -142,7 +142,7 @@ export function SideNav() {
               <span className={`text-lg transition-all duration-200 ${active ? '' : 'opacity-60'}`}>
                 {tab.icon}
               </span>
-              <span className={`font-syne font-semibold text-sm ${active ? 'text-app-accent' : ''}`}>
+              <span className={`font-jakarta font-semibold text-sm ${active ? 'text-app-accent' : ''}`}>
                 {tab.label}
               </span>
               {active && (
@@ -157,22 +157,22 @@ export function SideNav() {
       <div className="px-4 py-4 border-t border-app-border flex flex-col gap-3">
         {/* Theme toggle */}
         <div className="flex items-center justify-between">
-          <span className="text-app-text-faint text-[11px] font-dm">Theme</span>
+          <span className="text-app-text-faint text-[11px] font-inter">Theme</span>
           <ThemeToggle />
         </div>
 
         {/* User / Logout */}
         {user && (
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-app-accent/15 border border-app-accent/20 flex items-center justify-center text-xs text-app-accent font-syne font-bold flex-shrink-0">
+            <div className="w-7 h-7 rounded-full bg-app-accent/15 border border-app-accent/20 flex items-center justify-center text-xs text-app-accent font-jakarta font-bold flex-shrink-0">
               {user.name?.charAt(0)}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-app-text text-xs font-syne font-semibold truncate">{user.name}</p>
+              <p className="text-app-text text-xs font-jakarta font-semibold truncate">{user.name}</p>
             </div>
             <button
               onClick={handleLogout}
-              className="text-app-text-faint hover:text-app-red transition-colors text-xs font-syne font-semibold"
+              className="text-app-text-faint hover:text-app-red transition-colors text-xs font-jakarta font-semibold"
               title="Sign out"
             >
               ↩
@@ -180,7 +180,7 @@ export function SideNav() {
           </div>
         )}
 
-        <p className="text-app-text-faint text-[9px] font-dm opacity-50">ClassSpace · Nigerian students 🇳🇬</p>
+        <p className="text-app-text-faint text-[9px] font-inter opacity-50">ClassSpace · Nigerian students 🇳🇬</p>
       </div>
     </aside>
   );
@@ -196,8 +196,8 @@ export function TopBar({ title, subtitle, onBack }: { title: string; subtitle?: 
           </button>
         )}
         <div className="flex-1 min-w-0">
-          <h1 className="text-app-text font-syne font-semibold text-base truncate">{title}</h1>
-          {subtitle && <p className="text-app-text-dim text-xs font-dm truncate">{subtitle}</p>}
+          <h1 className="text-app-text font-jakarta font-semibold text-base truncate">{title}</h1>
+          {subtitle && <p className="text-app-text-dim text-xs font-inter truncate">{subtitle}</p>}
         </div>
       </div>
     </div>
@@ -228,7 +228,7 @@ export function FilterBar({
         <button
           key={f.value}
           onClick={() => onChange(f.value)}
-          className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-syne font-semibold transition-all duration-200 border ${
+          className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-jakarta font-semibold transition-all duration-200 border ${
             active === f.value
               ? 'bg-app-accent text-app-bg border-app-accent'
               : 'bg-app-surface text-app-text-dim border-app-border hover:text-app-text'

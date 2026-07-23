@@ -48,21 +48,21 @@ export function Register() {
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-2xl">📚</span>
-            <span className="text-app-accent font-syne font-bold text-lg tracking-widest uppercase">ClassSpace</span>
+            <span className="text-app-accent font-jakarta font-bold text-lg tracking-widest uppercase">ClassSpace</span>
           </div>
-          <h1 className="text-2xl font-syne font-bold text-app-text mb-1">Create your account</h1>
-          <p className="text-app-text-dim text-sm font-dm">Join ClassSpace — free forever</p>
+          <h1 className="text-2xl font-jakarta font-bold text-app-text mb-1">Create your account</h1>
+          <p className="text-app-text-dim text-sm font-inter">Join ClassSpace — free forever</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {error && (
             <div className="bg-app-red/10 border border-app-red/30 rounded-xl px-4 py-3">
-              <p className="text-app-red text-sm font-dm">{error}</p>
+              <p className="text-app-red text-sm font-inter">{error}</p>
             </div>
           )}
 
           <div>
-            <label className="text-app-text-dim text-xs font-syne font-semibold uppercase tracking-wider mb-1.5 block">
+            <label className="text-app-text-dim text-xs font-jakarta font-semibold uppercase tracking-wider mb-1.5 block">
               Full Name
             </label>
             <input
@@ -71,13 +71,13 @@ export function Register() {
               onChange={(e) => setName(e.target.value)}
               placeholder="Your name"
               autoComplete="name"
-              className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-dm text-sm placeholder:text-app-text-faint focus:border-app-accent focus:outline-none transition-colors"
+              className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-inter text-sm placeholder:text-app-text-faint focus:border-app-accent focus:outline-none transition-colors"
               required
             />
           </div>
 
           <div>
-            <label className="text-app-text-dim text-xs font-syne font-semibold uppercase tracking-wider mb-1.5 block">
+            <label className="text-app-text-dim text-xs font-jakarta font-semibold uppercase tracking-wider mb-1.5 block">
               Email
             </label>
             <input
@@ -86,13 +86,13 @@ export function Register() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@uniben.edu"
               autoComplete="email"
-              className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-dm text-sm placeholder:text-app-text-faint focus:border-app-accent focus:outline-none transition-colors"
+              className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-inter text-sm placeholder:text-app-text-faint focus:border-app-accent focus:outline-none transition-colors"
               required
             />
           </div>
 
           <div>
-            <label className="text-app-text-dim text-xs font-syne font-semibold uppercase tracking-wider mb-1.5 block">
+            <label className="text-app-text-dim text-xs font-jakarta font-semibold uppercase tracking-wider mb-1.5 block">
               Password
             </label>
             <input
@@ -101,7 +101,7 @@ export function Register() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Min 6 characters"
               autoComplete="new-password"
-              className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-dm text-sm placeholder:text-app-text-faint focus:border-app-accent focus:outline-none transition-colors"
+              className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-inter text-sm placeholder:text-app-text-faint focus:border-app-accent focus:outline-none transition-colors"
               required
               minLength={6}
             />
@@ -110,13 +110,13 @@ export function Register() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-app-accent text-app-bg font-syne font-bold text-sm rounded-xl py-3.5 mt-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50"
+            className="w-full bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl py-3.5 mt-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50"
           >
             {loading ? 'Creating account...' : 'Create Account'}
           </button>
         </form>
 
-        <p className="text-app-text-dim text-sm font-dm text-center mt-6">
+        <p className="text-app-text-dim text-sm font-inter text-center mt-6">
           Already have an account?{' '}
           <Link to="/login" className="text-app-accent font-semibold">Sign in</Link>
         </p>

@@ -57,10 +57,10 @@ export function Home() {
           subtitle="Create or join a space to get started"
           action={
             <div className="flex gap-3">
-              <button onClick={() => navigate('/setup')} className="bg-app-accent text-app-bg font-syne font-bold text-sm rounded-xl px-6 py-3">
+              <button onClick={() => navigate('/setup')} className="bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl px-6 py-3">
                 Create Space
               </button>
-              <button onClick={() => navigate('/join')} className="bg-app-surface border border-app-border text-app-text font-syne font-semibold text-sm rounded-xl px-6 py-3">
+              <button onClick={() => navigate('/join')} className="bg-app-surface border border-app-border text-app-text font-jakarta font-semibold text-sm rounded-xl px-6 py-3">
                 Join
               </button>
             </div>
@@ -84,10 +84,10 @@ export function Home() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <h1 className="text-app-text font-syne font-bold text-xl lg:text-2xl">
+        <h1 className="text-app-text font-jakarta font-bold text-xl lg:text-2xl">
           {greeting}, {user?.name?.split(' ')[0]} 👋
         </h1>
-        <p className="text-app-text-dim text-sm font-dm mt-0.5">
+        <p className="text-app-text-dim text-sm font-inter mt-0.5">
           {currentSpace.dept} · {currentSpace.uni.split('(')[1]?.replace(')', '') || currentSpace.uni}
         </p>
       </motion.div>
@@ -113,10 +113,10 @@ export function Home() {
                 style={card.accent ? { background: 'var(--app-accent)', borderColor: 'var(--app-accent)' } : {}}
               >
                 <span className="text-2xl mb-1">{card.icon}</span>
-                <p className="font-syne font-extrabold text-2xl" style={card.accent ? { color: 'var(--app-on-accent)' } : {}}>
+                <p className="font-jakarta font-extrabold text-2xl" style={card.accent ? { color: 'var(--app-on-accent)' } : {}}>
                   <span className={card.accent ? '' : 'text-app-text'}>{card.value}</span>
                 </p>
-                <p className="text-[11px] font-dm" style={card.accent ? { color: 'var(--app-on-accent)', opacity: 0.75 } : {}}>
+                <p className="text-[11px] font-inter" style={card.accent ? { color: 'var(--app-on-accent)', opacity: 0.75 } : {}}>
                   <span className={card.accent ? '' : 'text-app-text-dim'}>{card.label}</span>
                 </p>
               </div>
@@ -138,18 +138,18 @@ export function Home() {
                 🏛️
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-app-text font-syne font-extrabold text-base leading-tight">{currentSpace.name}</p>
-                <p className="text-app-text-dim text-xs font-dm mt-1 flex items-center gap-1.5">
+                <p className="text-app-text font-jakarta font-extrabold text-base leading-tight">{currentSpace.name}</p>
+                <p className="text-app-text-dim text-xs font-inter mt-1 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-app-green inline-block" />
                   Class Rep: {currentSpace.rep || user?.name?.split(' ')[0] || 'You'}
                 </p>
               </div>
-              <span className="text-app-accent text-sm font-syne font-semibold flex-shrink-0">View →</span>
+              <span className="text-app-accent text-sm font-jakarta font-semibold flex-shrink-0">View →</span>
             </div>
             <div className="flex gap-2 pl-3 flex-wrap">
-              <span className="text-[11px] bg-app-accent/10 text-app-accent font-syne font-semibold px-2.5 py-1 rounded-full">{courseList.length} courses</span>
-              <span className="text-[11px] bg-app-surface-2 text-app-text-dim font-syne font-semibold px-2.5 py-1 rounded-full">{currentSpace.level}</span>
-              <span className="text-[11px] bg-app-surface-2 text-app-text-dim font-syne font-semibold px-2.5 py-1 rounded-full">
+              <span className="text-[11px] bg-app-accent/10 text-app-accent font-jakarta font-semibold px-2.5 py-1 rounded-full">{courseList.length} courses</span>
+              <span className="text-[11px] bg-app-surface-2 text-app-text-dim font-jakarta font-semibold px-2.5 py-1 rounded-full">{currentSpace.level}</span>
+              <span className="text-[11px] bg-app-surface-2 text-app-text-dim font-jakarta font-semibold px-2.5 py-1 rounded-full">
                 Code: <span className="text-app-accent">{currentSpace.invite_code}</span>
               </span>
             </div>
@@ -165,7 +165,7 @@ export function Home() {
             >
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-base">🔴</span>
-                <p className="text-app-red font-syne font-bold text-sm uppercase tracking-wide">
+                <p className="text-app-red font-jakarta font-bold text-sm uppercase tracking-wide">
                   {urgentCount} Urgent {urgentCount === 1 ? 'Alert' : 'Alerts'}
                 </p>
               </div>
@@ -175,7 +175,7 @@ export function Home() {
                   onClick={() => navigate(`/space/${currentSpace.id}`)}
                   className="w-full text-left mb-1 last:mb-0"
                 >
-                  <p className="text-app-text text-sm font-dm truncate">• {ann.title}</p>
+                  <p className="text-app-text text-sm font-inter truncate">• {ann.title}</p>
                 </button>
               ))}
             </motion.div>
@@ -189,17 +189,17 @@ export function Home() {
           transition={{ duration: 0.3, delay: 0.15 }}
         >
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-app-text font-syne font-semibold text-sm lg:text-base">Recent Announcements</h2>
+            <h2 className="text-app-text font-jakarta font-semibold text-sm lg:text-base">Recent Announcements</h2>
             <button
               onClick={() => navigate(`/space/${currentSpace.id}`)}
-              className="text-app-accent text-xs font-syne font-semibold hover:opacity-80 transition-opacity"
+              className="text-app-accent text-xs font-jakarta font-semibold hover:opacity-80 transition-opacity"
             >
               See all →
             </button>
           </div>
           {announcements.length === 0 ? (
             <div className="bg-app-surface rounded-2xl p-6 border border-app-border text-center">
-              <p className="text-app-text-dim text-sm font-dm">No announcements yet</p>
+              <p className="text-app-text-dim text-sm font-inter">No announcements yet</p>
             </div>
           ) : (
             <div className="flex flex-col gap-2">
@@ -219,16 +219,16 @@ export function Home() {
                         {ann.urgent && <Badge variant="urgent">Urgent</Badge>}
                         {ann.pinned && !ann.urgent && <Badge variant="pin">Pinned</Badge>}
                         {ann.course_code && (
-                          <span className="text-[10px] bg-app-accent2/10 text-app-accent2 font-syne font-semibold px-1.5 py-0.5 rounded">{ann.course_code}</span>
+                          <span className="text-[10px] bg-app-accent2/10 text-app-accent2 font-jakarta font-semibold px-1.5 py-0.5 rounded">{ann.course_code}</span>
                         )}
-                        <span className={`ml-auto text-[10px] font-syne px-1.5 py-0.5 rounded capitalize ${
+                        <span className={`ml-auto text-[10px] font-jakarta px-1.5 py-0.5 rounded capitalize ${
                           ann.type === 'assignment' ? 'bg-app-orange/10 text-app-orange' :
                           ann.type === 'test' ? 'bg-app-red/10 text-app-red' :
                           ann.type === 'meeting' ? 'bg-app-accent2/10 text-app-accent2' :
                           'bg-app-surface-2 text-app-text-faint'
                         }`}>{ann.type}</span>
                       </div>
-                      <p className="text-app-text font-dm text-sm font-medium leading-snug">{ann.title}</p>
+                      <p className="text-app-text font-inter text-sm font-medium leading-snug">{ann.title}</p>
 
                       {/* Expanded body */}
                       <AnimatePresence initial={false}>
@@ -239,14 +239,14 @@ export function Home() {
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.2 }}
                           >
-                            <p className="text-app-text-dim text-xs font-dm leading-relaxed mt-2">{ann.body}</p>
+                            <p className="text-app-text-dim text-xs font-inter leading-relaxed mt-2">{ann.body}</p>
                             {ann.deadline && (
-                              <div className="flex items-center gap-1.5 mt-2 text-[11px] font-dm text-app-orange">
+                              <div className="flex items-center gap-1.5 mt-2 text-[11px] font-inter text-app-orange">
                                 <span>⏰</span><span>Due: {ann.deadline.split('T')[0]}</span>
                               </div>
                             )}
                             {ann.venue && (
-                              <div className="flex items-center gap-1.5 mt-1 text-[11px] font-dm text-app-text-dim">
+                              <div className="flex items-center gap-1.5 mt-1 text-[11px] font-inter text-app-text-dim">
                                 <span>📍</span><span>{ann.venue}</span>
                               </div>
                             )}
@@ -256,10 +256,10 @@ export function Home() {
 
                       {/* Footer row: author + View button */}
                       <div className="flex items-center justify-between mt-2">
-                        <p className="text-app-text-dim text-xs font-dm">{ann.author_name} · {ann.created_at?.split('T')[0]}</p>
+                        <p className="text-app-text-dim text-xs font-inter">{ann.author_name} · {ann.created_at?.split('T')[0]}</p>
                         <button
                           onClick={() => setExpandedId(isExpanded ? null : ann.id)}
-                          className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-syne font-semibold border transition-all duration-200 ${
+                          className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-jakarta font-semibold border transition-all duration-200 ${
                             isExpanded
                               ? 'bg-app-accent/10 border-app-accent/30 text-app-accent'
                               : 'bg-app-surface-2 border-app-border text-app-text-dim hover:border-app-accent/30 hover:text-app-text'

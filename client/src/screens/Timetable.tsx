@@ -72,7 +72,7 @@ function CountdownToClass({ entry }: { entry: TimetableEntry }) {
     return () => clearInterval(id);
   }, [entry.start_time]);
   if (!label) return null;
-  return <span className="text-amber-400 text-[10px] font-syne font-bold">{label}</span>;
+  return <span className="text-amber-400 text-[10px] font-jakarta font-bold">{label}</span>;
 }
 
 function ClassCard({ entry, isToday, showStatus = true }: { entry: TimetableEntry; isToday: boolean; showStatus?: boolean }) {
@@ -99,7 +99,7 @@ function ClassCard({ entry, isToday, showStatus = true }: { entry: TimetableEntr
             {showStatus && status === 'now' && (
               <div className="flex items-center gap-1.5 mb-2">
                 <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: color }} />
-                <span className="text-[10px] font-syne font-bold uppercase tracking-wider" style={{ color }}>Now in session</span>
+                <span className="text-[10px] font-jakarta font-bold uppercase tracking-wider" style={{ color }}>Now in session</span>
               </div>
             )}
             {showStatus && status === 'soon' && isToday && (
@@ -112,26 +112,26 @@ function ClassCard({ entry, isToday, showStatus = true }: { entry: TimetableEntr
                 {entry.course_icon}
               </span>
               <div className="min-w-0">
-                <p className="text-app-text font-syne font-bold text-sm leading-snug">{entry.course_name}</p>
-                <p className="text-app-text-dim text-[11px] font-dm">{entry.course_code}</p>
+                <p className="text-app-text font-jakarta font-bold text-sm leading-snug">{entry.course_name}</p>
+                <p className="text-app-text-dim text-[11px] font-inter">{entry.course_code}</p>
               </div>
             </div>
           </div>
           <div className="text-right flex-shrink-0">
-            <p className="text-app-text font-syne font-bold text-sm">{formatTimeRange(entry.start_time, entry.end_time)}</p>
-            <p className="text-app-text-faint text-[10px] font-dm mt-0.5">
+            <p className="text-app-text font-jakarta font-bold text-sm">{formatTimeRange(entry.start_time, entry.end_time)}</p>
+            <p className="text-app-text-faint text-[10px] font-inter mt-0.5">
               <ClassDurationLabel start={entry.start_time} end={entry.end_time} />
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3 mt-2.5 flex-wrap">
           {entry.venue && (
-            <div className="flex items-center gap-1 text-[11px] font-dm text-app-text-dim">
+            <div className="flex items-center gap-1 text-[11px] font-inter text-app-text-dim">
               <span>📍</span><span>{entry.venue}</span>
             </div>
           )}
           {entry.lecturer && (
-            <div className="flex items-center gap-1 text-[11px] font-dm text-app-text-dim">
+            <div className="flex items-center gap-1 text-[11px] font-inter text-app-text-dim">
               <span>👨‍🏫</span><span>{entry.lecturer}</span>
             </div>
           )}
@@ -252,14 +252,14 @@ export function Timetable() {
       <div className="px-4 pt-5 pb-3 border-b border-app-border lg:px-8 lg:pt-8">
         <div className="flex items-start justify-between mb-3">
           <div>
-            <h1 className="text-app-text font-syne font-bold text-xl lg:text-2xl">Timetable</h1>
-            <p className="text-app-text-dim text-sm font-dm mt-0.5">
+            <h1 className="text-app-text font-jakarta font-bold text-xl lg:text-2xl">Timetable</h1>
+            <p className="text-app-text-dim text-sm font-inter mt-0.5">
               {new Date().toLocaleDateString('en-NG', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
           </div>
           <div className="bg-app-accent/10 border border-app-accent/30 rounded-xl px-3 py-2 text-right">
-            <p className="text-app-accent font-syne font-bold text-sm">{dayEntries.length}</p>
-            <p className="text-app-accent/70 text-[10px] font-dm">classes {isToday ? 'today' : DAY_SHORT[selectedDay]}</p>
+            <p className="text-app-accent font-jakarta font-bold text-sm">{dayEntries.length}</p>
+            <p className="text-app-accent/70 text-[10px] font-inter">classes {isToday ? 'today' : DAY_SHORT[selectedDay]}</p>
           </div>
         </div>
 
@@ -269,7 +269,7 @@ export function Timetable() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-1.5 text-xs font-syne font-semibold rounded-lg transition-all duration-200 capitalize flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-1.5 text-xs font-jakarta font-semibold rounded-lg transition-all duration-200 capitalize flex items-center justify-center gap-1.5 ${
                 activeTab === tab ? 'bg-app-surface text-app-text shadow-sm' : 'text-app-text-faint hover:text-app-text-dim'
               }`}
             >
@@ -299,9 +299,9 @@ export function Timetable() {
                   ←
                 </button>
                 <div className="text-center">
-                  <p className="text-app-text font-syne font-semibold text-xs">{fmtWeekRange()}</p>
+                  <p className="text-app-text font-jakarta font-semibold text-xs">{fmtWeekRange()}</p>
                   {isCurrentWeek && (
-                    <p className="text-app-accent text-[10px] font-dm">This week</p>
+                    <p className="text-app-accent text-[10px] font-inter">This week</p>
                   )}
                 </div>
                 <button
@@ -331,8 +331,8 @@ export function Timetable() {
                           : 'bg-app-surface border-app-border text-app-text-dim'
                       }`}
                     >
-                      <span className="text-[10px] font-syne font-semibold">{DAY_SHORT[i]}</span>
-                      <span className={`text-[11px] font-syne font-bold ${isActive ? 'text-app-bg' : isActualToday ? 'text-app-accent' : 'text-app-text'}`}>
+                      <span className="text-[10px] font-jakarta font-semibold">{DAY_SHORT[i]}</span>
+                      <span className={`text-[11px] font-jakarta font-bold ${isActive ? 'text-app-bg' : isActualToday ? 'text-app-accent' : 'text-app-text'}`}>
                         {dateObj.getDate()}
                       </span>
                       {dayCount > 0 && (
@@ -377,10 +377,10 @@ export function Timetable() {
                         </motion.div>
                       ))}
                       <div className="bg-app-surface rounded-xl p-3 border border-app-border flex items-center justify-between mt-1">
-                        <p className="text-app-text-dim text-xs font-dm">
+                        <p className="text-app-text-dim text-xs font-inter">
                           {dayEntries.length} {dayEntries.length === 1 ? 'class' : 'classes'} · {totalHoursToday}h total
                         </p>
-                        <p className="text-app-text-faint text-[10px] font-dm">
+                        <p className="text-app-text-faint text-[10px] font-inter">
                           {isToday ? 'Today' : `${DAY_SHORT[selectedDay]} ${fmtShortDate(weekDates[selectedDay])}`}
                         </p>
                       </div>
@@ -396,17 +396,17 @@ export function Timetable() {
               <div className="flex items-center justify-between mb-4">
                 <button
                   onClick={() => setWeekOffset(w => w - 1)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-app-surface border border-app-border text-app-text-dim hover:text-app-text text-sm font-syne font-semibold transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-app-surface border border-app-border text-app-text-dim hover:text-app-text text-sm font-jakarta font-semibold transition-colors"
                 >
                   ← Prev week
                 </button>
                 <div className="text-center">
-                  <p className="text-app-text font-syne font-semibold text-sm">{fmtWeekRange()}</p>
-                  {isCurrentWeek && <p className="text-app-accent text-[10px] font-dm">Current week</p>}
+                  <p className="text-app-text font-jakarta font-semibold text-sm">{fmtWeekRange()}</p>
+                  {isCurrentWeek && <p className="text-app-accent text-[10px] font-inter">Current week</p>}
                 </div>
                 <button
                   onClick={() => setWeekOffset(w => w + 1)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-app-surface border border-app-border text-app-text-dim hover:text-app-text text-sm font-syne font-semibold transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-app-surface border border-app-border text-app-text-dim hover:text-app-text text-sm font-jakarta font-semibold transition-colors"
                 >
                   Next week →
                 </button>
@@ -429,23 +429,23 @@ export function Timetable() {
                         <div className={`mb-3 px-3 py-2.5 rounded-xl text-center border ${
                           isActualToday ? 'bg-app-accent/10 border-app-accent/30' : 'bg-app-surface border-app-border'
                         }`}>
-                          <p className={`font-syne font-bold text-xs ${isActualToday ? 'text-app-accent' : 'text-app-text-dim'}`}>
+                          <p className={`font-jakarta font-bold text-xs ${isActualToday ? 'text-app-accent' : 'text-app-text-dim'}`}>
                             {DAY_SHORT[i]}
                           </p>
-                          <p className={`font-syne font-extrabold text-lg leading-tight ${isActualToday ? 'text-app-accent' : 'text-app-text'}`}>
+                          <p className={`font-jakarta font-extrabold text-lg leading-tight ${isActualToday ? 'text-app-accent' : 'text-app-text'}`}>
                             {dateObj.getDate()}
                           </p>
-                          <p className={`text-[9px] font-dm ${isActualToday ? 'text-app-accent/70' : 'text-app-text-faint'}`}>
+                          <p className={`text-[9px] font-inter ${isActualToday ? 'text-app-accent/70' : 'text-app-text-faint'}`}>
                             {dateObj.toLocaleDateString('en-NG', { month: 'short' })}
                           </p>
-                          {isActualToday && <p className="text-app-accent/70 text-[9px] font-dm font-bold">TODAY</p>}
+                          {isActualToday && <p className="text-app-accent/70 text-[9px] font-inter font-bold">TODAY</p>}
                         </div>
 
                         {/* Classes */}
                         <div className="flex flex-col gap-2 flex-1">
                           {dEntries.length === 0 ? (
                             <div className="flex-1 rounded-xl border border-dashed border-app-border flex items-center justify-center py-8">
-                              <p className="text-app-text-faint text-[10px] font-dm text-center">No classes</p>
+                              <p className="text-app-text-faint text-[10px] font-inter text-center">No classes</p>
                             </div>
                           ) : (
                             dEntries.map((entry) => {
@@ -470,14 +470,14 @@ export function Timetable() {
                                     {status === 'now' && (
                                       <div className="flex items-center gap-1 mb-1">
                                         <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: color }} />
-                                        <span className="text-[9px] font-syne font-bold uppercase" style={{ color }}>Live</span>
+                                        <span className="text-[9px] font-jakarta font-bold uppercase" style={{ color }}>Live</span>
                                       </div>
                                     )}
-                                    <p className="text-app-text font-syne font-bold text-xs leading-snug line-clamp-2">{entry.course_name}</p>
-                                    <p className="text-app-text-dim text-[10px] font-dm mt-0.5">{entry.course_code}</p>
-                                    <p className="text-app-text-faint text-[10px] font-dm mt-1.5">{formatTimeRange(entry.start_time, entry.end_time)}</p>
+                                    <p className="text-app-text font-jakarta font-bold text-xs leading-snug line-clamp-2">{entry.course_name}</p>
+                                    <p className="text-app-text-dim text-[10px] font-inter mt-0.5">{entry.course_code}</p>
+                                    <p className="text-app-text-faint text-[10px] font-inter mt-1.5">{formatTimeRange(entry.start_time, entry.end_time)}</p>
                                     {entry.venue && (
-                                      <p className="text-app-text-faint text-[10px] font-dm mt-0.5">📍 {entry.venue}</p>
+                                      <p className="text-app-text-faint text-[10px] font-inter mt-0.5">📍 {entry.venue}</p>
                                     )}
                                   </div>
                                 </div>
@@ -487,7 +487,7 @@ export function Timetable() {
                         </div>
 
                         {dEntries.length > 0 && (
-                          <p className="text-app-text-faint text-[10px] font-dm text-center mt-2">
+                          <p className="text-app-text-faint text-[10px] font-inter text-center mt-2">
                             {dEntries.length} {dEntries.length === 1 ? 'class' : 'classes'}
                           </p>
                         )}
@@ -511,12 +511,12 @@ export function Timetable() {
           >
             <div className="flex items-center gap-2 mb-5">
               <div className="flex-1">
-                <h2 className="text-app-text font-syne font-bold text-base">UNIBEN Academic Calendar</h2>
-                <p className="text-app-text-faint text-xs font-dm mt-0.5">2025/2026 Academic Session — University of Benin</p>
+                <h2 className="text-app-text font-jakarta font-bold text-base">UNIBEN Academic Calendar</h2>
+                <p className="text-app-text-faint text-xs font-inter mt-0.5">2025/2026 Academic Session — University of Benin</p>
               </div>
               <div className="flex items-center gap-1.5 bg-app-accent/10 border border-app-accent/30 rounded-lg px-2.5 py-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-app-accent animate-pulse" />
-                <span className="text-app-accent text-[10px] font-syne font-bold">2nd Semester</span>
+                <span className="text-app-accent text-[10px] font-jakarta font-bold">2nd Semester</span>
               </div>
             </div>
 
@@ -532,7 +532,7 @@ export function Timetable() {
                   <div className="flex items-center gap-2.5 mb-3">
                     <div className="h-px flex-1" style={{ background: `${phase.color}30` }} />
                     <span
-                      className="text-[10px] font-syne font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full"
+                      className="text-[10px] font-jakarta font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full"
                       style={{ color: phase.color, background: `${phase.color}14`, border: `1px solid ${phase.color}30` }}
                     >
                       {phase.phase}
@@ -567,15 +567,15 @@ export function Timetable() {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className={`text-xs font-dm font-medium ${ev.current ? 'text-app-accent' : ev.done ? 'text-app-text line-through' : 'text-app-text'}`}>
+                          <p className={`text-xs font-inter font-medium ${ev.current ? 'text-app-accent' : ev.done ? 'text-app-text line-through' : 'text-app-text'}`}>
                             {ev.label}
                           </p>
-                          <p className={`text-[10px] font-dm mt-0.5 ${ev.current ? 'text-app-accent/70' : 'text-app-text-faint'}`}>
+                          <p className={`text-[10px] font-inter mt-0.5 ${ev.current ? 'text-app-accent/70' : 'text-app-text-faint'}`}>
                             {ev.date}
                           </p>
                         </div>
                         {ev.current && (
-                          <span className="text-[9px] font-syne font-bold text-app-accent bg-app-accent/10 px-1.5 py-0.5 rounded flex-shrink-0">NOW</span>
+                          <span className="text-[9px] font-jakarta font-bold text-app-accent bg-app-accent/10 px-1.5 py-0.5 rounded flex-shrink-0">NOW</span>
                         )}
                       </div>
                     ))}
@@ -585,8 +585,8 @@ export function Timetable() {
             </div>
 
             <div className="mt-5 p-3 rounded-xl border border-app-border bg-app-surface text-center">
-              <p className="text-app-text-faint text-[10px] font-dm">Dates based on UNIBEN 2025/2026 academic calendar</p>
-              <p className="text-app-text-faint text-[9px] font-dm mt-0.5 opacity-60">Always confirm with your department</p>
+              <p className="text-app-text-faint text-[10px] font-inter">Dates based on UNIBEN 2025/2026 academic calendar</p>
+              <p className="text-app-text-faint text-[9px] font-inter mt-0.5 opacity-60">Always confirm with your department</p>
             </div>
           </motion.div>
         )}

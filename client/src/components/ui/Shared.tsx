@@ -4,7 +4,7 @@ export function Toast({ message, onClose }: { message: string; onClose: () => vo
   return (
     <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-[400px] animate-slideDown">
       <div className="bg-app-surface border border-app-border rounded-2xl px-4 py-3 flex items-center gap-3 shadow-2xl">
-        <span className="text-app-text text-sm font-dm flex-1">{message}</span>
+        <span className="text-app-text text-sm font-inter flex-1">{message}</span>
         <button onClick={onClose} className="text-app-text-dim hover:text-app-text text-lg leading-none">&times;</button>
       </div>
     </div>
@@ -38,7 +38,7 @@ export function Badge({ children, variant = 'default' }: { children: ReactNode; 
   };
 
   return (
-    <span className={`text-[11px] font-syne font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md border ${colors[variant]}`}>
+    <span className={`text-[11px] font-jakarta font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md border ${colors[variant]}`}>
       {children}
     </span>
   );
@@ -48,8 +48,8 @@ export function EmptyState({ icon, title, subtitle, action }: { icon: string; ti
   return (
     <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
       <span className="text-5xl mb-4">{icon}</span>
-      <h3 className="text-app-text font-syne font-semibold text-lg mb-1">{title}</h3>
-      {subtitle && <p className="text-app-text-dim text-sm font-dm">{subtitle}</p>}
+      <h3 className="text-app-text font-jakarta font-semibold text-lg mb-1">{title}</h3>
+      {subtitle && <p className="text-app-text-dim text-sm font-inter">{subtitle}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
   );

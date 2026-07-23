@@ -80,12 +80,12 @@ function FeedPreview() {
         <div className="flex-1 flex items-center justify-center">
           <div className="bg-app-surface-2 rounded-lg px-3 py-1 flex items-center gap-2">
             <span className="text-xs">📚</span>
-            <span className="text-app-text-faint text-[11px] font-dm">PRE220 — 300L Production Eng.</span>
+            <span className="text-app-text-faint text-[11px] font-inter">PRE220 — 300L Production Eng.</span>
           </div>
         </div>
         <div className="flex items-center gap-1">
           <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-          <span className="text-[9px] text-green-400 font-syne font-bold">LIVE</span>
+          <span className="text-[9px] text-green-400 font-jakarta font-bold">LIVE</span>
         </div>
       </div>
 
@@ -94,7 +94,7 @@ function FeedPreview() {
         {['Updates', 'Files', 'Opportunities', 'Schedule'].map((t, i) => (
           <div
             key={t}
-            className={`py-2.5 px-3 text-[11px] font-syne font-semibold relative ${i === 0 ? 'text-app-accent' : 'text-app-text-faint'}`}
+            className={`py-2.5 px-3 text-[11px] font-jakarta font-semibold relative ${i === 0 ? 'text-app-accent' : 'text-app-text-faint'}`}
           >
             {t}
             {i === 0 && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-app-accent" />}
@@ -119,20 +119,20 @@ function FeedPreview() {
               {item.icon}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-app-text text-[12px] font-dm font-medium leading-snug line-clamp-1">{item.title}</p>
+              <p className="text-app-text text-[12px] font-inter font-medium leading-snug line-clamp-1">{item.title}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span
-                  className="text-[9px] font-syne font-bold px-1.5 py-0.5 rounded"
+                  className="text-[9px] font-jakarta font-bold px-1.5 py-0.5 rounded"
                   style={{ background: `${item.badgeColor}18`, color: item.badgeColor }}
                 >
                   {item.badge}
                 </span>
                 {item.course && (
-                  <span className="text-app-text-faint text-[9px] font-dm">{item.course}</span>
+                  <span className="text-app-text-faint text-[9px] font-inter">{item.course}</span>
                 )}
               </div>
             </div>
-            <span className="text-app-text-faint text-[9px] font-dm flex-shrink-0">{item.time}</span>
+            <span className="text-app-text-faint text-[9px] font-inter flex-shrink-0">{item.time}</span>
           </motion.div>
         ))}
       </div>
@@ -141,9 +141,9 @@ function FeedPreview() {
       <div className="px-4 py-2.5 border-t border-app-border flex items-center justify-between" style={{ background: 'rgba(0,0,0,0.1)' }}>
         <div className="flex items-center gap-1.5">
           <div className="w-1.5 h-1.5 rounded-full bg-app-accent animate-pulse" />
-          <span className="text-[10px] text-app-text-faint font-dm">42 members · 5 courses</span>
+          <span className="text-[10px] text-app-text-faint font-inter">42 members · 5 courses</span>
         </div>
-        <span className="text-[10px] text-app-accent font-syne font-semibold">Live preview ↗</span>
+        <span className="text-[10px] text-app-accent font-jakarta font-semibold">Live preview ↗</span>
       </div>
     </div>
   );
@@ -170,10 +170,10 @@ export function Landing() {
       <div className="flex lg:hidden flex-col min-h-dvh">
         {/* Mobile nav */}
         <div className="flex items-center justify-between px-5 py-4">
-          <div className="font-syne font-extrabold text-[10px] tracking-[0.26em] uppercase text-app-accent flex items-center gap-1.5">
+          <div className="font-jakarta font-extrabold text-[10px] tracking-[0.26em] uppercase text-app-accent flex items-center gap-1.5">
             <span className="text-base">📚</span> ClassSpace
           </div>
-          <Link to="/login" className="text-app-text-dim font-syne font-semibold text-xs hover:text-app-text transition-colors">
+          <Link to="/login" className="text-app-text-dim font-jakarta font-semibold text-xs hover:text-app-text transition-colors">
             Sign in
           </Link>
         </div>
@@ -188,7 +188,7 @@ export function Landing() {
             transition={{ duration: 0.4 }}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-app-accent animate-pulse" />
-            <span className="text-app-accent font-syne font-semibold text-[10px] tracking-wider uppercase">
+            <span className="text-app-accent font-jakarta font-semibold text-[10px] tracking-wider uppercase">
               Built for Nigerian Students 🇳🇬
             </span>
           </motion.div>
@@ -200,16 +200,16 @@ export function Landing() {
             transition={{ duration: 0.5, delay: 0.06 }}
             className="mb-3"
           >
-            <h1 className="font-syne font-extrabold leading-[1.0] text-[38px] text-app-text">
+            <h1 className="font-jakarta font-extrabold leading-[1.0] text-[38px] text-app-text">
               Your class.
             </h1>
-            <h1 className="font-syne font-extrabold leading-[1.0] text-[38px] text-app-accent">
+            <h1 className="font-jakarta font-extrabold leading-[1.0] text-[38px] text-app-accent">
               Organised.
             </h1>
           </motion.div>
 
           <motion.p
-            className="text-app-text-dim font-dm text-sm leading-relaxed mb-5 max-w-[300px]"
+            className="text-app-text-dim font-inter text-sm leading-relaxed mb-5 max-w-[300px]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.1 }}
@@ -236,14 +236,14 @@ export function Landing() {
           >
             <Link
               to="/register"
-              className="w-full text-center font-syne font-bold text-sm rounded-2xl py-4 transition-all duration-200 active:scale-[0.98]"
+              className="w-full text-center font-jakarta font-bold text-sm rounded-2xl py-4 transition-all duration-200 active:scale-[0.98]"
               style={{ background: 'var(--app-accent)', color: 'var(--app-on-accent)', boxShadow: '0 4px 28px color-mix(in srgb, var(--app-accent) 30%, transparent)' }}
             >
               Create a Space — Free →
             </Link>
             <Link
               to="/join"
-              className="w-full text-center bg-app-surface border border-app-border text-app-text font-syne font-semibold text-sm rounded-2xl py-4 active:scale-[0.98] transition-all duration-200"
+              className="w-full text-center bg-app-surface border border-app-border text-app-text font-jakarta font-semibold text-sm rounded-2xl py-4 active:scale-[0.98] transition-all duration-200"
             >
               Join with Invite Code
             </Link>
@@ -260,16 +260,16 @@ export function Landing() {
               <div key={f.label} className="bg-app-surface border border-app-border rounded-xl p-3 flex items-start gap-2.5">
                 <span className="text-lg mt-0.5">{f.icon}</span>
                 <div>
-                  <p className="text-app-text font-syne font-semibold text-xs">{f.label}</p>
-                  <p className="text-app-text-faint text-[10px] font-dm leading-snug mt-0.5">{f.desc}</p>
+                  <p className="text-app-text font-jakarta font-semibold text-xs">{f.label}</p>
+                  <p className="text-app-text-faint text-[10px] font-inter leading-snug mt-0.5">{f.desc}</p>
                 </div>
               </div>
             ))}
           </motion.div>
 
-          <p className="text-app-text-faint text-xs font-dm text-center">
+          <p className="text-app-text-faint text-xs font-inter text-center">
             Already have an account?{' '}
-            <Link to="/login" className="text-app-accent font-syne font-semibold">Sign in</Link>
+            <Link to="/login" className="text-app-accent font-jakarta font-semibold">Sign in</Link>
           </p>
         </div>
       </div>
@@ -278,22 +278,22 @@ export function Landing() {
       <div className="hidden lg:flex flex-col min-h-dvh">
         {/* Desktop nav */}
         <nav className="flex items-center justify-between px-10 xl:px-20 py-5 border-b border-app-border/30">
-          <div className="font-syne font-extrabold text-[11px] tracking-[0.28em] uppercase text-app-accent flex items-center gap-2">
+          <div className="font-jakarta font-extrabold text-[11px] tracking-[0.28em] uppercase text-app-accent flex items-center gap-2">
             <span className="text-xl">📚</span> ClassSpace
           </div>
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-4 text-app-text-faint text-sm font-syne font-semibold">
+            <div className="flex items-center gap-4 text-app-text-faint text-sm font-jakarta font-semibold">
               <span className="hover:text-app-text transition-colors cursor-pointer">Features</span>
               <span className="hover:text-app-text transition-colors cursor-pointer">How it works</span>
               <span className="hover:text-app-text transition-colors cursor-pointer">About</span>
             </div>
             <div className="w-px h-4 bg-app-border" />
-            <Link to="/login" className="text-app-text-dim font-syne font-semibold text-sm hover:text-app-text transition-colors">
+            <Link to="/login" className="text-app-text-dim font-jakarta font-semibold text-sm hover:text-app-text transition-colors">
               Sign in
             </Link>
             <Link
               to="/register"
-              className="font-syne font-bold text-sm rounded-xl px-5 py-2.5 hover:opacity-90 transition-all duration-200 hover:scale-[1.02]"
+              className="font-jakarta font-bold text-sm rounded-xl px-5 py-2.5 hover:opacity-90 transition-all duration-200 hover:scale-[1.02]"
               style={{ background: 'var(--app-accent)', color: 'var(--app-on-accent)', boxShadow: '0 4px 20px color-mix(in srgb, var(--app-accent) 25%, transparent)' }}
             >
               Get Started →
@@ -317,19 +317,19 @@ export function Landing() {
                 transition={{ duration: 0.4, delay: 0.05 }}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-app-accent animate-pulse" />
-                <span className="text-app-accent font-syne font-semibold text-xs tracking-wider uppercase">
+                <span className="text-app-accent font-jakarta font-semibold text-xs tracking-wider uppercase">
                   Built for Nigerian university students 🇳🇬
                 </span>
               </motion.div>
 
-              <h1 className="font-syne font-extrabold leading-[1.0] text-[56px] xl:text-[68px] text-app-text mb-2">
+              <h1 className="font-jakarta font-extrabold leading-[1.0] text-[56px] xl:text-[68px] text-app-text mb-2">
                 Your class.
               </h1>
-              <h1 className="font-syne font-extrabold leading-[1.0] text-[56px] xl:text-[68px] text-app-accent mb-8">
+              <h1 className="font-jakarta font-extrabold leading-[1.0] text-[56px] xl:text-[68px] text-app-accent mb-8">
                 Organised.
               </h1>
 
-              <p className="text-app-text-dim font-dm text-lg leading-relaxed mb-10 max-w-[420px]">
+              <p className="text-app-text-dim font-inter text-lg leading-relaxed mb-10 max-w-[420px]">
                 One clean hub that cuts through the noise. Announcements, files, timetables, and opportunities — all where your class can find them.
               </p>
 
@@ -345,8 +345,8 @@ export function Landing() {
                   >
                     <span className="text-xl flex-shrink-0">{f.icon}</span>
                     <div>
-                      <p className="text-app-text font-syne font-semibold text-sm">{f.label}</p>
-                      <p className="text-app-text-faint font-dm text-xs mt-0.5 leading-snug">{f.desc}</p>
+                      <p className="text-app-text font-jakarta font-semibold text-sm">{f.label}</p>
+                      <p className="text-app-text-faint font-inter text-xs mt-0.5 leading-snug">{f.desc}</p>
                     </div>
                   </motion.div>
                 ))}
@@ -361,14 +361,14 @@ export function Landing() {
               >
                 <Link
                   to="/register"
-                  className="font-syne font-bold text-sm rounded-2xl px-8 py-4 hover:opacity-90 transition-all duration-200 hover:scale-[1.02]"
+                  className="font-jakarta font-bold text-sm rounded-2xl px-8 py-4 hover:opacity-90 transition-all duration-200 hover:scale-[1.02]"
                   style={{ background: 'var(--app-accent)', color: 'var(--app-on-accent)', boxShadow: '0 4px 32px color-mix(in srgb, var(--app-accent) 30%, transparent)' }}
                 >
                   Create a Space — Free →
                 </Link>
                 <Link
                   to="/join"
-                  className="bg-app-surface border border-app-border text-app-text font-syne font-semibold text-sm rounded-2xl px-8 py-4 hover:border-app-accent/40 transition-colors"
+                  className="bg-app-surface border border-app-border text-app-text font-jakarta font-semibold text-sm rounded-2xl px-8 py-4 hover:border-app-accent/40 transition-colors"
                 >
                   Join with Code
                 </Link>
@@ -401,8 +401,8 @@ export function Landing() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.4, delay: 0.8 }}
               >
-                <p className="text-[10px] font-syne font-bold text-app-accent">📢 Live Updates</p>
-                <p className="text-[9px] text-app-text-faint font-dm">Real-time class feed</p>
+                <p className="text-[10px] font-jakarta font-bold text-app-accent">📢 Live Updates</p>
+                <p className="text-[9px] text-app-text-faint font-inter">Real-time class feed</p>
               </motion.div>
 
               <motion.div
@@ -411,8 +411,8 @@ export function Landing() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.4, delay: 1.0 }}
               >
-                <p className="text-[10px] font-syne font-bold text-app-green">🏆 Opportunities</p>
-                <p className="text-[9px] text-app-text-faint font-dm">Scholarships & more</p>
+                <p className="text-[10px] font-jakarta font-bold text-app-green">🏆 Opportunities</p>
+                <p className="text-[9px] text-app-text-faint font-inter">Scholarships & more</p>
               </motion.div>
             </motion.div>
           </div>
@@ -420,8 +420,8 @@ export function Landing() {
 
         {/* Footer */}
         <div className="flex items-center justify-between px-10 xl:px-20 py-4 border-t border-app-border/30">
-          <p className="text-app-text-faint text-[11px] font-dm">Made for Nigerian university students 🇳🇬</p>
-          <p className="text-app-text-faint text-[10px] font-dm opacity-40">ClassSpace · Built for real academic life</p>
+          <p className="text-app-text-faint text-[11px] font-inter">Made for Nigerian university students 🇳🇬</p>
+          <p className="text-app-text-faint text-[10px] font-inter opacity-40">ClassSpace · Built for real academic life</p>
         </div>
       </div>
     </div>

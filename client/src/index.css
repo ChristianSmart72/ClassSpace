@@ -15,8 +15,8 @@
   --color-app-green: #52ffa0;
   --color-app-orange: #ffb347;
 
-  --font-syne: "Syne", sans-serif;
-  --font-dm: "DM Sans", sans-serif;
+  --font-jakarta: "Plus Jakarta Sans", sans-serif;
+  --font-inter: "Inter", sans-serif;
 
   --animate-fadeIn: fadeIn 0.3s ease-out;
   --animate-slideUp: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -106,14 +106,21 @@
 }
 
 @layer base {
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }
+  .font-jakarta { font-family: "Plus Jakarta Sans", sans-serif; }
+  .font-inter { font-family: "Inter", sans-serif; }
   * { box-sizing: border-box; }
   body {
-    @apply bg-app-bg text-app-text font-dm antialiased;
+    @apply bg-app-bg text-app-text font-inter antialiased;
     margin: 0;
     -webkit-tap-highlight-color: transparent;
     transition: background-color 0.25s ease, color 0.25s ease;
   }
-  #root { @apply min-h-dvh max-w-[430px] lg:max-w-none mx-auto relative overflow-x-hidden; }
+  #root {
+    @apply min-h-dvh max-w-[430px] lg:max-w-none mx-auto relative;
+    /* overflow-x clip done at body level to avoid Android Chrome blank space bug */
+  }
+  body { overflow-x: hidden; }
   ::-webkit-scrollbar { display: none; }
   input, textarea, select { @apply outline-none; }
   a { @apply no-underline text-inherit; }

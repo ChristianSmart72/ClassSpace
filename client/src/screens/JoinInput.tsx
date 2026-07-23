@@ -27,11 +27,11 @@ export function JoinInput() {
     <div className="min-h-dvh flex flex-col px-6 py-8">
       <button onClick={() => navigate(-1)} className="text-app-text-dim hover:text-app-text text-lg mb-6 self-start">←</button>
 
-      <h2 className="text-xl font-syne font-bold text-app-text mb-1">Join a Space</h2>
-      <p className="text-app-text-dim text-sm font-dm mb-6">Paste a ClassSpace link to preview and join</p>
+      <h2 className="text-xl font-jakarta font-bold text-app-text mb-1">Join a Space</h2>
+      <p className="text-app-text-dim text-sm font-inter mb-6">Paste a ClassSpace link to preview and join</p>
 
       <div>
-        <label className="text-app-text-dim text-xs font-syne font-semibold uppercase tracking-wider mb-1.5 block">
+        <label className="text-app-text-dim text-xs font-jakarta font-semibold uppercase tracking-wider mb-1.5 block">
           Link
         </label>
         <input
@@ -39,14 +39,14 @@ export function JoinInput() {
           value={link}
           onChange={(e) => setLink(e.target.value)}
           placeholder="classspace.app/s/abc123"
-          className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-dm text-sm placeholder:text-app-text-faint focus:border-app-accent transition-colors"
+          className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-inter text-sm placeholder:text-app-text-faint focus:border-app-accent transition-colors"
         />
       </div>
 
       <button
         onClick={handlePreview}
         disabled={!link.trim()}
-        className="w-full bg-app-accent text-app-bg font-syne font-bold text-sm rounded-xl py-3.5 mt-4 active:scale-[0.98] transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
+        className="w-full bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl py-3.5 mt-4 active:scale-[0.98] transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
       >
         Preview
       </button>
@@ -57,15 +57,15 @@ export function JoinInput() {
           <div className="flex items-center gap-3">
             <span className="text-2xl">{getLinkIcon(link)}</span>
             <div>
-              <p className="text-app-text font-dm text-sm font-medium">{getLinkLabel(link)}</p>
-              <p className="text-app-text-dim text-xs font-dm">{link}</p>
+              <p className="text-app-text font-inter text-sm font-medium">{getLinkLabel(link)}</p>
+              <p className="text-app-text-dim text-xs font-inter">{link}</p>
             </div>
           </div>
         </div>
       )}
 
       <div className="mt-8">
-        <p className="text-app-text-dim text-xs font-syne font-semibold uppercase tracking-wider mb-3">Try a demo link</p>
+        <p className="text-app-text-dim text-xs font-jakarta font-semibold uppercase tracking-wider mb-3">Try a demo link</p>
         <div className="flex flex-col gap-2">
           {DEMO_LINKS.map((d) => (
             <button
@@ -73,8 +73,8 @@ export function JoinInput() {
               onClick={() => demoLink(d.link)}
               className="text-left bg-app-surface rounded-xl px-4 py-3 border border-app-border active:scale-[0.98] transition-all duration-200"
             >
-              <p className="text-app-text font-dm text-sm">{d.label}</p>
-              <p className="text-app-text-dim text-xs font-dm mt-0.5">{d.link}</p>
+              <p className="text-app-text font-inter text-sm">{d.label}</p>
+              <p className="text-app-text-dim text-xs font-inter mt-0.5">{d.link}</p>
             </button>
           ))}
         </div>
