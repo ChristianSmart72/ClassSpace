@@ -6,7 +6,6 @@ import { useAuthStore } from '../../store/authStore';
 const NAV_TABS = (currentSpacePath: string) => [
   { path: '/home', icon: '🏠', label: 'Home', matchPrefix: '/home' },
   { path: currentSpacePath, icon: '📋', label: 'Space', matchPrefix: '/space' },
-  { path: '/timetable', icon: '📅', label: 'Timetable', matchPrefix: '/timetable' },
   { path: '/profile', icon: '👤', label: 'Profile', matchPrefix: '/profile' },
 ];
 
@@ -74,27 +73,13 @@ function NavItem({ tab }: { tab: ReturnType<typeof useNavTabs>[0] }) {
 
 export function BottomNav() {
   const tabs = useNavTabs();
-  const { theme, toggle } = useThemeStore();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 lg:hidden bg-app-bg border-t border-app-border z-40" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
-      <div className="flex items-center justify-around h-16 max-w-[430px] mx-auto px-2">
+    <nav className="fixed bottom-0 left-0 right-0 lg:hidden bg-app-bg border-t border-app-border z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <div className="flex items-stretch justify-around h-16 max-w-[430px] mx-auto">
         {tabs.map((tab) => (
           <NavItem key={tab.label} tab={tab} />
         ))}
-        {/* Theme toggle in bottom nav */}
-        <button
-          onClick={toggle}
-          className="flex flex-col items-center gap-0.5 px-3 py-1 transition-all duration-200"
-          title="Toggle theme"
-        >
-          <span className="text-xl opacity-40 hover:opacity-70 transition-opacity">
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </span>
-          <span className="text-[10px] font-jakarta font-semibold text-app-text-faint">
-            {theme === 'dark' ? 'Light' : 'Dark'}
-          </span>
-        </button>
       </div>
     </nav>
   );

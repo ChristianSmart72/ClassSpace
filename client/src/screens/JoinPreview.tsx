@@ -199,22 +199,54 @@ function AnnouncementPreview({ data, onJoin, user }: { data: SharedAnnouncement;
 
 function MaterialPreview({ data, onJoin, user }: { data: SharedMaterial; onJoin: () => void; user: any }) {
   const iconMap: Record<string, string> = { pdf: '📄', doc: '📝', ppt: '📊', img: '🖼️', video: '🎬' };
+  const downloadUrl = `/api/materials/${data.id}/download`;
+
   return (
     <div className="flex-1 flex flex-col">
-      <div className="flex-1 flex flex-col items-center text-center">
-        <span className="text-5xl mb-4">{iconMap[data.file_type] || '📁'}</span>
-        <h2 className="text-app-text font-jakarta font-bold text-lg">{data.name}</h2>
-        <p className="text-app-text-dim text-sm font-inter">{data.course.code} · {data.category}</p>
-        <p className="text-app-text-dim text-xs font-inter mt-1">{(data.file_size / 1024 / 1024).toFixed(1)} MB</p>
-        <p className="text-app-text-faint text-xs font-inter mt-4">Uploaded by {data.uploader}</p>
-        <p className="text-app-text-faint text-xs font-inter">From {data.space.name}</p>
+      {/* File preview card */}
+      <div className="bg-app-surface rounded-2xl border border-app-border p-5 mb-4 flex flex-col items-center text-center">
+        <span className="text-5xl mb-3">{iconMap[data.file_type] || '📁'}</span>
+        <h2 className="text-app-text font-jakarta font-bold text-lg mb-1">{data.name}</h2>
+        <div className="flex items-center gap-2 flex-wrap justify-center mb-3">
+          <span className="text-[10px] bg-app-accent2/10 text-app-accent2 font-jakarta font-semibold px-2 py-0.5 rounded-full">{data.course.code}</span>
+          <span className="text-[10px] bg-app-surface-2 text-app-text-dim font-jakarta font-semibold px-2 py-0.5 rounded-full">{data.category}</span>
+          <span className="text-[10px] text-app-text-faint font-inter">{(data.file_size / 1024 / 1024).toFixed(1)} MB</span>
+        </div>
+        <p className="text-app-text-faint text-xs font-inter">
+          Shared by <span className="text-app-text-dim">{data.uploader}</span> · {data.space.name}
+        </p>
       </div>
-      {user ? (
-        <button onClick={onJoin} className="w-full bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200">
+
+      {/* Direct download — no login required */}
+      <a
+        href={downloadUrl}
+        download
+        className="w-full bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl py-3.5 text-center active:scale-[0.98] transition-all duration-200 mb-3"
+      >
+        ⬇ Download File
+      </a>
+
+      {/* Soft prompt for non-logged-in users */}
+      {!user && (
+        <div className="bg-app-accent/5 border border-app-accent/20 rounded-2xl p-4 text-center">
+          <p className="text-app-text font-jakarta font-semibold text-sm mb-1">Want to see more?</p>
+          <p className="text-app-text-dim text-xs font-inter mb-3">Create an account to access all files and join this space</p>
+          <div className="flex gap-2">
+            <Link to="/register" className="flex-1 bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl py-3 text-center">
+              Create Account
+            </Link>
+            <Link to="/login" className="flex-1 bg-app-surface border border-app-border text-app-text font-jakarta font-semibold text-sm rounded-xl py-3 text-center">
+              Sign In
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Logged-in users just see a join/view button */}
+      {user && (
+        <button onClick={onJoin} className="w-full bg-app-surface border border-app-border text-app-text font-jakarta font-semibold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200">
           View in Space →
         </button>
-      ) : (
-        <AuthPrompt />
       )}
     </div>
   );

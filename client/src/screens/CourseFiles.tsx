@@ -43,7 +43,7 @@ export function CourseFiles() {
   if (!course) {
     return (
       <div className="px-4 pt-4">
-        <TopBar title="Course Files" onBack={() => navigate(`/space/${spaceId}`)} />
+        <TopBar title="Course Files" onBack={() => navigate(`/space/${spaceId}?tab=mat`)} />
         <p className="text-app-text-dim text-sm font-inter mt-4">Course not found</p>
       </div>
     );
@@ -53,7 +53,7 @@ export function CourseFiles() {
     <div className="pb-4">
       <div className="sticky top-0 bg-app-bg/95 backdrop-blur-lg z-30 border-b border-app-border">
         <div className="flex items-center gap-3 px-4 h-14">
-          <button onClick={() => navigate(`/space/${spaceId}`)} className="text-app-text-dim hover:text-app-text text-xl transition-colors">←</button>
+          <button onClick={() => navigate(`/space/${spaceId}?tab=mat`)} className="text-app-text-dim hover:text-app-text text-xl transition-colors">←</button>
           <div className="flex-1 min-w-0">
             <h1 className="text-app-text font-jakarta font-semibold text-base truncate">{course.name}</h1>
             <p className="text-app-text-dim text-xs font-inter truncate">{course.code}</p>

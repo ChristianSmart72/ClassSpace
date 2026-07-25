@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSpaceStore } from '../store/spaceStore';
 import { useContentStore } from '../store/contentStore';
@@ -9,48 +9,10 @@ import { Badge, EmptyState, Skeleton } from '../components/ui/Shared';
 import { PostAnnouncementSheet } from '../components/sheets/PostAnnouncement';
 import { UploadMaterialSheet } from '../components/sheets/UploadMaterial';
 import { toggleReaction } from '../api/content';
-import type { Announcement, Opportunity } from '../types';
-import { COURSE_COLORS, COURSE_BG_COLORS, OPPORTUNITY_CATEGORIES as OPP_CATS } from '../types';
+import { getTimetable } from '../api/timetable';
+import type { Announcement } from '../types';
+import { COURSE_COLORS, COURSE_BG_COLORS, DAYS, type TimetableEntry } from '../types';
 import { ShareSheet } from '../components/sheets/ShareSheet';
-
-// ─── Demo opportunities shown when space has none yet ─────────────────────
-const DEMO_OPPS: Opportunity[] = [
-  {
-    id: -1, space_id: '', author_id: 0, author_name: 'ClassSpace',
-    title: 'Shell Nigeria STEM Scholarship 2025',
-    description: 'Open to 300L and 400L engineering students with a minimum CGPA of 3.5. Covers tuition, stipend, and mentorship with Shell professionals. Applications close August 31, 2025.',
-    category: 'scholarship', link: 'https://shell.com/scholarship', deadline: '2025-08-31',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: -2, space_id: '', author_id: 0, author_name: 'ClassSpace',
-    title: 'MTN Foundation Summer Internship — Lagos & Abuja',
-    description: 'Paid 3-month internship for penultimate year students in Computer Science, Engineering or Business. Accommodation provided for out-of-state candidates.',
-    category: 'internship', link: 'https://mtn.com/internship', deadline: '2025-07-15',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: -3, space_id: '', author_id: 0, author_name: 'ClassSpace',
-    title: 'Faculty Research Seminar — Renewable Energy Systems',
-    description: 'Weekly seminar series hosted by the Department of Mechanical Engineering. Open to all levels. Attendance certificates issued. Starts next Monday, 10am, Lecture Theatre B.',
-    category: 'seminar', link: '', deadline: '',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: -4, space_id: '', author_id: 0, author_name: 'ClassSpace',
-    title: 'IEEE Nigeria Student Competition — Best Final Year Project',
-    description: 'Submit your final year project abstract for a chance to win ₦500,000 and an IEEE membership. Open to all engineering disciplines. Winners announced October 2025.',
-    category: 'competition', link: 'https://ieee.org/nigeria', deadline: '2025-09-10',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: -5, space_id: '', author_id: 0, author_name: 'ClassSpace',
-    title: 'Covenant University Job Fair 2025',
-    description: 'Over 40 top Nigerian companies recruiting across all fields. Bring printed CVs and dress professionally. Free for all registered students.',
-    category: 'job', link: '', deadline: '2025-07-22',
-    created_at: new Date().toISOString(),
-  },
-];
 
 // Demo vote counts seeded from announcement id — looks realistic for a pitch
 function demoCounts(annId: number) {
@@ -94,131 +56,6 @@ function DeadlineCountdown({ deadline }: { deadline: string }) {
   );
 }
 
-// ─── Create Opportunity Form ───────────────────────────────────────────────
-function CreateOpportunityForm({ spaceId, onCreated, onCancel }: {
-  spaceId: string; onCreated: () => void; onCancel: () => void;
-}) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('scholarship');
-  const [link, setLink] = useState('');
-  const [deadline, setDeadline] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const { createOpportunity } = useContentStore();
-
-  const handleSubmit = async () => {
-    if (!title.trim()) { setError('Enter a title'); return; }
-    if (!description.trim()) { setError('Enter a description'); return; }
-    setSaving(true); setError('');
-    try {
-      await createOpportunity(spaceId, {
-        title: title.trim(), description: description.trim(), category,
-        link: link.trim() || undefined, deadline: deadline || undefined,
-      });
-      onCreated();
-    } catch (e: any) {
-      setError(e?.response?.data?.error || 'Failed to post opportunity');
-    } finally { setSaving(false); }
-  };
-
-  const selected = OPP_CATS.find(c => c.value === category)!;
-
-  return (
-    <div className="bg-app-surface rounded-2xl border border-app-accent/30 p-4 mb-3">
-      <h3 className="text-app-text font-jakarta font-bold text-sm mb-3">{selected.icon} Post Opportunity</h3>
-      <div className="flex flex-wrap gap-1.5 mb-3">
-        {OPP_CATS.map(cat => (
-          <button
-            key={cat.value} onClick={() => setCategory(cat.value)}
-            className={`text-[11px] font-jakarta font-semibold px-2.5 py-1 rounded-full border transition-all duration-200 ${
-              category === cat.value ? 'border-transparent text-white' : 'border-app-border text-app-text-dim hover:border-app-accent/40'
-            }`}
-            style={category === cat.value ? { background: cat.color } : {}}
-          >{cat.icon} {cat.label}</button>
-        ))}
-      </div>
-      <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Title (e.g. Shell Scholarship 2025)"
-        className="w-full bg-app-surface-2 border border-app-border rounded-xl px-3 py-2.5 text-app-text text-sm font-inter placeholder:text-app-text-faint focus:outline-none focus:border-app-accent mb-2" />
-      <textarea value={description} onChange={e => setDescription(e.target.value)}
-        placeholder="Describe the opportunity — eligibility, requirements, what to expect..." rows={3}
-        className="w-full bg-app-surface-2 border border-app-border rounded-xl px-3 py-2.5 text-app-text text-sm font-inter placeholder:text-app-text-faint focus:outline-none focus:border-app-accent resize-none mb-2" />
-      <input value={link} onChange={e => setLink(e.target.value)} placeholder="Link (optional)" type="url"
-        className="w-full bg-app-surface-2 border border-app-border rounded-xl px-3 py-2.5 text-app-text text-sm font-inter placeholder:text-app-text-faint focus:outline-none focus:border-app-accent mb-2" />
-      <div className="mb-3">
-        <p className="text-app-text-dim text-[11px] font-jakarta font-semibold uppercase tracking-wider mb-1.5">Deadline (optional)</p>
-        <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)}
-          className="bg-app-surface-2 border border-app-border rounded-xl px-3 py-2 text-app-text text-sm font-inter focus:outline-none focus:border-app-accent" />
-      </div>
-      {error && <p className="text-app-red text-xs font-inter mb-3">{error}</p>}
-      <div className="flex gap-2">
-        <button onClick={handleSubmit} disabled={saving}
-          className="flex-1 bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl py-2.5 disabled:opacity-50">
-          {saving ? 'Posting...' : 'Post Opportunity'}
-        </button>
-        <button onClick={onCancel}
-          className="px-4 bg-app-surface-2 text-app-text-dim font-jakarta font-semibold text-sm rounded-xl py-2.5 border border-app-border">
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ─── Opportunity Card ──────────────────────────────────────────────────────
-function OpportunityCard({ opp, isRep, onDelete, isDemo }: {
-  opp: Opportunity; isRep: boolean; onDelete: (id: number) => void; isDemo?: boolean;
-}) {
-  const cat = OPP_CATS.find(c => c.value === opp.category) ?? OPP_CATS[OPP_CATS.length - 1];
-  const isExpired = opp.deadline ? new Date(opp.deadline) < new Date() : false;
-
-  return (
-    <div className="bg-app-surface rounded-2xl border border-app-border overflow-hidden">
-      <div className="px-4 py-2 flex items-center gap-2"
-        style={{ background: `${cat.color}12`, borderBottom: `1px solid ${cat.color}25` }}>
-        <span className="text-base">{cat.icon}</span>
-        <span className="text-xs font-jakarta font-bold" style={{ color: cat.color }}>{cat.label.toUpperCase()}</span>
-        {isDemo && (
-          <span className="text-[9px] bg-app-surface text-app-text-faint font-jakarta font-semibold px-1.5 py-0.5 rounded border border-app-border ml-1">Sample</span>
-        )}
-        {isExpired && (
-          <span className="ml-auto text-[10px] bg-app-surface-2 text-app-text-faint font-jakarta font-bold px-2 py-0.5 rounded-full">Closed</span>
-        )}
-        {isRep && !isDemo && (
-          <button onClick={() => onDelete(opp.id)} className="ml-auto text-app-text-faint hover:text-app-red transition-colors text-sm px-1">🗑</button>
-        )}
-        {isRep && isExpired && !isDemo && (
-          <button onClick={() => onDelete(opp.id)} className="text-app-text-faint hover:text-app-red transition-colors text-sm px-1">🗑</button>
-        )}
-      </div>
-      <div className="p-4">
-        <h3 className="text-app-text font-jakarta font-bold text-base leading-tight mb-2">{opp.title}</h3>
-        <p className="text-app-text-dim text-sm font-inter leading-relaxed mb-3">{opp.description}</p>
-        <div className="flex flex-wrap gap-2 items-center">
-          {opp.deadline && !isExpired && (
-            <span className="flex items-center gap-1.5 text-[11px] font-inter text-app-orange bg-app-orange/10 border border-app-orange/20 px-2.5 py-1 rounded-full">
-              ⏰ {new Date(opp.deadline).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}
-            </span>
-          )}
-          {opp.link && (
-            <a href={opp.link} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-[11px] font-jakarta font-semibold text-app-accent bg-app-accent/10 border border-app-accent/20 px-2.5 py-1 rounded-full hover:bg-app-accent/20 transition-colors"
-              onClick={e => e.stopPropagation()}>
-              🔗 Apply / Learn more
-            </a>
-          )}
-        </div>
-        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-app-border">
-          <div className="w-5 h-5 rounded-full bg-app-accent2/20 flex items-center justify-center text-[10px] text-app-accent2 font-jakarta font-bold">
-            {opp.author_name?.charAt(0)}
-          </div>
-          <p className="text-app-text-faint text-xs font-inter">{opp.author_name} · {opp.created_at?.split('T')[0]}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── Main Space screen ─────────────────────────────────────────────────────
 export function Space() {
   const { id } = useParams<{ id: string }>();
@@ -226,19 +63,27 @@ export function Space() {
   const { currentSpace, courses, fetchSpace, memberRole, loading: spaceLoading, error: spaceError } = useSpaceStore();
   const {
     announcements, loading: annLoading, fetchAnnouncements, deleteAnnouncement,
-    opportunities, opportunitiesLoading, fetchOpportunities, deleteOpportunity,
   } = useContentStore();
   const { user } = useAuthStore();
 
-  const [tab, setTab] = useState<'ann' | 'mat' | 'opps'>('ann');
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState<'ann' | 'mat' | 'schedule'>(() => {
+    const t = searchParams.get('tab');
+    if (t === 'mat') return 'mat';
+    if (t === 'schedule') return 'schedule';
+    return 'ann';
+  });
   const [filter, setFilter] = useState('all');
   const [showPost, setShowPost] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
-  const [showCreateOpp, setShowCreateOpp] = useState(false);
   const [shareTarget, setShareTarget] = useState<{ type: string; id: string | number } | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [showSearch, setShowSearch] = useState(false);
+
+  const [timetable, setTimetable] = useState<TimetableEntry[]>([]);
+  const todayIndex = (() => { const d = new Date().getDay(); return d === 0 || d === 6 ? 0 : d - 1; })();
+  const [scheduleDay, setScheduleDay] = useState(todayIndex);
 
   const [localReactions, setLocalReactions] = useState<Record<number, Record<string, number>>>({});
   const [userReacted, setUserReacted] = useState<Record<number, string | null>>({});
@@ -248,7 +93,11 @@ export function Space() {
 
   useEffect(() => { if (id) fetchSpace(id); }, [id]);
   useEffect(() => { if (id) fetchAnnouncements(id, filter); }, [id, filter]);
-  useEffect(() => { if (id && tab === 'opps') fetchOpportunities(id); }, [id, tab]);
+  useEffect(() => {
+    if (id && tab === 'schedule') {
+      getTimetable(id).then(data => setTimetable(data || [])).catch(() => setTimetable([]));
+    }
+  }, [id, tab]);
 
   useEffect(() => {
     if (announcements.length === 0) return;
@@ -287,11 +136,6 @@ export function Space() {
     if (!confirm('Delete this announcement?')) return;
     setDeletingId(annId);
     try { await deleteAnnouncement(annId); } finally { setDeletingId(null); }
-  };
-
-  const handleDeleteOpp = async (oppId: number) => {
-    if (!confirm('Delete this opportunity?')) return;
-    try { await deleteOpportunity(oppId); } catch { /* ignore */ }
   };
 
   const handleReact = useCallback(async (annId: number, reaction: string) => {
@@ -349,9 +193,6 @@ export function Space() {
   }
 
   const urgentCount = (announcements ?? []).filter(a => a.urgent).length;
-  // Show demo opps when no real ones yet
-  const displayOpps = opportunities.length > 0 ? opportunities : DEMO_OPPS;
-  const usingDemoOpps = opportunities.length === 0 && !opportunitiesLoading;
 
   return (
     <div className="pb-4">
@@ -405,16 +246,16 @@ export function Space() {
       {/* Tabs */}
       <div className="flex mx-4 mb-3 bg-app-surface rounded-xl p-1 border border-app-border gap-1">
         {[
-          { key: 'ann', label: 'Updates', icon: '📢', count: announcements.length },
-          { key: 'mat', label: 'Files', icon: '📁', count: courseList.length },
-          { key: 'opps', label: 'Opps', icon: '🏆', count: displayOpps.length },
+          { key: 'ann',      label: 'Updates',  icon: '📢', count: announcements.length },
+          { key: 'mat',      label: 'Files',    icon: '📁', count: courseList.length },
+          { key: 'schedule', label: 'Schedule', icon: '📅', count: 0 },
         ].map(t => (
-          <button key={t.key} onClick={() => setTab(t.key as 'ann' | 'mat' | 'opps')}
-            className={`flex-1 py-2 text-sm font-jakarta font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 ${
-              tab === t.key ? 'bg-app-accent text-app-bg' : 'text-app-text-dim'
+          <button key={t.key} onClick={() => setTab(t.key as 'ann' | 'mat' | 'schedule')}
+            className={`flex-1 py-2.5 text-sm font-jakarta font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 ${
+              tab === t.key ? 'bg-app-accent text-app-bg' : 'text-app-text-dim hover:text-app-text'
             }`}>
             <span>{t.icon}</span>
-            <span className="hidden xs:inline">{t.label}</span>
+            <span>{t.label}</span>
             {t.count > 0 && (
               <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tab === t.key ? 'bg-app-bg/20 text-app-bg' : 'bg-app-surface-2 text-app-text-faint'}`}>
                 {t.count}
@@ -510,44 +351,70 @@ export function Space() {
           </motion.div>
         )}
 
-        {/* ── Opportunities Tab ── */}
-        {tab === 'opps' && (
-          <motion.div key="opps" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }} className="px-4">
-            {usingDemoOpps && (
-              <div className="bg-app-accent/8 border border-app-accent/20 rounded-xl px-3 py-2.5 mb-3 flex items-center gap-2">
-                <span className="text-sm">✨</span>
-                <p className="text-app-text-dim text-xs font-inter">Sample opportunities shown. Class rep can post real ones.</p>
-              </div>
-            )}
-            {isRep && (
-              <div className="mb-3">
-                {showCreateOpp ? (
-                  <CreateOpportunityForm spaceId={id!} onCreated={() => setShowCreateOpp(false)} onCancel={() => setShowCreateOpp(false)} />
-                ) : (
-                  <button onClick={() => setShowCreateOpp(true)}
-                    className="w-full bg-app-surface border border-dashed border-app-accent/40 rounded-2xl py-3 text-app-accent text-sm font-jakarta font-semibold hover:border-app-accent/70 transition-colors">
-                    + Post an Opportunity
-                  </button>
-                )}
-              </div>
-            )}
-            {opportunitiesLoading ? (
-              [1, 2].map(i => <Skeleton key={i} className="h-40 w-full mb-3 rounded-2xl" />)
-            ) : (
-              <div className="flex flex-col gap-3">
-                {displayOpps.map(opp => (
-                  <OpportunityCard key={opp.id} opp={opp} isRep={isRep}
-                    onDelete={handleDeleteOpp} isDemo={opp.id < 0} />
-                ))}
-              </div>
-            )}
+        {/* ── Schedule Tab ── */}
+        {tab === 'schedule' && (
+          <motion.div key="schedule" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }} className="px-4">
+            {/* Day selector */}
+            <div className="flex gap-1.5 mb-4 overflow-x-auto scrollbar-none pb-1">
+              {['Mon','Tue','Wed','Thu','Fri'].map((d, i) => (
+                <button
+                  key={d}
+                  onClick={() => setScheduleDay(i)}
+                  className={`flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-xl text-xs font-jakarta font-bold transition-all duration-200 border ${
+                    scheduleDay === i
+                      ? 'bg-app-accent text-app-bg border-app-accent'
+                      : i === todayIndex
+                        ? 'bg-app-surface border-app-accent/40 text-app-accent'
+                        : 'bg-app-surface border-app-border text-app-text-dim'
+                  }`}
+                >
+                  <span>{d}</span>
+                  {i === todayIndex && <span className="w-1 h-1 rounded-full bg-current mt-0.5 opacity-60" />}
+                </button>
+              ))}
+            </div>
+
+            {(() => {
+              const dayName = DAYS[scheduleDay];
+              const classes = timetable.filter(e => e.day === dayName);
+              if (!classes.length) return (
+                <div className="text-center py-12">
+                  <p className="text-3xl mb-3">📭</p>
+                  <p className="text-app-text font-jakarta font-semibold text-sm mb-1">No classes</p>
+                  <p className="text-app-text-dim text-xs font-inter">Nothing scheduled for this day</p>
+                </div>
+              );
+              return (
+                <div className="flex flex-col gap-2.5">
+                  {classes.sort((a,b) => a.start_time.localeCompare(b.start_time)).map(entry => {
+                    const ci = entry.color_index % 5;
+                    const colors = ['#e8ff47','#5b6af0','#52ffa0','#ffb347','#ff5252'];
+                    const bgs   = ['#e8ff4715','#5b6af015','#52ffa015','#ffb34715','#ff525215'];
+                    return (
+                      <div key={entry.id} className="bg-app-surface border border-app-border rounded-2xl p-4 relative overflow-hidden">
+                        <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: colors[ci] }} />
+                        <div className="pl-3">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <p className="text-app-text font-jakarta font-bold text-sm leading-snug flex-1">{entry.course_name}</p>
+                            <span className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: bgs[ci], color: colors[ci] }}>
+                              {entry.course_code}
+                            </span>
+                          </div>
+                          <p className="text-app-text-dim text-xs font-inter">{entry.start_time.slice(0,5)} – {entry.end_time.slice(0,5)}</p>
+                          {entry.venue && <p className="text-app-text-faint text-xs font-inter mt-0.5">📍 {entry.venue}</p>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </motion.div>
         )}
       </AnimatePresence>
 
       {isRep && tab === 'ann' && <Fab onClick={() => setShowPost(true)} icon="+" />}
       {isRep && tab === 'mat' && <Fab onClick={() => setShowUpload(true)} icon="+" />}
-      {isRep && tab === 'opps' && !showCreateOpp && <Fab onClick={() => setShowCreateOpp(true)} icon="+" />}
 
       {showPost && id && <PostAnnouncementSheet spaceId={id} onClose={() => setShowPost(false)} />}
       {showUpload && <UploadMaterialSheet onClose={() => setShowUpload(false)} />}
