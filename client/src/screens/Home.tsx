@@ -116,6 +116,75 @@ export function Home() {
         </p>
       </motion.div>
 
+      {/* Opportunities Section — shown before the grid */}
+      <motion.div
+        className="mb-5"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.07 }}
+      >
+        {oppsLoading ? (
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {[1, 2, 3].map(i => <Skeleton key={i} className="h-40 w-64 flex-shrink-0 rounded-2xl" />)}
+          </div>
+        ) : (
+          <div className="flex gap-3 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4">
+            {displayOpps.map(opp => {
+              const cat = CAT_STYLE[opp.category] ?? { bg: '#ffffff0d', color: '#7a7a88', label: opp.category };
+              const daysLeft = opp.deadline
+                ? Math.ceil((new Date(opp.deadline).getTime() - Date.now()) / 86400000)
+                : null;
+              return (
+                <div
+                  key={opp.id}
+                  className="flex-shrink-0 w-[260px] bg-app-surface border border-app-border rounded-2xl overflow-hidden"
+                  style={{ borderLeft: `3px solid ${cat.color}` }}
+                >
+                  <div className="p-3.5 flex flex-col gap-1.5">
+                    <span
+                      className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-full self-start"
+                      style={{ background: cat.bg, color: cat.color }}
+                    >
+                      {cat.label}
+                    </span>
+                    <p className="text-app-text font-jakarta font-semibold text-sm leading-snug line-clamp-2">
+                      {opp.title}
+                    </p>
+                    <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-app-border mt-auto">
+                      <span className={`text-[10px] font-jakarta font-semibold ${
+                        !daysLeft ? 'text-app-text-faint' :
+                        daysLeft < 0 ? 'text-app-red' :
+                        daysLeft <= 7 ? 'text-app-orange' : 'text-app-text-dim'
+                      }`}>
+                        {!daysLeft ? 'Open' : daysLeft < 0 ? 'Expired' : daysLeft === 0 ? 'Today!' : `${daysLeft}d left`}
+                      </span>
+                      {opp.link ? (
+                        <a
+                          href={opp.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] font-jakarta font-bold px-2.5 py-1 rounded-lg"
+                          style={{ background: cat.bg, color: cat.color }}
+                        >
+                          Apply →
+                        </a>
+                      ) : (
+                        <button
+                          onClick={() => navigate(`/space/${currentSpace.id}`)}
+                          className="text-[11px] font-jakarta font-bold px-2.5 py-1 rounded-lg bg-app-surface-2 text-app-text-dim"
+                        >
+                          View →
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </motion.div>
+
       {/* Desktop two-column layout */}
       <div className="lg:grid lg:grid-cols-[1fr_1.5fr] lg:gap-8 lg:items-start">
 
@@ -307,93 +376,6 @@ export function Home() {
         </motion.div>
       </div>
 
-      {/* Opportunities Section */}
-      <motion.div
-        className="mt-6"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.2 }}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h2 className="text-app-text font-jakarta font-semibold text-sm">Opportunities for you</h2>
-            <p className="text-app-text-dim text-xs font-inter mt-0.5">Scholarships, internships & more</p>
-          </div>
-          <button
-            onClick={() => navigate(`/space/${currentSpace.id}`)}
-            className="text-app-accent text-xs font-jakarta font-semibold"
-          >
-            See all →
-          </button>
-        </div>
-
-        {oppsLoading ? (
-          <div className="flex gap-3 overflow-x-auto pb-2">
-            {[1, 2, 3].map(i => <Skeleton key={i} className="h-40 w-64 flex-shrink-0 rounded-2xl" />)}
-          </div>
-        ) : (
-          <div className="flex gap-3 overflow-x-auto scrollbar-none pb-2 -mx-4 px-4">
-            {displayOpps.map(opp => {
-              const cat = CAT_STYLE[opp.category] ?? { bg: '#ffffff0d', color: '#7a7a88', label: opp.category };
-              const daysLeft = opp.deadline
-                ? Math.ceil((new Date(opp.deadline).getTime() - Date.now()) / 86400000)
-                : null;
-              return (
-                <div
-                  key={opp.id}
-                  className="flex-shrink-0 w-72 bg-app-surface border border-app-border rounded-2xl overflow-hidden"
-                  style={{ borderLeft: `3px solid ${cat.color}` }}
-                >
-                  <div className="p-4 flex flex-col">
-                    <span
-                      className="text-[10px] font-jakarta font-bold px-2.5 py-1 rounded-full self-start mb-3"
-                      style={{ background: cat.bg, color: cat.color }}
-                    >
-                      {cat.label}
-                    </span>
-                    <p className="text-app-text font-jakarta font-bold text-sm leading-snug mb-2 line-clamp-2">
-                      {opp.title}
-                    </p>
-                    <p className="text-app-text-dim text-xs font-inter leading-relaxed line-clamp-2 mb-3">
-                      {opp.description}
-                    </p>
-                    <div className="flex items-center justify-between gap-2 pt-3 border-t border-app-border">
-                      {daysLeft !== null ? (
-                        <span className={`text-[10px] font-jakarta font-bold ${
-                          daysLeft < 0 ? 'text-app-red' :
-                          daysLeft <= 7 ? 'text-app-orange' : 'text-app-text-dim'
-                        }`}>
-                          {daysLeft < 0 ? 'Expired' : daysLeft === 0 ? 'Today!' : `${daysLeft}d left`}
-                        </span>
-                      ) : (
-                        <span className="text-[10px] text-app-text-faint font-inter">Open</span>
-                      )}
-                      {opp.link ? (
-                        <a
-                          href={opp.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[11px] font-jakarta font-bold px-3 py-1.5 rounded-xl"
-                          style={{ background: cat.bg, color: cat.color }}
-                        >
-                          Apply →
-                        </a>
-                      ) : (
-                        <button
-                          onClick={() => navigate(`/space/${currentSpace.id}`)}
-                          className="text-[11px] font-jakarta font-bold px-3 py-1.5 rounded-xl bg-app-surface-2 text-app-text-dim"
-                        >
-                          View →
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </motion.div>
     </div>
   );
 }
