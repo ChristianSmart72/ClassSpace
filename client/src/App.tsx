@@ -16,6 +16,7 @@ import { CourseFiles } from './screens/CourseFiles';
 import { Profile } from './screens/Profile';
 import { Timetable } from './screens/Timetable';
 import { AnnouncementDetail } from './screens/AnnouncementDetail';
+import { LogoSplash } from './components/ui/Logo';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null };
@@ -99,10 +100,7 @@ export default function App() {
   if (!initialized) {
     return (
       <div className="min-h-dvh flex items-center justify-center bg-app-bg">
-        <div className="flex flex-col items-center gap-3">
-          <span className="text-4xl">📚</span>
-          <div className="w-6 h-6 border-2 border-app-accent border-t-transparent rounded-full animate-spin" />
-        </div>
+        <LogoSplash size={44} />
       </div>
     );
   }

@@ -6,6 +6,7 @@ import { useSpaceStore } from '../store/spaceStore';
 import { useContentStore } from '../store/contentStore';
 import { Skeleton, EmptyState } from '../components/ui/Shared';
 import { Badge } from '../components/ui/Shared';
+import { Logo } from '../components/ui/Logo';
 import { getOpportunities } from '../api/opportunities';
 import type { Opportunity } from '../types';
 
@@ -76,7 +77,7 @@ export function Home() {
     return (
       <div className="flex flex-col items-center justify-center min-h-dvh px-6">
         <EmptyState
-          icon="📚"
+          icon={<Logo width={36} height={36} className="text-app-text-dim" />}
           title="No space yet"
           subtitle="Create or join a space to get started"
           action={
@@ -96,7 +97,7 @@ export function Home() {
 
   const STAT_CARDS = [
     { icon: '📢', value: announcements.length, label: 'Announcements', accent: true },
-    { icon: '📚', value: courseCount, label: 'Courses', accent: false },
+    { icon: <Logo width={24} height={24} className="text-app-text-dim" />, value: courseCount, label: 'Courses', accent: false },
   ];
 
   return (
@@ -205,7 +206,7 @@ export function Home() {
                 }`}
                 style={card.accent ? { background: 'var(--app-accent)', borderColor: 'var(--app-accent)' } : {}}
               >
-                <span className="text-2xl mb-1">{card.icon}</span>
+                {typeof card.icon === 'string' ? <span className="text-2xl mb-1">{card.icon}</span> : <div className="mb-1">{card.icon}</div>}
                 <p className="font-jakarta font-extrabold text-2xl" style={card.accent ? { color: 'var(--app-on-accent)' } : {}}>
                   <span className={card.accent ? '' : 'text-app-text'}>{card.value}</span>
                 </p>

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { Logo } from '../components/ui/Logo';
 
 const FEATURES = [
   { icon: '📢', label: 'Announcements', desc: 'Assignments, tests, and urgent notices' },
@@ -171,7 +172,7 @@ export function Landing() {
         {/* Mobile nav */}
         <div className="flex items-center justify-between px-5 py-4">
           <div className="font-jakarta font-extrabold text-[10px] tracking-[0.26em] uppercase text-app-accent flex items-center gap-1.5">
-            <span className="text-base">📚</span> ClassSpace
+            <Logo width={18} height={18} className="text-app-accent" /> ClassSpace
           </div>
           <Link to="/login" className="text-app-text-dim font-jakarta font-semibold text-xs hover:text-app-text transition-colors">
             Sign in
@@ -279,7 +280,7 @@ export function Landing() {
         {/* Desktop nav */}
         <nav className="flex items-center justify-between px-10 xl:px-20 py-5 border-b border-app-border/30">
           <div className="font-jakarta font-extrabold text-[11px] tracking-[0.28em] uppercase text-app-accent flex items-center gap-2">
-            <span className="text-xl">📚</span> ClassSpace
+            <Logo width={20} height={20} className="text-app-accent" /> ClassSpace
           </div>
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-4 text-app-text-faint text-sm font-jakarta font-semibold">

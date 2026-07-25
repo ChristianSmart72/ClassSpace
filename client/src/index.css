@@ -117,8 +117,7 @@
     transition: background-color 0.25s ease, color 0.25s ease;
   }
   #root {
-    @apply min-h-dvh max-w-[430px] lg:max-w-none mx-auto relative;
-    /* overflow-x clip done at body level to avoid Android Chrome blank space bug */
+    @apply min-h-dvh w-full mx-auto relative;
   }
   body { overflow-x: hidden; max-width: 100vw; overscroll-behavior: none; }
   html { overflow-x: hidden; overscroll-behavior: none; }

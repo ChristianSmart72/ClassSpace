@@ -44,10 +44,10 @@ export function Badge({ children, variant = 'default' }: { children: ReactNode; 
   );
 }
 
-export function EmptyState({ icon, title, subtitle, action }: { icon: string; title: string; subtitle?: string; action?: ReactNode }) {
+export function EmptyState({ icon, title, subtitle, action }: { icon: ReactNode; title: string; subtitle?: string; action?: ReactNode }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-      <span className="text-5xl mb-4">{icon}</span>
+      <div className="mb-4 flex items-center justify-center">{typeof icon === 'string' ? <span className="text-5xl">{icon}</span> : icon}</div>
       <h3 className="text-app-text font-jakarta font-semibold text-lg mb-1">{title}</h3>
       {subtitle && <p className="text-app-text-dim text-sm font-inter">{subtitle}</p>}
       {action && <div className="mt-4">{action}</div>}
