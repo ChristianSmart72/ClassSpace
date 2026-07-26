@@ -8,12 +8,19 @@ interface ThemeState {
   setTheme: (t: Theme) => void;
 }
 
-function applyTheme(t: Theme) {
-  document.documentElement.setAttribute('data-theme', t);
-  localStorage.setItem('theme', t);
+function lsGet(key: string): string | null {
+  try { return localStorage.getItem(key) } catch { return null }
+}
+function lsSet(key: string, val: string) {
+  try { localStorage.setItem(key, val) } catch {}
 }
 
-const saved = (localStorage.getItem('theme') as Theme) || 'dark';
+function applyTheme(t: Theme) {
+  document.documentElement.setAttribute('data-theme', t);
+  lsSet('theme', t);
+}
+
+const saved: Theme = (lsGet('theme') as Theme) || 'dark';
 applyTheme(saved);
 
 export const useThemeStore = create<ThemeState>((set) => ({

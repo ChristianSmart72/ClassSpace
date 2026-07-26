@@ -15,12 +15,12 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  token: localStorage.getItem('token'),
+  token: (() => { try { return localStorage.getItem('token') } catch { return null } })(),
   loading: false,
   initialized: false,
 
   init: async () => {
-    const token = localStorage.getItem('token');
+    const token = (() => { try { return localStorage.getItem('token') } catch { return null } })();
     if (!token) {
       set({ initialized: true });
       return;
@@ -29,13 +29,13 @@ export const useAuthStore = create<AuthState>((set) => ({
       const res = await getMe();
       const { user, space } = res as any;
       if (space) {
-        localStorage.setItem('spaceId', space.id);
+        try { localStorage.setItem('spaceId', space.id) } catch {}
         const { useSpaceStore } = await import('./spaceStore');
         useSpaceStore.getState().fetchSpace(space.id);
       }
       set({ user, token, initialized: true });
     } catch {
-      localStorage.removeItem('token');
+      try { localStorage.removeItem('token') } catch {}
       set({ token: null, user: null, initialized: true });
     }
   },
@@ -70,8 +70,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('spaceId');
+    try { localStorage.removeItem('token'); localStorage.removeItem('spaceId') } catch {}
     set({ user: null, token: null });
   },
 }));

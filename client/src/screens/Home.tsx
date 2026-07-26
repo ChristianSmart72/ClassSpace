@@ -55,7 +55,7 @@ export function Home() {
   const courseCount = courseList.length;
   const urgentCount = announcements.filter(a => a.urgent).length;
   const displayOpps = (opps.length > 0 ? opps : DEMO_OPPS).slice(0, 3);
-  const loading = (!currentSpace && !!localStorage.getItem('spaceId')) || spaceLoading;
+  const loading = (!currentSpace && !!(() => { try { return localStorage.getItem('spaceId') } catch { return null } })()) || spaceLoading;
 
   if (loading) {
     return (

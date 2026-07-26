@@ -82,12 +82,12 @@ export const useSpaceStore = create<SpaceState>((set) => ({
   },
 
   setSpace: (space, courses) => {
-    localStorage.setItem('spaceId', space.id);
+    try { localStorage.setItem('spaceId', space.id) } catch {}
     set({ currentSpace: space, courses, isMember: true, memberRole: 'member', error: null });
   },
 
   leaveSpace: () => {
-    localStorage.removeItem('spaceId');
+    try { localStorage.removeItem('spaceId') } catch {}
     set({ currentSpace: null, courses: [], members: [], isMember: false, memberRole: null, error: null });
   },
 
