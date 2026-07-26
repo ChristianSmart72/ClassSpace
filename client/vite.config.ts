@@ -10,6 +10,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
+        id: '/',
         name: 'ClassSpace',
         short_name: 'ClassSpace',
         description: 'One clean hub for your department\'s announcements and study materials',
@@ -19,6 +20,10 @@ export default defineConfig({
         orientation: 'portrait',
         scope: '/',
         start_url: '/',
+        lang: 'en',
+        dir: 'ltr',
+        categories: ['education'],
+        prefer_related_applications: false,
         icons: [
           {
             src: 'pwa-192x192.png',
@@ -35,6 +40,26 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any',
+          },
+        ],
+        shortcuts: [
+          {
+            name: 'Home',
+            short_name: 'Home',
+            url: '/home',
+            icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
+          },
+          {
+            name: 'Space',
+            short_name: 'Space',
+            url: '/space',
+            icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
+          },
+          {
+            name: 'Profile',
+            short_name: 'Profile',
+            url: '/profile',
+            icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
           },
         ],
       },
