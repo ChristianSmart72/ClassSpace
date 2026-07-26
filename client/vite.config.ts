@@ -24,6 +24,10 @@ export default defineConfig({
         dir: 'ltr',
         categories: ['education'],
         prefer_related_applications: false,
+        display_override: ['standalone', 'minimal-ui'],
+        launch_handler: {
+          client_mode: 'focus-existing',
+        },
         icons: [
           {
             src: 'pwa-192x192.png',
@@ -40,6 +44,24 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any',
+          },
+        ],
+        share_target: {
+          action: '/',
+          method: 'GET',
+          params: {
+            title: 'title',
+            text: 'text',
+            url: 'url',
+          },
+        },
+        screenshots: [
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            form_factor: 'narrow',
+            label: 'ClassSpace home screen',
           },
         ],
         shortcuts: [
