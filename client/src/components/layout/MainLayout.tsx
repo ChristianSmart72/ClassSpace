@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import { BottomNav, SideNav } from './index';
+import { PwaInstall } from '../ui/PwaInstall';
 
 export function MainLayout() {
   return (
@@ -18,6 +19,7 @@ export function MainLayout() {
         {/* Mobile bottom nav — fixed, doesn't affect document flow */}
         <BottomNav />
       </div>
+      <PwaInstall />
     </div>
   );
 }
