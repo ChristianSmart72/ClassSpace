@@ -1,5 +1,5 @@
 import { useEffect, Component, type ReactNode } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { useSpaceStore } from './store/spaceStore';
 import { FloatingThemeToggle } from './components/ui/FloatingThemeToggle';
@@ -56,16 +56,11 @@ function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// Routes where the floating theme toggle should appear (non-dashboard pages)
-const PUBLIC_PATHS = ['/', '/login', '/register', '/setup', '/join'];
-
 function AppRoutes() {
-  const location = useLocation();
-  const isPublic = PUBLIC_PATHS.some(p => location.pathname === p || location.pathname.startsWith('/join/'));
   return (
     <>
-      {isPublic && <FloatingThemeToggle />}
-      <Routes location={location}>
+      <FloatingThemeToggle />
+      <Routes>
         <Route path="/" element={<PublicOnlyRoute><Landing /></PublicOnlyRoute>} />
         <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
         <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />

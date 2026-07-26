@@ -6,7 +6,7 @@ export function FloatingThemeToggle() {
     <button
       onClick={toggle}
       title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-      className="fixed bottom-6 right-4 z-50 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 backdrop-blur-sm"
+      className="fixed lg:bottom-6 lg:right-4 bottom-24 right-4 z-50 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 backdrop-blur-sm"
       style={{
         background: theme === 'dark' ? 'rgba(232,255,71,0.12)' : 'rgba(0,0,0,0.10)',
         border: theme === 'dark' ? '1px solid rgba(232,255,71,0.25)' : '1px solid rgba(0,0,0,0.18)',
