@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { useSpaceStore } from '../store/spaceStore';
 import { getTimetable } from '../api/timetable';
 import { Skeleton, EmptyState } from '../components/ui/Shared';
@@ -279,15 +279,8 @@ export function Timetable() {
         </div>
       </div>
 
-      <AnimatePresence mode="wait">
         {activeTab === 'schedule' && (
-          <motion.div
-            key="schedule"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
-          >
+          <div className="animate-fadeIn">
             {/* ── Mobile layout ── */}
             <div className="lg:hidden">
               {/* Week navigation */}
@@ -349,43 +342,29 @@ export function Timetable() {
                     {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}
                   </div>
                 ) : dayEntries.length === 0 ? (
-                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+                  <div className="animate-fadeIn">
                     <EmptyState
                       icon={selectedDay >= 5 ? '😴' : '📅'}
                       title={selectedDay >= 5 ? 'Weekend' : 'Free day'}
                       subtitle={selectedDay >= 5 ? 'Enjoy the weekend!' : `No ${DAYS[selectedDay]} classes scheduled`}
                     />
-                  </motion.div>
+                  </div>
                 ) : (
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={selectedDay}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.2 }}
-                      className="flex flex-col gap-3"
-                    >
-                      {dayEntries.map((entry, idx) => (
-                        <motion.div
-                          key={entry.id}
-                          initial={{ opacity: 0, y: 12 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.2, delay: idx * 0.06 }}
-                        >
-                          <ClassCard entry={entry} isToday={isToday} />
-                        </motion.div>
-                      ))}
-                      <div className="bg-app-surface rounded-xl p-3 border border-app-border flex items-center justify-between mt-1">
-                        <p className="text-app-text-dim text-xs font-inter">
-                          {dayEntries.length} {dayEntries.length === 1 ? 'class' : 'classes'} · {totalHoursToday}h total
-                        </p>
-                        <p className="text-app-text-faint text-[10px] font-inter">
-                          {isToday ? 'Today' : `${DAY_SHORT[selectedDay]} ${fmtShortDate(weekDates[selectedDay])}`}
-                        </p>
+                  <div className="flex flex-col gap-3 animate-fadeIn">
+                    {dayEntries.map(entry => (
+                      <div key={entry.id}>
+                        <ClassCard entry={entry} isToday={isToday} />
                       </div>
-                    </motion.div>
-                  </AnimatePresence>
+                    ))}
+                    <div className="bg-app-surface rounded-xl p-3 border border-app-border flex items-center justify-between mt-1">
+                      <p className="text-app-text-dim text-xs font-inter">
+                        {dayEntries.length} {dayEntries.length === 1 ? 'class' : 'classes'} · {totalHoursToday}h total
+                      </p>
+                      <p className="text-app-text-faint text-[10px] font-inter">
+                        {isToday ? 'Today' : `${DAY_SHORT[selectedDay]} ${fmtShortDate(weekDates[selectedDay])}`}
+                      </p>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -497,18 +476,11 @@ export function Timetable() {
                 </div>
               )}
             </div>
-          </motion.div>
+          </div>
         )}
 
         {activeTab === 'calendar' && (
-          <motion.div
-            key="calendar"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
-            className="px-4 py-4 lg:px-8 lg:py-6"
-          >
+          <div className="px-4 py-4 lg:px-8 lg:py-6 animate-fadeIn">
             <div className="flex items-center gap-2 mb-5">
               <div className="flex-1">
                 <h2 className="text-app-text font-jakarta font-bold text-base">UNIBEN Academic Calendar</h2>
@@ -522,12 +494,7 @@ export function Timetable() {
 
             <div className="flex flex-col gap-5">
               {ACADEMIC_CALENDAR.map((phase, pi) => (
-                <motion.div
-                  key={pi}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25, delay: pi * 0.08 }}
-                >
+                <div key={pi} className="animate-fadeIn">
                   {/* Phase header */}
                   <div className="flex items-center gap-2.5 mb-3">
                     <div className="h-px flex-1" style={{ background: `${phase.color}30` }} />
@@ -580,7 +547,7 @@ export function Timetable() {
                       </div>
                     ))}
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
 
@@ -588,9 +555,8 @@ export function Timetable() {
               <p className="text-app-text-faint text-[10px] font-inter">Dates based on UNIBEN 2025/2026 academic calendar</p>
               <p className="text-app-text-faint text-[9px] font-inter mt-0.5 opacity-60">Always confirm with your department</p>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
     </div>
   );
 }

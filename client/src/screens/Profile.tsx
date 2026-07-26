@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useSpaceStore } from '../store/spaceStore';
 import { ShareSheet } from '../components/sheets/ShareSheet';
-import { motion } from 'framer-motion';
+
 import { useThemeStore } from '../store/themeStore';
 
 export function Profile() {
@@ -54,12 +54,7 @@ export function Profile() {
           {/* Left — identity */}
           <div>
             {/* Avatar + info card */}
-            <motion.div
-              className="bg-app-surface border border-app-border rounded-2xl p-5 mb-4"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
+            <div className="bg-app-surface border border-app-border rounded-2xl p-5 mb-4 animate-fadeIn">
               <div className="flex items-center gap-4">
                 <div
                   className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-jakarta font-bold flex-shrink-0"
@@ -83,16 +78,11 @@ export function Profile() {
                   </span>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
             {/* Space info */}
             {currentSpace && (
-              <motion.div
-                className="bg-app-surface border border-app-border rounded-2xl overflow-hidden mb-4"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.06 }}
-              >
+              <div className="bg-app-surface border border-app-border rounded-2xl overflow-hidden mb-4 animate-fadeIn">
                 <div className="px-4 py-3 border-b border-app-border flex items-center gap-2">
                   <span>🏛️</span>
                   <p className="text-app-text-dim text-xs font-jakarta font-semibold uppercase tracking-wider">Your Space</p>
@@ -127,16 +117,11 @@ export function Profile() {
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             )}
 
             {/* Actions */}
-            <motion.div
-              className="flex flex-col gap-2.5"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.12 }}
-            >
+            <div className="flex flex-col gap-2.5 animate-fadeIn">
               {currentSpace && (
                 <button
                   onClick={() => setShowShare(true)}
@@ -152,17 +137,12 @@ export function Profile() {
               >
                 {signingOut ? 'Signing out…' : 'Sign Out'}
               </button>
-            </motion.div>
+            </div>
           </div>
 
           {/* Right — settings */}
           <div className="mt-5 lg:mt-0 flex flex-col gap-3">
-            <motion.div
-              className="bg-app-surface border border-app-border rounded-2xl overflow-hidden"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-            >
+            <div className="bg-app-surface border border-app-border rounded-2xl overflow-hidden animate-fadeIn">
               <div className="px-4 py-3.5 border-b border-app-border flex items-center gap-2">
                 <span>🎨</span>
                 <p className="text-app-text font-jakarta font-semibold text-sm">Theme</p>
@@ -170,14 +150,9 @@ export function Profile() {
               <div className="divide-y divide-app-border">
                 <ThemeRow />
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div
-              className="bg-app-surface border border-app-border rounded-2xl overflow-hidden"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.15 }}
-            >
+            <div className="bg-app-surface border border-app-border rounded-2xl overflow-hidden animate-fadeIn">
               <div className="px-4 py-3.5 border-b border-app-border flex items-center gap-2">
                 <span>🔔</span>
                 <p className="text-app-text font-jakarta font-semibold text-sm">Notifications</p>
@@ -188,7 +163,7 @@ export function Profile() {
                 <ToggleRow label="New materials" desc="When files are uploaded" defaultOn />
                 <ToggleRow label="Test & assignment reminders" desc="Deadline alerts" defaultOn />
               </div>
-            </motion.div>
+            </div>
 
             <p className="text-app-text-dim text-xs font-inter text-center mt-6 lg:text-left opacity-50">
               ClassSpace · Made for Nigerian students 🇳🇬

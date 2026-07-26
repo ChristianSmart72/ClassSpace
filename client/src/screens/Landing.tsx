@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { Logo } from '../components/ui/Logo';
 
@@ -73,7 +72,6 @@ function FeedPreview() {
       className="w-full rounded-2xl overflow-hidden border border-app-border"
       style={{ background: 'var(--color-app-surface)', boxShadow: '0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(232,255,71,0.05)' }}
     >
-      {/* App chrome bar */}
       <div className="flex items-center gap-1.5 px-4 py-3 border-b border-app-border">
         <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'rgba(255,82,82,0.6)' }} />
         <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'rgba(255,179,71,0.6)' }} />
@@ -90,7 +88,6 @@ function FeedPreview() {
         </div>
       </div>
 
-      {/* Tab bar */}
       <div className="flex border-b border-app-border px-4">
         {['Updates', 'Files', 'Opportunities', 'Schedule'].map((t, i) => (
           <div
@@ -103,15 +100,12 @@ function FeedPreview() {
         ))}
       </div>
 
-      {/* Feed */}
       <div className="divide-y divide-app-border" style={{ minHeight: '220px' }}>
         {FEED_ITEMS.slice(0, visible).map((item, i) => (
-          <motion.div
+          <div
             key={i}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: i < 3 ? i * 0.08 : 0 }}
-            className="px-4 py-3 flex items-center gap-3"
+            className="px-4 py-3 flex items-center gap-3 animate-fadeIn"
+            style={{ animationDelay: `${i < 3 ? i * 80 : 0}ms` }}
           >
             <div
               className="w-8 h-8 rounded-xl flex items-center justify-center text-sm flex-shrink-0"
@@ -134,11 +128,10 @@ function FeedPreview() {
               </div>
             </div>
             <span className="text-app-text-faint text-[9px] font-inter flex-shrink-0">{item.time}</span>
-          </motion.div>
+          </div>
         ))}
       </div>
 
-      {/* Bottom bar */}
       <div className="px-4 py-2.5 border-t border-app-border flex items-center justify-between" style={{ background: 'rgba(0,0,0,0.1)' }}>
         <div className="flex items-center gap-1.5">
           <div className="w-1.5 h-1.5 rounded-full bg-app-accent animate-pulse" />
@@ -156,7 +149,6 @@ export function Landing() {
       className="min-h-dvh flex flex-col overflow-x-hidden"
       style={{ background: 'var(--landing-bg, radial-gradient(ellipse at 65% -10%, #1a1a24 0%, #0f0f11 60%))' }}
     >
-      {/* Subtle top glow */}
       <div
         className="fixed top-0 left-1/2 -translate-x-1/2 pointer-events-none"
         style={{
@@ -167,9 +159,7 @@ export function Landing() {
         }}
       />
 
-      {/* ── MOBILE layout ── */}
       <div className="flex lg:hidden flex-col min-h-dvh">
-        {/* Mobile nav */}
         <div className="flex items-center justify-between px-5 py-4">
           <div className="font-jakarta font-extrabold text-[10px] tracking-[0.26em] uppercase text-app-accent flex items-center gap-1.5">
             <Logo width={18} height={18} className="text-app-accent" /> ClassSpace
@@ -179,62 +169,32 @@ export function Landing() {
           </Link>
         </div>
 
-        {/* Hero content */}
         <div className="flex-1 flex flex-col px-5 pt-2 pb-20">
-          {/* Badge */}
-          <motion.div
-            className="inline-flex items-center gap-2 self-start bg-app-accent/10 border border-app-accent/20 rounded-full px-3 py-1.5 mb-4"
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
+          <div className="inline-flex items-center gap-2 self-start bg-app-accent/10 border border-app-accent/20 rounded-full px-3 py-1.5 mb-4 animate-fadeIn">
             <span className="w-1.5 h-1.5 rounded-full bg-app-accent animate-pulse" />
             <span className="text-app-accent font-jakarta font-semibold text-[10px] tracking-wider uppercase">
               Built for Nigerian Students 🇳🇬
             </span>
-          </motion.div>
+          </div>
 
-          {/* Headline */}
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.06 }}
-            className="mb-3"
-          >
+          <div className="animate-fadeIn mb-3">
             <h1 className="font-jakarta font-extrabold leading-[1.0] text-[38px] text-app-text">
               Your class.
             </h1>
             <h1 className="font-jakarta font-extrabold leading-[1.0] text-[38px] text-app-accent">
               Organised.
             </h1>
-          </motion.div>
+          </div>
 
-          <motion.p
-            className="text-app-text-dim font-inter text-sm leading-relaxed mb-5 max-w-[300px]"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-          >
+          <p className="text-app-text-dim font-inter text-sm leading-relaxed mb-5 max-w-[300px] animate-fadeIn">
             One hub for your entire class — announcements, files, timetable, and opportunities. No noise.
-          </motion.p>
+          </p>
 
-          {/* Preview card */}
-          <motion.div
-            className="mb-5"
-            initial={{ opacity: 0, y: 20, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.55, delay: 0.14 }}
-          >
+          <div className="mb-5 animate-fadeIn">
             <FeedPreview />
-          </motion.div>
+          </div>
 
-          {/* CTAs */}
-          <motion.div
-            className="flex flex-col gap-2.5 mb-5"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-          >
+          <div className="flex flex-col gap-2.5 mb-5 animate-fadeIn">
             <Link
               to="/register"
               className="w-full text-center font-jakarta font-bold text-sm rounded-2xl py-4 transition-all duration-200 active:scale-[0.98]"
@@ -248,15 +208,9 @@ export function Landing() {
             >
               Join with Invite Code
             </Link>
-          </motion.div>
+          </div>
 
-          {/* Features grid */}
-          <motion.div
-            className="grid grid-cols-2 gap-2 mb-5"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
-          >
+          <div className="grid grid-cols-2 gap-2 mb-5 animate-fadeIn">
             {FEATURES.map(f => (
               <div key={f.label} className="bg-app-surface border border-app-border rounded-xl p-3 flex items-start gap-2.5">
                 <span className="text-lg mt-0.5">{f.icon}</span>
@@ -266,7 +220,7 @@ export function Landing() {
                 </div>
               </div>
             ))}
-          </motion.div>
+          </div>
 
           <p className="text-app-text-faint text-xs font-inter text-center">
             Already have an account?{' '}
@@ -275,9 +229,7 @@ export function Landing() {
         </div>
       </div>
 
-      {/* ── DESKTOP layout ── */}
       <div className="hidden lg:flex flex-col min-h-dvh">
-        {/* Desktop nav */}
         <nav className="flex items-center justify-between px-10 xl:px-20 py-5 border-b border-app-border/30">
           <div className="font-jakarta font-extrabold text-[11px] tracking-[0.28em] uppercase text-app-accent flex items-center gap-2">
             <Logo width={20} height={20} className="text-app-accent" /> ClassSpace
@@ -302,26 +254,15 @@ export function Landing() {
           </div>
         </nav>
 
-        {/* Hero */}
         <div className="flex-1 flex items-center px-10 xl:px-20 py-12">
           <div className="max-w-7xl mx-auto w-full grid grid-cols-[1fr_1.1fr] gap-16 items-center">
-            {/* Left col */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55 }}
-            >
-              <motion.div
-                className="inline-flex items-center gap-2 bg-app-accent/10 border border-app-accent/20 rounded-full px-4 py-1.5 mb-8"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, delay: 0.05 }}
-              >
+            <div className="animate-fadeIn">
+              <div className="inline-flex items-center gap-2 bg-app-accent/10 border border-app-accent/20 rounded-full px-4 py-1.5 mb-8 animate-fadeIn">
                 <span className="w-1.5 h-1.5 rounded-full bg-app-accent animate-pulse" />
                 <span className="text-app-accent font-jakarta font-semibold text-xs tracking-wider uppercase">
                   Built for Nigerian university students 🇳🇬
                 </span>
-              </motion.div>
+              </div>
 
               <h1 className="font-jakarta font-extrabold leading-[1.0] text-[56px] xl:text-[68px] text-app-text mb-2">
                 Your class.
@@ -334,32 +275,23 @@ export function Landing() {
                 One clean hub that cuts through the noise. Announcements, files, timetables, and opportunities — all where your class can find them.
               </p>
 
-              {/* Features */}
               <div className="grid grid-cols-2 gap-3 mb-10">
                 {FEATURES.map((f, i) => (
-                  <motion.div
+                  <div
                     key={f.label}
-                    className="flex items-center gap-3 bg-app-surface border border-app-border rounded-xl px-4 py-3"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.3, delay: 0.14 + i * 0.06 }}
+                    className="flex items-center gap-3 bg-app-surface border border-app-border rounded-xl px-4 py-3 animate-fadeIn"
+                    style={{ animationDelay: `${i * 60}ms` }}
                   >
                     <span className="text-xl flex-shrink-0">{f.icon}</span>
                     <div>
                       <p className="text-app-text font-jakarta font-semibold text-sm">{f.label}</p>
                       <p className="text-app-text-faint font-inter text-xs mt-0.5 leading-snug">{f.desc}</p>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
 
-              {/* CTAs */}
-              <motion.div
-                className="flex items-center gap-3 flex-wrap"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.42 }}
-              >
+              <div className="flex items-center gap-3 flex-wrap animate-fadeIn">
                 <Link
                   to="/register"
                   className="font-jakarta font-bold text-sm rounded-2xl px-8 py-4 hover:opacity-90 transition-all duration-200 hover:scale-[1.02]"
@@ -373,17 +305,10 @@ export function Landing() {
                 >
                   Join with Code
                 </Link>
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
 
-            {/* Right col — app preview */}
-            <motion.div
-              initial={{ opacity: 0, x: 30, scale: 0.96 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              transition={{ duration: 0.65, delay: 0.12 }}
-              className="relative"
-            >
-              {/* Glow behind card */}
+            <div className="relative animate-fadeIn">
               <div
                 className="absolute inset-0 -z-10"
                 style={{
@@ -395,31 +320,19 @@ export function Landing() {
 
               <FeedPreview />
 
-              {/* Floating annotation pills */}
-              <motion.div
-                className="absolute -left-14 top-16 bg-app-surface border border-app-border rounded-xl px-3 py-2 shadow-xl"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.4, delay: 0.8 }}
-              >
+              <div className="absolute -left-14 top-16 bg-app-surface border border-app-border rounded-xl px-3 py-2 shadow-xl animate-fadeIn">
                 <p className="text-[10px] font-jakarta font-bold text-app-accent">📢 Live Updates</p>
                 <p className="text-[9px] text-app-text-faint font-inter">Real-time class feed</p>
-              </motion.div>
+              </div>
 
-              <motion.div
-                className="absolute -right-12 bottom-20 bg-app-surface border border-app-border rounded-xl px-3 py-2 shadow-xl"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.4, delay: 1.0 }}
-              >
+              <div className="absolute -right-12 bottom-20 bg-app-surface border border-app-border rounded-xl px-3 py-2 shadow-xl animate-fadeIn">
                 <p className="text-[10px] font-jakarta font-bold text-app-green">🏆 Opportunities</p>
                 <p className="text-[9px] text-app-text-faint font-inter">Scholarships & more</p>
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-between px-10 xl:px-20 py-4 border-t border-app-border/30">
           <p className="text-app-text-faint text-[11px] font-inter">Made for Nigerian university students 🇳🇬</p>
           <p className="text-app-text-faint text-[10px] font-inter opacity-40">ClassSpace · Built for real academic life</p>

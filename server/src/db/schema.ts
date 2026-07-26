@@ -141,5 +141,6 @@ export function createTables(): void {
     CREATE INDEX IF NOT EXISTS idx_poll_options_poll ON poll_options(poll_id);
     CREATE INDEX IF NOT EXISTS idx_poll_votes_poll ON poll_votes(poll_id);
     CREATE INDEX IF NOT EXISTS idx_opportunities_space ON opportunities(space_id);
+    CREATE INDEX IF NOT EXISTS idx_space_members_user ON space_members(user_id);
   `);
 }

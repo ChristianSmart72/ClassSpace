@@ -25,26 +25,52 @@ export function pollRoutes(app: FastifyInstance) {
       ORDER BY p.created_at DESC
     `).all(id) as any[];
 
-    const enriched = polls.map((poll) => {
-      const options = db.prepare(`
-        SELECT po.id, po.text, po.display_order,
-          COUNT(pv.id) as votes
-        FROM poll_options po
-        LEFT JOIN poll_votes pv ON pv.option_id = po.id
-        WHERE po.poll_id = ?
-        GROUP BY po.id
-        ORDER BY po.display_order
-      `).all(poll.id) as any[];
+    if (polls.length === 0) return { polls: [] };
 
-      const totalVotes = options.reduce((s: number, o: any) => s + o.votes, 0);
+    // Batch fetch all options for all polls (2 queries total, no N+1)
+    const pollIds = polls.map(p => p.id);
+    const placeholders = pollIds.map(() => '?').join(',');
 
-      let myVote: number | null = null;
-      if (userId) {
-        const vote = db.prepare('SELECT option_id FROM poll_votes WHERE poll_id = ? AND user_id = ?').get(poll.id, userId) as any;
-        if (vote) myVote = vote.option_id;
+    const allOptions = db.prepare(`
+      SELECT po.id, po.poll_id, po.text, po.display_order,
+        COUNT(pv.id) as votes
+      FROM poll_options po
+      LEFT JOIN poll_votes pv ON pv.option_id = po.id
+      WHERE po.poll_id IN (${placeholders})
+      GROUP BY po.id
+      ORDER BY po.display_order
+    `).all(...pollIds) as any[];
+
+    // Group options by poll_id
+    const optionsByPoll = new Map<number, any[]>();
+    for (const opt of allOptions) {
+      if (!optionsByPoll.has(opt.poll_id)) {
+        optionsByPoll.set(opt.poll_id, []);
       }
+      optionsByPoll.get(opt.poll_id)!.push(opt);
+    }
 
-      return { ...poll, options, total_votes: totalVotes, my_vote: myVote };
+    // Batch fetch this user's votes
+    let voteByPoll = new Map<number, number>();
+    if (userId) {
+      const myVotes = db.prepare(`
+        SELECT poll_id, option_id FROM poll_votes
+        WHERE poll_id IN (${placeholders}) AND user_id = ?
+      `).all(...pollIds, userId) as any[];
+      for (const v of myVotes) {
+        voteByPoll.set(v.poll_id, v.option_id);
+      }
+    }
+
+    const enriched = polls.map((poll) => {
+      const options = optionsByPoll.get(poll.id) ?? [];
+      const totalVotes = options.reduce((s: number, o: any) => s + o.votes, 0);
+      return {
+        ...poll,
+        options,
+        total_votes: totalVotes,
+        my_vote: voteByPoll.get(poll.id) ?? null,
+      };
     });
 
     return { polls: enriched };

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+
 import { getAnnouncement, getMaterials } from '../api/content';
 import type { Announcement, Material } from '../types';
 import { Skeleton } from '../components/ui/Shared';
@@ -249,7 +249,7 @@ export function AnnouncementDetail() {
         )}
 
         {/* ── Type badge ── */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+        <div className="animate-fadeIn">
           <span
             className="inline-flex items-center gap-1.5 text-xs font-jakarta font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-xl mb-3"
             style={{ background: meta.bg, color: meta.color }}
@@ -261,25 +261,15 @@ export function AnnouncementDetail() {
             {ann.type === 'announcement' && '📢'}
             {' '}{meta.label}
           </span>
-        </motion.div>
+        </div>
 
         {/* ── Title ── */}
-        <motion.h2
-          className="text-app-text font-jakarta font-extrabold text-[26px] leading-[1.15] mb-3"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.04 }}
-        >
+        <h2 className="text-app-text font-jakarta font-extrabold text-[26px] leading-[1.15] mb-3 animate-fadeIn">
           {ann.title}
-        </motion.h2>
+        </h2>
 
         {/* ── Tags row ── */}
-        <motion.div
-          className="flex flex-wrap gap-2 mb-2"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.08 }}
-        >
+        <div className="flex flex-wrap gap-2 mb-2 animate-fadeIn">
           {ann.course_code && (
             <span className="text-[11px] bg-app-accent2/15 text-app-accent2 font-jakarta font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">
               {ann.course_code}{ann.course_name ? ` — ${ann.course_name}` : ''}
@@ -290,19 +280,14 @@ export function AnnouncementDetail() {
               📌 Pinned
             </span>
           )}
-        </motion.div>
+        </div>
 
         {/* ── Timestamp ── */}
         <p className="text-app-text-faint text-xs font-inter mb-5">{relativeTime(ann.created_at)}</p>
 
         {/* ── Key Details ── */}
         {hasKeyDetails && (
-          <motion.div
-            className="bg-app-surface rounded-2xl border border-app-border overflow-hidden mb-5"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-          >
+          <div className="bg-app-surface rounded-2xl border border-app-border overflow-hidden mb-5 animate-fadeIn">
             <div className="px-4 pt-3 pb-1">
               <p className="text-app-text-faint text-[10px] font-jakarta font-bold uppercase tracking-widest">Key Details</p>
             </div>
@@ -325,17 +310,12 @@ export function AnnouncementDetail() {
                 <DetailRow icon="📍" label="Venue" value={ann.venue} />
               )}
             </div>
-          </motion.div>
+          </div>
         )}
 
         {/* ── Instructions / body ── */}
         {ann.body && (
-          <motion.div
-            className="mb-5"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.14 }}
-          >
+          <div className="mb-5 animate-fadeIn">
             <p className="text-app-text-faint text-[10px] font-jakarta font-bold uppercase tracking-widest mb-3">Instructions</p>
             <div className="bg-app-surface rounded-2xl border border-app-border px-4 py-4">
               <p className="text-app-text-dim font-inter text-sm leading-relaxed whitespace-pre-wrap">{ann.body}</p>
@@ -343,17 +323,12 @@ export function AnnouncementDetail() {
                 <p className="text-app-text-dim font-inter text-sm leading-relaxed whitespace-pre-wrap mt-3 pt-3 border-t border-app-border">{ann.instructions}</p>
               )}
             </div>
-          </motion.div>
+          </div>
         )}
 
         {/* ── Attachments ── */}
         {showMaterials && displayMaterials.length > 0 && (
-          <motion.div
-            className="mb-5"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.18 }}
-          >
+          <div className="mb-5 animate-fadeIn">
             <div className="flex items-center justify-between mb-3">
               <p className="text-app-text-faint text-[10px] font-jakarta font-bold uppercase tracking-widest">Attachments</p>
               {usingDemoMats && (
@@ -365,16 +340,11 @@ export function AnnouncementDetail() {
                 <AttachmentCard key={mat.id} mat={mat} isDemo={mat.id < 0} />
               ))}
             </div>
-          </motion.div>
+          </div>
         )}
 
         {/* ── Author footer ── */}
-        <motion.div
-          className="bg-app-surface rounded-2xl border border-app-border px-4 py-4 flex items-center gap-3"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.22 }}
-        >
+        <div className="bg-app-surface rounded-2xl border border-app-border px-4 py-4 flex items-center gap-3 animate-fadeIn">
           <div className="w-11 h-11 rounded-full bg-app-accent2/20 border border-app-accent2/30 flex items-center justify-center text-base text-app-accent2 font-jakarta font-bold flex-shrink-0">
             {ann.author_name?.charAt(0)?.toUpperCase()}
           </div>
@@ -388,7 +358,7 @@ export function AnnouncementDetail() {
               Due Soon
             </span>
           )}
-        </motion.div>
+        </div>
       </div>
       {showShareSheet && annId && spaceId && (
         <ShareSheet

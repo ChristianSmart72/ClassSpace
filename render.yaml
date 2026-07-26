@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: free
     buildCommand: cd client && npm ci && npm run build && cd ../server && npm ci && npm run build
-    startCommand: node server/dist/index.js
+    startCommand: NODE_OPTIONS="--max-old-space-size=384" node server/dist/index.js
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV

@@ -1,108 +1,108 @@
 @import "tailwindcss";
 
 @theme {
-  --color-app-bg: #0f0f11;
-  --color-app-surface: #18181c;
-  --color-app-surface-2: #1f1f25;
-  --color-app-border: #2a2a32;
-  --color-app-accent: #e8ff47;
-  --color-app-accent-2: #5b6af0;
-  --color-app-accent2: #5b6af0;
+  --color-app-bg: #0d0d12;
+  --color-app-surface: #141418;
+  --color-app-surface-2: #19191f;
+  --color-app-border: #22222b;
+  --color-app-accent: #3b82f6;
+  --color-app-accent-2: #6366f1;
+  --color-app-accent2: #6366f1;
   --color-app-text: #f0f0f2;
   --color-app-text-dim: #7a7a88;
   --color-app-text-faint: #52525f;
-  --color-app-red: #ff5252;
-  --color-app-green: #52ffa0;
-  --color-app-orange: #ffb347;
+  --color-app-red: #ef4444;
+  --color-app-green: #22c55e;
+  --color-app-orange: #f59e0b;
 
   --font-jakarta: "Plus Jakarta Sans", sans-serif;
   --font-inter: "Inter", sans-serif;
 
   --animate-fadeIn: fadeIn 0.3s ease-out;
-  --animate-slideUp: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  --animate-slideDown: slideDown 0.25s ease-out;
+  --animate-fadeInFast: fadeIn 0.2s ease-out;
+  --animate-fadeInUp: fadeInUp 0.4s ease-out;
+  --animate-fadeInUpSm: fadeInUp 0.3s ease-out;
+  --animate-fadeInScale: fadeInScale 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slideUp: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slideDown: slideDown 0.2s ease-out;
 
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeInScale {
+    from { opacity: 0; transform: translateY(24px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
   @keyframes slideUp {
     from { transform: translateY(100%); }
     to { transform: translateY(0); }
   }
   @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-12px); }
+    from { opacity: 0; transform: translateY(-8px); }
     to { opacity: 1; transform: translateY(0); }
   }
 }
 
 /* ── Dark theme (default) ── */
 :root, [data-theme="dark"] {
-  --app-bg: #0f0f11;
-  --app-surface: #18181c;
-  --app-surface-2: #1f1f25;
-  --app-border: #2a2a32;
-  --app-accent: #e8ff47;
-  --app-accent2: #5b6af0;
+  --app-bg: #0d0d12;
+  --app-surface: #141418;
+  --app-surface-2: #19191f;
+  --app-border: #22222b;
+  --app-accent: #3b82f6;
+  --app-accent2: #6366f1;
   --app-text: #f0f0f2;
   --app-text-dim: #7a7a88;
   --app-text-faint: #52525f;
-  --app-red: #ff5252;
-  --app-green: #52ffa0;
-  --app-orange: #ffb347;
-  --landing-bg: radial-gradient(ellipse at 65% -10%, #1a1a24 0%, #0f0f11 60%);
+  --app-red: #ef4444;
+  --app-green: #22c55e;
+  --app-orange: #f59e0b;
+  --app-on-accent: #ffffff;
+  --landing-bg: radial-gradient(ellipse at 65% -10%, #14141e 0%, #0d0d12 60%);
 }
 
 /* ── Light theme ── */
 [data-theme="light"] {
-  /* Core surfaces */
-  --app-bg: #eeeef6;
+  --app-bg: #f1f5f9;
   --app-surface: #ffffff;
-  --app-surface-2: #e4e5f0;
-  --app-border: #c8c9e0;
-
-  /* Accent */
-  --app-accent: #4f46e5;
-  --app-accent2: #7c3aed;
+  --app-surface-2: #e2e8f0;
+  --app-border: #cbd5e1;
+  --app-accent: #3b82f6;
+  --app-accent2: #6366f1;
   --app-on-accent: #ffffff;
+  --app-text: #0f172a;
+  --app-text-dim: #475569;
+  --app-text-faint: #94a3b8;
+  --app-red: #ef4444;
+  --app-green: #22c55e;
+  --app-orange: #f59e0b;
+  --landing-bg: linear-gradient(135deg, #eef2ff 0%, #f1f5f9 60%);
 
-  /* Text */
-  --app-text: #09090f;
-  --app-text-dim: #36364f;
-  --app-text-faint: #6464a0;
-
-  /* Semantic */
-  --app-red: #dc2626;
-  --app-green: #15803d;
-  --app-orange: #c2590a;
-
-  --landing-bg: linear-gradient(135deg, #eceeff 0%, #f4f4fb 60%);
-
-  /* Tailwind token overrides */
-  --color-app-bg: #eeeef6;
+  --color-app-bg: #f1f5f9;
   --color-app-surface: #ffffff;
-  --color-app-surface-2: #e4e5f0;
-  --color-app-border: #c8c9e0;
-  --color-app-accent: #4f46e5;
-  --color-app-accent-2: #7c3aed;
-  --color-app-accent2: #7c3aed;
-  --color-app-text: #09090f;
-  --color-app-text-dim: #36364f;
-  --color-app-text-faint: #6464a0;
-  --color-app-red: #dc2626;
-  --color-app-green: #15803d;
-  --color-app-orange: #c2590a;
+  --color-app-surface-2: #e2e8f0;
+  --color-app-border: #cbd5e1;
+  --color-app-accent: #3b82f6;
+  --color-app-accent-2: #6366f1;
+  --color-app-accent2: #6366f1;
+  --color-app-text: #0f172a;
+  --color-app-text-dim: #475569;
+  --color-app-text-faint: #94a3b8;
+  --color-app-red: #ef4444;
+  --color-app-green: #22c55e;
+  --color-app-orange: #f59e0b;
 }
 
-/* ── on-accent text colour (text on an accent-coloured background) ── */
-:root, [data-theme="dark"] { --app-on-accent: #0f0f11; }
-
-/* ── Light mode depth: give white cards a shadow so they lift off the bg ── */
 [data-theme="light"] .bg-app-surface {
-  box-shadow: 0 1px 4px rgba(0, 0, 60, 0.07), 0 0 0 1px rgba(200, 201, 224, 0.6);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(203, 213, 225, 0.6);
 }
 [data-theme="light"] .bg-app-surface-2 {
-  box-shadow: inset 0 0 0 1px rgba(200, 201, 224, 0.8);
+  box-shadow: inset 0 0 0 1px rgba(203, 213, 225, 0.8);
 }
 
 @layer base {
@@ -114,7 +114,7 @@
     @apply bg-app-bg text-app-text font-inter antialiased;
     margin: 0;
     -webkit-tap-highlight-color: transparent;
-    transition: background-color 0.25s ease, color 0.25s ease;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
   #root {
     @apply min-h-dvh w-full mx-auto relative;
@@ -123,7 +123,6 @@
   html { overflow-x: hidden; overscroll-behavior: none; }
   * { max-width: 100%; }
   img, video, canvas, svg { max-width: 100%; }
-  ::-webkit-scrollbar { display: none; }
   input, textarea, select { @apply outline-none; }
   a { @apply no-underline text-inherit; }
   select { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%237a7a88' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
@@ -131,5 +130,6 @@
 
 @layer utilities {
   .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
   .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
 }

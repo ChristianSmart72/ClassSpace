@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { useSpaceStore } from '../store/spaceStore';
 import { useContentStore } from '../store/contentStore';
 import { useAuthStore } from '../store/authStore';
@@ -226,22 +226,18 @@ export function Space() {
       </div>
 
       {/* Search Bar */}
-      <AnimatePresence>
-        {showSearch && (
-          <motion.div className="px-4 mb-3"
-            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}>
-            <input autoFocus value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Search announcements, courses..."
-              className="w-full bg-app-surface border border-app-accent/40 rounded-xl px-4 py-3 text-app-text text-sm font-inter placeholder:text-app-text-faint focus:outline-none focus:border-app-accent transition-colors" />
-            {search && (
-              <p className="text-app-text-faint text-xs font-inter mt-1.5 px-1">
-                {filteredAnnouncements.length + filteredCourses.length} results for "{search}"
-              </p>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {showSearch && (
+        <div className="px-4 mb-3 animate-fadeIn">
+          <input autoFocus value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Search announcements, courses..."
+            className="w-full bg-app-surface border border-app-accent/40 rounded-xl px-4 py-3 text-app-text text-sm font-inter placeholder:text-app-text-faint focus:outline-none focus:border-app-accent transition-colors" />
+          {search && (
+            <p className="text-app-text-faint text-xs font-inter mt-1.5 px-1">
+              {filteredAnnouncements.length + filteredCourses.length} results for "{search}"
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex mx-4 mb-3 bg-app-surface rounded-xl p-1 border border-app-border gap-1">
@@ -265,10 +261,9 @@ export function Space() {
         ))}
       </div>
 
-      <AnimatePresence mode="wait">
         {/* ── Announcements Tab ── */}
         {tab === 'ann' && (
-          <motion.div key="ann" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }}>
+          <div className="animate-fadeIn">
             {!showSearch && <FilterBar filters={filterOptions} active={filter} onChange={setFilter} />}
             <div className="px-4 flex flex-col gap-3">
               {annLoading ? (
@@ -298,12 +293,12 @@ export function Space() {
                 ))
               )}
             </div>
-          </motion.div>
+          </div>
         )}
 
         {/* ── Materials Tab ── */}
         {tab === 'mat' && (
-          <motion.div key="mat" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }} className="px-4">
+          <div className="px-4 animate-fadeIn">
             {spaceLoading ? (
               <div className="flex flex-col gap-2">
                 {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full rounded-2xl" />)}
@@ -348,12 +343,12 @@ export function Space() {
                 })}
               </div>
             )}
-          </motion.div>
+          </div>
         )}
 
         {/* ── Schedule Tab ── */}
         {tab === 'schedule' && (
-          <motion.div key="schedule" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }} className="px-4">
+          <div className="px-4 animate-fadeIn">
             {/* Day selector */}
             <div className="flex gap-1.5 mb-4 overflow-x-auto scrollbar-none pb-1">
               {['Mon','Tue','Wed','Thu','Fri'].map((d, i) => (
@@ -409,9 +404,8 @@ export function Space() {
                 </div>
               );
             })()}
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
 
       {isRep && tab === 'ann' && <Fab onClick={() => setShowPost(true)} icon="+" />}
       {isRep && tab === 'mat' && <Fab onClick={() => setShowUpload(true)} icon="+" />}

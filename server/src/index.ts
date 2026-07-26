@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import staticFiles from '@fastify/static';
+import compress from '@fastify/compress';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { authRoutes } from './routes/auth.js';
@@ -28,6 +29,7 @@ async function main() {
 
   await app.register(cors, { origin: true });
   await app.register(multipart, { limits: { fileSize: 50 * 1024 * 1024 } });
+  await app.register(compress, { global: true, threshold: 1024 });
 
   const db = getDb();
   createTables();
@@ -52,7 +54,13 @@ async function main() {
 
   if (IS_PROD) {
     const clientDist = path.join(__dirname, '../../client/dist');
-    await app.register(staticFiles, { root: clientDist, prefix: '/' });
+    await app.register(staticFiles, {
+      root: clientDist,
+      prefix: '/',
+      cacheControl: true,
+      maxAge: '365d',
+      immutable: true,
+    });
     app.setNotFoundHandler(async (_request, reply) => {
       return reply.sendFile('index.html');
     });

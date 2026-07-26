@@ -86,8 +86,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
-        globIgnores: ['**/pwa-*', '**/apple-touch-icon*'],
+        globPatterns: ['**/*.{js,css,html,png,ico,woff2}'],
         runtimeCaching: [
           {
             urlPattern: /^https?:\/\/.*\/api\/.*/i,
@@ -105,9 +104,20 @@ export default defineConfig({
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'google-fonts-cache',
+              cacheName: 'google-fonts-css-cache',
               expiration: {
                 maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365,
+              },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts-webfont-cache',
+              expiration: {
+                maxEntries: 50,
                 maxAgeSeconds: 60 * 60 * 24 * 365,
               },
             },
@@ -123,5 +133,8 @@ export default defineConfig({
     proxy: {
       '/api': 'http://127.0.0.1:3001',
     },
+  },
+  build: {
+    chunkSizeWarningLimit: 300,
   },
 })

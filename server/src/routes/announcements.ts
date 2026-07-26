@@ -22,7 +22,6 @@ export function announcementRoutes(app: FastifyInstance) {
     const query = request.query as { filter?: string };
     const db = getDb();
 
-    // Try to get userId from token (optional auth)
     let userId: number | null = null;
     try {
       const auth = request.headers.authorization;
@@ -36,9 +35,7 @@ export function announcementRoutes(app: FastifyInstance) {
     let sql = `
       SELECT a.*,
         u.name as author_name,
-        c.name as course_name, c.code as course_code, c.icon as course_icon,
-        COALESCE((SELECT COUNT(*) FROM reactions WHERE announcement_id = a.id AND emoji = 'upvote'), 0) as react_upvote,
-        COALESCE((SELECT COUNT(*) FROM reactions WHERE announcement_id = a.id AND emoji = 'downvote'), 0) as react_downvote
+        c.name as course_name, c.code as course_code, c.icon as course_icon
       FROM announcements a
       JOIN users u ON a.author_id = u.id
       LEFT JOIN courses c ON a.course_id = c.id
@@ -58,25 +55,49 @@ export function announcementRoutes(app: FastifyInstance) {
     sql += ' ORDER BY a.pinned DESC, a.urgent DESC, a.created_at DESC';
 
     const rows = db.prepare(sql).all(...params) as any[];
-    const announcements = rows.map((r) => {
-      // Get this user's reaction for this announcement
-      let myReaction: string | null = null;
-      if (userId) {
-        const vote = db.prepare(
-          'SELECT emoji FROM reactions WHERE announcement_id = ? AND user_id = ?'
-        ).get(r.id, userId) as any;
-        if (vote) myReaction = vote.emoji;
-      }
 
+    // Batch fetch all reactions for these announcements (2 queries total, no N+1)
+    const ids = rows.map(r => r.id);
+    if (ids.length === 0) return { announcements: [] };
+
+    const placeholders = ids.map(() => '?').join(',');
+    const reactions = db.prepare(`
+      SELECT announcement_id, emoji, COUNT(*) as count
+      FROM reactions
+      WHERE announcement_id IN (${placeholders})
+      GROUP BY announcement_id, emoji
+    `).all(...ids) as any[];
+
+    const reactionMap = new Map<number, { upvote: number; downvote: number }>();
+    for (const r of reactions) {
+      if (!reactionMap.has(r.announcement_id)) {
+        reactionMap.set(r.announcement_id, { upvote: 0, downvote: 0 });
+      }
+      const map = reactionMap.get(r.announcement_id)!;
+      if (r.emoji === 'upvote') map.upvote = r.count;
+      if (r.emoji === 'downvote') map.downvote = r.count;
+    }
+
+    // Batch fetch this user's reactions
+    let myReactionMap = new Map<number, string>();
+    if (userId) {
+      const myVotes = db.prepare(`
+        SELECT announcement_id, emoji FROM reactions
+        WHERE announcement_id IN (${placeholders}) AND user_id = ?
+      `).all(...ids, userId) as any[];
+      for (const v of myVotes) {
+        myReactionMap.set(v.announcement_id, v.emoji);
+      }
+    }
+
+    const announcements = rows.map((r) => {
+      const react = reactionMap.get(r.id) ?? { upvote: 0, downvote: 0 };
       return {
         ...r,
         urgent: Boolean(r.urgent),
         pinned: Boolean(r.pinned),
-        reactions: {
-          upvote: r.react_upvote,
-          downvote: r.react_downvote,
-        },
-        my_reaction: myReaction,
+        reactions: react,
+        my_reaction: myReactionMap.get(r.id) ?? null,
       };
     });
     return { announcements };
