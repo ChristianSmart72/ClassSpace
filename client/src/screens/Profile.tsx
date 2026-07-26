@@ -3,6 +3,7 @@ import { useAuthStore } from '../store/authStore';
 import { useSpaceStore } from '../store/spaceStore';
 import { ShareSheet } from '../components/sheets/ShareSheet';
 import { motion } from 'framer-motion';
+import { useThemeStore } from '../store/themeStore';
 
 export function Profile() {
   const { user, logout } = useAuthStore();
@@ -155,12 +156,27 @@ export function Profile() {
           </div>
 
           {/* Right — settings */}
-          <div className="mt-5 lg:mt-0">
+          <div className="mt-5 lg:mt-0 flex flex-col gap-3">
             <motion.div
               className="bg-app-surface border border-app-border rounded-2xl overflow-hidden"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.1 }}
+            >
+              <div className="px-4 py-3.5 border-b border-app-border flex items-center gap-2">
+                <span>🎨</span>
+                <p className="text-app-text font-jakarta font-semibold text-sm">Theme</p>
+              </div>
+              <div className="divide-y divide-app-border">
+                <ThemeRow />
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="bg-app-surface border border-app-border rounded-2xl overflow-hidden"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.15 }}
             >
               <div className="px-4 py-3.5 border-b border-app-border flex items-center gap-2">
                 <span>🔔</span>
@@ -184,6 +200,30 @@ export function Profile() {
       {showShare && currentSpace && (
         <ShareSheet type="space" id={currentSpace.id} spaceId={currentSpace.id} onClose={() => setShowShare(false)} />
       )}
+    </div>
+  );
+}
+
+function ThemeRow() {
+  const { theme, toggle } = useThemeStore();
+  return (
+    <div className="flex items-center justify-between px-4 py-3.5 gap-3">
+      <div className="flex-1 min-w-0">
+        <span className="text-app-text font-inter text-sm block">Appearance</span>
+        <span className="text-app-text-dim text-xs font-inter block mt-0.5 opacity-70">
+          {theme === 'dark' ? 'Dark mode' : 'Light mode'}
+        </span>
+      </div>
+      <button
+        onClick={toggle}
+        className="w-9 h-5 rounded-full transition-colors relative flex-shrink-0"
+        style={{ background: theme === 'dark' ? 'var(--app-accent)' : 'var(--app-border)' }}
+      >
+        <div
+          className="absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all duration-200"
+          style={{ left: theme === 'dark' ? '18px' : '2px' }}
+        />
+      </button>
     </div>
   );
 }
