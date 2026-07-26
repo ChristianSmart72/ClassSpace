@@ -1,32 +1,22 @@
-# React + TypeScript + Vite
+# ClassSpace — Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React 19 + TypeScript + Vite 8 frontend for ClassSpace.
 
-Currently, two official plugins are available:
+## Scripts
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Command | Description |
+|---|---|
+| `npm run dev` | Start Vite dev server on port 5000 |
+| `npm run build` | TypeScript check + Vite production build (includes PWA SW) |
+| `npm run preview` | Preview the production build locally |
+| `npm run lint` | Run oxlint |
 
-## React Compiler
+## PWA
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The production build generates a service worker (`sw.js`) with:
+- Precaching of all static assets (JS, CSS, HTML, icons)
+- Runtime caching for API calls (NetworkFirst, 24h expiry)
+- Runtime caching for Google Fonts (CacheFirst, 1yr expiry)
+- SPA navigation fallback
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
-
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+The app is installable on Android and iOS home screens.
