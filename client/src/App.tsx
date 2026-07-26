@@ -88,8 +88,8 @@ export default function App() {
   useEffect(() => {
     init().then(() => {
       const spaceId = localStorage.getItem('spaceId');
-      if (spaceId) fetchSpace(spaceId);
-    });
+      if (spaceId) fetchSpace(spaceId).catch(() => {});
+    }).catch(() => {});
   }, []);
 
   if (!initialized) {
