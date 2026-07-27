@@ -9,21 +9,35 @@ import { Logo } from '../components/ui/Logo';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { getTimetable } from '../api/timetable';
 import { getOpportunities } from '../api/opportunities';
-import { DAYS, COURSE_COLORS } from '../types';
+import { COURSE_COLORS } from '../types';
 import type { TimetableEntry, Opportunity, Announcement } from '../types';
+
+const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
 function getTodayIndex(): number {
   const d = new Date().getDay();
   return d === 0 || d === 6 ? -1 : d - 1;
 }
 
-function getTodayDayName(): string {
-  return DAYS[getTodayIndex()] || '';
+function getTodayName(): string {
+  return WEEKDAYS[getTodayIndex()] || '';
+}
+
+function getTomorrowName(): string {
+  let idx = getTodayIndex();
+  if (idx === -1) idx = 0;
+  idx = (idx + 1) % 5;
+  return WEEKDAYS[idx];
 }
 
 function timeToMinutes(t: string): number {
   const [h, m] = t.split(':').map(Number);
   return h * 60 + m;
+}
+
+function nowMinutes(): number {
+  const d = new Date();
+  return d.getHours() * 60 + d.getMinutes();
 }
 
 function formatTime(t: string): string {
@@ -33,24 +47,55 @@ function formatTime(t: string): string {
   return `${hr}:${m.toString().padStart(2, '0')}${period}`;
 }
 
-function getNextClass(entries: TimetableEntry[]): TimetableEntry | null {
-  const todayIdx = getTodayIndex();
-  if (todayIdx === -1) return null;
-  const todayName = DAYS[todayIdx];
-  const todayEntries = entries.filter(e => e.day === todayName);
-  const nowMins = timeToMinutes(`${new Date().getHours()}:${new Date().getMinutes()}`);
-  const upcoming = todayEntries.filter(e => timeToMinutes(e.start_time) > nowMins);
-  if (upcoming.length > 0) {
-    upcoming.sort((a, b) => timeToMinutes(a.start_time) - timeToMinutes(b.start_time));
-    return upcoming[0];
-  }
-  return null;
+function formatRelativeTime(dateStr: string): string {
+  const now = Date.now();
+  const date = new Date(dateStr).getTime();
+  const diffSec = Math.floor((now - date) / 1000);
+  if (diffSec < 60) return 'Just now';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin} min ago`;
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return 'Yesterday';
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const d = new Date(dateStr);
+  const dayOfWeek = d.getDay();
+  if (diffDays < 7) return dayNames[dayOfWeek];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${months[d.getMonth()]} ${d.getDate()}`;
 }
 
 function getClassesToday(entries: TimetableEntry[]): TimetableEntry[] {
-  const todayName = getTodayDayName();
-  if (!todayName) return [];
-  return entries.filter(e => e.day === todayName);
+  const today = getTodayName();
+  if (!today) return [];
+  return entries.filter(e => e.day === today);
+}
+
+function getInProgressClass(entries: TimetableEntry[]): TimetableEntry | null {
+  const today = getTodayName();
+  if (!today) return null;
+  const now = nowMinutes();
+  return entries.find(e => e.day === today && timeToMinutes(e.start_time) <= now && timeToMinutes(e.end_time) > now) ?? null;
+}
+
+function getNextUpcomingClass(entries: TimetableEntry[]): TimetableEntry | null {
+  const today = getTodayName();
+  if (!today) return null;
+  const now = nowMinutes();
+  const upcoming = entries
+    .filter(e => e.day === today && timeToMinutes(e.start_time) > now)
+    .sort((a, b) => timeToMinutes(a.start_time) - timeToMinutes(b.start_time));
+  return upcoming[0] ?? null;
+}
+
+function getTomorrowFirstClass(entries: TimetableEntry[]): TimetableEntry | null {
+  const tomorrow = getTomorrowName();
+  if (!tomorrow) return null;
+  const tomorrowEntries = entries.filter(e => e.day === tomorrow);
+  if (tomorrowEntries.length === 0) return null;
+  tomorrowEntries.sort((a, b) => timeToMinutes(a.start_time) - timeToMinutes(b.start_time));
+  return tomorrowEntries[0];
 }
 
 function getDueItems(announcements: Announcement[]): Announcement[] {
@@ -60,10 +105,27 @@ function getDueItems(announcements: Announcement[]): Announcement[] {
     .slice(0, 5);
 }
 
+function getActiveOpps(opps: Opportunity[]): Opportunity[] {
+  return opps.filter(o => !o.deadline || new Date(o.deadline).getTime() > Date.now());
+}
+
+function getOppStatus(opp: Opportunity): { label: string; color: string } {
+  if (!opp.deadline) return { label: 'Open', color: 'text-app-text-faint' };
+  const diff = new Date(opp.deadline).getTime() - Date.now();
+  const days = Math.ceil(diff / 86400000);
+  if (diff <= 0) return { label: 'Expired', color: 'text-app-text-faint' };
+  const createdAgo = Date.now() - new Date(opp.created_at).getTime();
+  if (createdAgo < 86400000) return { label: 'New', color: 'text-app-green' };
+  if (days === 0) return { label: 'Closing Today', color: 'text-app-red' };
+  if (days <= 3) return { label: 'Closing Soon', color: 'text-app-orange' };
+  if (days <= 7) return { label: `${days} Days Left`, color: 'text-app-orange' };
+  return { label: `${days} Days Left`, color: 'text-app-text-dim' };
+}
+
 const DEMO_OPPS: Opportunity[] = [
-  { id: -1, space_id: '', author_id: 0, author_name: 'ClassSpace', title: 'Shell Nigeria STEM Scholarship 2025', description: 'Open to 300L and 400L engineering students with a minimum CGPA of 3.5.', category: 'scholarship', link: 'https://shell.com/scholarship', deadline: '2025-08-31', created_at: new Date().toISOString() },
-  { id: -2, space_id: '', author_id: 0, author_name: 'ClassSpace', title: 'MTN Foundation Summer Internship', description: 'Paid 3-month internship for penultimate year students.', category: 'internship', link: 'https://mtn.com/internship', deadline: '2025-07-15', created_at: new Date().toISOString() },
-  { id: -3, space_id: '', author_id: 0, author_name: 'ClassSpace', title: 'IEEE Nigeria Student Competition', description: 'Submit your FYP abstract. Win ₦500,000 and IEEE membership.', category: 'competition', link: 'https://ieee.org/nigeria', deadline: '2025-09-10', created_at: new Date().toISOString() },
+  { id: -1, space_id: '', author_id: 0, author_name: 'ClassSpace', title: 'Shell Nigeria STEM Scholarship 2025', description: 'Open to 300L and 400L engineering students with a minimum CGPA of 3.5.', category: 'scholarship', link: 'https://shell.com/scholarship', deadline: '2025-12-31', created_at: new Date(Date.now() - 86400000 * 5).toISOString() },
+  { id: -2, space_id: '', author_id: 0, author_name: 'ClassSpace', title: 'MTN Foundation Summer Internship', description: 'Paid 3-month internship for penultimate year students.', category: 'internship', link: 'https://mtn.com/internship', deadline: '2025-07-15', created_at: new Date(Date.now() - 86400000 * 2).toISOString() },
+  { id: -3, space_id: '', author_id: 0, author_name: 'ClassSpace', title: 'IEEE Nigeria Student Competition', description: 'Submit your FYP abstract. Win ₦500,000 and IEEE membership.', category: 'competition', link: 'https://ieee.org/nigeria', deadline: '2025-09-10', created_at: new Date(Date.now() - 86400000 * 30).toISOString() },
 ];
 
 const OPP_CAT_STYLE: Record<string, { color: string; label: string }> = {
@@ -105,30 +167,163 @@ function DeadlineBadge({ deadline }: { deadline: string }) {
   return <span className={`text-[10px] font-jakarta font-semibold px-1.5 py-0.5 rounded ${bgCls} ${cls}`}>{display}</span>;
 }
 
-function ClassCountdown({ startTime }: { startTime: string }) {
+function LiveCountdown({ startTime, endTime }: { startTime: string; endTime: string }) {
   const [label, setLabel] = useState('');
+  const [mode, setMode] = useState<'before' | 'during' | 'after'>('before');
   useEffect(() => {
     const calc = () => {
-      const nowMins = timeToMinutes(`${new Date().getHours()}:${new Date().getMinutes()}`);
-      const startMins = timeToMinutes(startTime);
-      const diff = startMins - nowMins;
-      if (diff <= 0) { setLabel('Now'); return; }
-      const h = Math.floor(diff / 60);
-      const m = diff % 60;
-      setLabel(h > 0 ? `${h}h ${m}m` : `${m}m`);
+      const now = nowMinutes();
+      const start = timeToMinutes(startTime);
+      const end = timeToMinutes(endTime);
+      if (now < start) {
+        const diff = start - now;
+        const h = Math.floor(diff / 60);
+        const m = diff % 60;
+        setLabel(h > 0 ? `${h}h ${m}m` : `${m}m`);
+        setMode('before');
+      } else if (now < end) {
+        const diff = end - now;
+        const h = Math.floor(diff / 60);
+        const m = diff % 60;
+        setLabel(h > 0 ? `${h}h ${m}m left` : `${m}m left`);
+        setMode('during');
+      } else {
+        setLabel('Ended');
+        setMode('after');
+      }
     };
     calc();
     const id = setInterval(calc, 30000);
     return () => clearInterval(id);
-  }, [startTime]);
-  if (!label) return null;
-  return <span className="text-app-accent text-[10px] font-jakarta font-bold">in {label}</span>;
+  }, [startTime, endTime]);
+  if (mode === 'before') return <span className="text-app-accent text-[10px] font-jakarta font-bold">Starts in {label}</span>;
+  if (mode === 'during') return <span className="text-app-green text-[10px] font-jakarta font-bold">{label} · In Progress</span>;
+  return null;
+}
+
+function NextClassSection({ timetable, ttLoading, spaceId, navigate }: { timetable: TimetableEntry[]; ttLoading: boolean; spaceId: string; navigate: ReturnType<typeof useNavigate> }) {
+  const [, forceUpdate] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => forceUpdate(t => t + 1), 30000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (ttLoading) {
+    return (
+      <div className="mb-5">
+        <p className="text-app-text-dim text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-1.5">Next class</p>
+        <Skeleton className="h-[68px] rounded-xl" />
+      </div>
+    );
+  }
+
+  const inProgress = getInProgressClass(timetable);
+  const upcoming = getNextUpcomingClass(timetable);
+  const tomorrowFirst = getTomorrowFirstClass(timetable);
+  if (inProgress) {
+    return (
+      <div className="mb-5 animate-fadeInUp" style={{ animationDelay: '0.04s' }}>
+        <p className="text-app-text-dim text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-1.5">Current class</p>
+        <button
+          onClick={() => navigate(`/space/${spaceId}?tab=schedule`)}
+          className="w-full bg-app-surface rounded-xl border border-app-border p-4 text-left active:scale-[0.99] transition-all duration-200 group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0" style={{ background: `${COURSE_COLORS[inProgress.color_index % 5]}18` }}>
+              {inProgress.course_icon}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-app-text font-jakarta font-semibold text-sm leading-tight">{inProgress.course_name}</p>
+                <span className="text-app-text-faint text-[10px] font-jakarta font-medium">{inProgress.course_code}</span>
+              </div>
+              <p className="text-app-text-dim text-xs font-inter mt-0.5">
+                {formatTime(inProgress.start_time)} – {formatTime(inProgress.end_time)}
+                {inProgress.venue && ` · ${inProgress.venue}`}
+              </p>
+            </div>
+            <div className="flex flex-col items-end gap-1 flex-shrink-0">
+              <LiveCountdown startTime={inProgress.start_time} endTime={inProgress.end_time} />
+            </div>
+          </div>
+        </button>
+      </div>
+    );
+  }
+
+  if (upcoming) {
+    return (
+      <div className="mb-5 animate-fadeInUp" style={{ animationDelay: '0.04s' }}>
+        <p className="text-app-text-dim text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-1.5">Next class</p>
+        <button
+          onClick={() => navigate(`/space/${spaceId}?tab=schedule`)}
+          className="w-full bg-app-surface rounded-xl border border-app-border p-4 text-left active:scale-[0.99] transition-all duration-200 group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0" style={{ background: `${COURSE_COLORS[upcoming.color_index % 5]}18` }}>
+              {upcoming.course_icon}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-app-text font-jakarta font-semibold text-sm leading-tight">{upcoming.course_name}</p>
+                <span className="text-app-text-faint text-[10px] font-jakarta font-medium">{upcoming.course_code}</span>
+              </div>
+              <p className="text-app-text-dim text-xs font-inter mt-0.5">
+                {formatTime(upcoming.start_time)} – {formatTime(upcoming.end_time)}
+                {upcoming.venue && ` · ${upcoming.venue}`}
+              </p>
+            </div>
+            <div className="flex flex-col items-end gap-1 flex-shrink-0">
+              <LiveCountdown startTime={upcoming.start_time} endTime={upcoming.end_time} />
+              <span className="text-app-text-faint text-[11px] group-hover:text-app-accent transition-colors">→</span>
+            </div>
+          </div>
+        </button>
+      </div>
+    );
+  }
+
+  if (tomorrowFirst) {
+    return (
+      <div className="mb-5 animate-fadeInUp" style={{ animationDelay: '0.04s' }}>
+        <p className="text-app-text-dim text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-1.5">Next class</p>
+        <div className="bg-app-surface rounded-xl border border-app-border p-4">
+          <p className="text-app-green text-sm font-jakarta font-semibold mb-2">🎉 You're done with classes today.</p>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0" style={{ background: `${COURSE_COLORS[tomorrowFirst.color_index % 5]}18` }}>
+              {tomorrowFirst.course_icon}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-app-text font-jakarta font-semibold text-sm leading-tight">{tomorrowFirst.course_name}</p>
+                <span className="text-app-text-faint text-[10px] font-jakarta font-medium">{tomorrowFirst.course_code}</span>
+              </div>
+              <p className="text-app-text-dim text-xs font-inter mt-0.5">
+                {formatTime(tomorrowFirst.start_time)} – {formatTime(tomorrowFirst.end_time)}
+                {tomorrowFirst.venue && ` · ${tomorrowFirst.venue}`}
+                <span className="ml-1.5 text-app-text-faint">Tomorrow</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-5 animate-fadeInUp" style={{ animationDelay: '0.04s' }}>
+      <p className="text-app-text-dim text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-1.5">Next class</p>
+      <div className="bg-app-surface rounded-xl border border-app-border p-4">
+        <p className="text-app-text-dim text-sm font-inter">🎉 No classes scheduled. Enjoy your day!</p>
+      </div>
+    </div>
+  );
 }
 
 export function Home() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { currentSpace, loading: spaceLoading } = useSpaceStore();
+  const { currentSpace, memberRole, loading: spaceLoading } = useSpaceStore();
   const { announcements, fetchAnnouncements } = useContentStore();
   const [greeting, setGreeting] = useState('');
   const [timetable, setTimetable] = useState<TimetableEntry[]>([]);
@@ -161,25 +356,32 @@ export function Home() {
   )()) || spaceLoading;
 
   const todayClasses = getClassesToday(timetable);
-  const nextClass = getNextClass(timetable);
   const dueItems = getDueItems(announcements);
   const recentAnnouncements = announcements.slice(0, 3);
-  const displayOpp = (opps.length > 0 ? opps : DEMO_OPPS)[0] ?? null;
+  const displayOpp = getActiveOpps(opps.length > 0 ? opps : DEMO_OPPS)[0] ?? null;
   const newAnnounceCount = announcements.filter(
     a => new Date(a.created_at).getTime() > Date.now() - 86400000 * 2
   ).length;
 
-  const firstLectureStart = nextClass?.start_time
-    ? (() => {
-        const nowMins = timeToMinutes(`${new Date().getHours()}:${new Date().getMinutes()}`);
-        const classMins = timeToMinutes(nextClass.start_time);
-        const diff = classMins - nowMins;
-        if (diff <= 0) return null;
-        const h = Math.floor(diff / 60);
-        const m = diff % 60;
-        return h > 0 ? `${h}h ${m}m` : `${m}m`;
-      })()
-    : null;
+  const isRep = memberRole === 'rep';
+
+  const quickActions = isRep
+    ? [
+        { label: 'Announce', icon: '📢', onClick: () => navigate(`/space/${currentSpace!.id}`) },
+        { label: 'Upload', icon: '📁', onClick: () => navigate(`/space/${currentSpace!.id}`) },
+        { label: 'Timetable', icon: '📅', onClick: () => navigate(`/space/${currentSpace!.id}?tab=schedule`) },
+        { label: 'Share', icon: '🔗', onClick: () => {
+          const url = `https://classspace.app/join/${currentSpace!.invite_code}`;
+          if (navigator.share) navigator.share({ url });
+          else navigator.clipboard.writeText(url);
+        }},
+      ]
+    : [
+        { label: 'Timetable', icon: '📅', onClick: () => navigate(`/space/${currentSpace!.id}?tab=schedule`) },
+        { label: 'Files', icon: '📁', onClick: () => navigate(`/space/${currentSpace!.id}`) },
+        { label: 'Opps', icon: '🎯', onClick: () => navigate(`/space/${currentSpace!.id}`) },
+        { label: 'Search', icon: '🔍', onClick: () => navigate(`/space/${currentSpace!.id}`) },
+      ];
 
   const isAllClear = todayClasses.length === 0 && dueItems.length === 0 && newAnnounceCount === 0;
 
@@ -220,6 +422,20 @@ export function Home() {
       </div>
     );
   }
+
+  const firstLectureStart = (() => {
+    const ip = getInProgressClass(timetable);
+    if (ip) return null;
+    const uc = getNextUpcomingClass(timetable);
+    if (!uc) return null;
+    const now = nowMinutes();
+    const start = timeToMinutes(uc.start_time);
+    const diff = start - now;
+    if (diff <= 0) return null;
+    const h = Math.floor(diff / 60);
+    const m = diff % 60;
+    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  })();
 
   return (
     <div className="px-4 pt-6 pb-4 lg:px-8 lg:pt-8 max-w-2xl mx-auto">
@@ -266,35 +482,12 @@ export function Home() {
       </div>
 
       {/* ── Next Class ──────────────────────────────────────────────────── */}
-      {!ttLoading && nextClass && (
-        <div className="mb-5 animate-fadeInUp" style={{ animationDelay: '0.04s' }}>
-          <p className="text-app-text-dim text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-1.5">Next class</p>
-          <button
-            onClick={() => navigate(`/space/${currentSpace.id}?tab=schedule`)}
-            className="w-full bg-app-surface rounded-xl border border-app-border p-4 text-left active:scale-[0.99] transition-all duration-200 group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0" style={{ background: `${COURSE_COLORS[nextClass.color_index % 5]}18` }}>
-                {nextClass.course_icon}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-app-text font-jakarta font-semibold text-sm leading-tight">{nextClass.course_name}</p>
-                  <span className="text-app-text-faint text-[10px] font-jakarta font-medium">{nextClass.course_code}</span>
-                </div>
-                <p className="text-app-text-dim text-xs font-inter mt-0.5">
-                  {formatTime(nextClass.start_time)} – {formatTime(nextClass.end_time)}
-                  {nextClass.venue && ` · ${nextClass.venue}`}
-                </p>
-              </div>
-              <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                <ClassCountdown startTime={nextClass.start_time} />
-                <span className="text-app-text-faint text-[11px] group-hover:text-app-accent transition-colors">→</span>
-              </div>
-            </div>
-          </button>
-        </div>
-      )}
+      <NextClassSection
+        timetable={timetable}
+        ttLoading={ttLoading}
+        spaceId={currentSpace.id}
+        navigate={navigate}
+      />
 
       {/* ── Due Today ───────────────────────────────────────────────────── */}
       {dueItems.length > 0 && (
@@ -366,16 +559,7 @@ export function Home() {
         <div className="mb-5 lg:mb-0 animate-fadeInUp" style={{ animationDelay: '0.1s' }}>
           <p className="text-app-text-dim text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-2">Quick actions</p>
           <div className="grid grid-cols-4 gap-1.5">
-            {[
-              { label: 'Announce', icon: '📢', onClick: () => navigate(`/space/${currentSpace.id}`) },
-              { label: 'Upload', icon: '📁', onClick: () => navigate(`/space/${currentSpace.id}`) },
-              { label: 'Timetable', icon: '📅', onClick: () => navigate(`/space/${currentSpace.id}?tab=schedule`) },
-              { label: 'Share', icon: '🔗', onClick: () => {
-                const url = `https://classspace.app/join/${currentSpace.invite_code}`;
-                if (navigator.share) navigator.share({ url });
-                else navigator.clipboard.writeText(url);
-              }},
-            ].map(action => (
+            {quickActions.map(action => (
               <button
                 key={action.label}
                 onClick={action.onClick}
@@ -428,7 +612,7 @@ export function Home() {
                       <div className="flex items-center gap-2 mt-0.5">
                         {ann.course_code && <span className="text-app-text-dim text-[11px] font-inter">{ann.course_code}</span>}
                         <span className="text-app-text-faint text-[10px] font-inter">
-                          {ann.created_at?.split('T')[0]}
+                          {ann.created_at ? formatRelativeTime(ann.created_at) : ''}
                         </span>
                       </div>
                     </div>
@@ -443,7 +627,7 @@ export function Home() {
 
       {/* ── Featured Opportunity ──────────────────────────────────────── */}
       {displayOpp && (
-        <div className="mt-6 animate-fadeInUp" style={{ animationDelay: '0.14s' }}>
+        <div className="mt-5 animate-fadeInUp" style={{ animationDelay: '0.14s' }}>
           <p className="text-app-text-dim text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-2">Featured opportunity</p>
           <FeaturedOppCard opp={displayOpp} spaceId={currentSpace.id} navigate={navigate} />
           <button
@@ -461,36 +645,28 @@ export function Home() {
 
 function FeaturedOppCard({ opp, spaceId, navigate }: { opp: Opportunity; spaceId: string; navigate: ReturnType<typeof useNavigate> }) {
   const cat = OPP_CAT_STYLE[opp.category] ?? { color: '#5a5a6a', label: opp.category };
-  const daysLeft = opp.deadline
-    ? Math.ceil((new Date(opp.deadline).getTime() - Date.now()) / 86400000)
-    : null;
+  const status = getOppStatus(opp);
 
   return (
     <div className="bg-app-surface rounded-xl border border-app-border overflow-hidden" style={{ borderLeft: `3px solid ${cat.color}` }}>
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-3">
+      <div className="p-3">
+        <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <span className="text-[10px] font-jakarta font-bold px-1.5 py-0.5 rounded-full" style={{ background: `${cat.color}18`, color: cat.color }}>
               {cat.label}
             </span>
-            <p className="text-app-text font-jakarta font-semibold text-sm leading-snug mt-2">{opp.title}</p>
-            <p className="text-app-text-dim text-xs font-inter mt-1 line-clamp-2">{opp.description}</p>
+            <p className="text-app-text font-jakarta font-semibold text-xs leading-snug mt-1.5">{opp.title}</p>
+            <p className="text-app-text-dim text-[11px] font-inter mt-0.5 line-clamp-1">{opp.description}</p>
           </div>
         </div>
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-app-border">
-          <span className={`text-[11px] font-jakarta font-semibold ${
-            !daysLeft ? 'text-app-text-faint' :
-            daysLeft < 0 ? 'text-app-red' :
-            daysLeft <= 7 ? 'text-app-orange' : 'text-app-text-dim'
-          }`}>
-            {!daysLeft ? 'Open' : daysLeft < 0 ? 'Expired' : daysLeft === 0 ? 'Closes today' : `Closes in ${daysLeft}d`}
-          </span>
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-app-border">
+          <span className={`text-[10px] font-jakarta font-semibold ${status.color}`}>{status.label}</span>
           {opp.link ? (
             <a
               href={opp.link}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs font-jakarta font-bold px-3 py-1 rounded-lg"
+              className="text-[11px] font-jakarta font-bold px-2.5 py-1 rounded-lg"
               style={{ background: `${cat.color}18`, color: cat.color }}
             >
               Apply →
@@ -498,7 +674,7 @@ function FeaturedOppCard({ opp, spaceId, navigate }: { opp: Opportunity; spaceId
           ) : (
             <button
               onClick={() => navigate(`/space/${spaceId}`)}
-              className="text-xs font-jakarta font-bold px-3 py-1 rounded-lg bg-app-surface-2 text-app-text-dim"
+              className="text-[11px] font-jakarta font-bold px-2.5 py-1 rounded-lg bg-app-surface-2 text-app-text-dim"
             >
               View →
             </button>
