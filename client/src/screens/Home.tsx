@@ -12,8 +12,6 @@ import { getOpportunities } from '../api/opportunities';
 import { DAYS, COURSE_COLORS } from '../types';
 import type { TimetableEntry, Opportunity, Announcement } from '../types';
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
 function getTodayIndex(): number {
   const d = new Date().getDay();
   return d === 0 || d === 6 ? -1 : d - 1;
@@ -68,16 +66,14 @@ const DEMO_OPPS: Opportunity[] = [
   { id: -3, space_id: '', author_id: 0, author_name: 'ClassSpace', title: 'IEEE Nigeria Student Competition', description: 'Submit your FYP abstract. Win ₦500,000 and IEEE membership.', category: 'competition', link: 'https://ieee.org/nigeria', deadline: '2025-09-10', created_at: new Date().toISOString() },
 ];
 
-const OPP_CAT_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  scholarship:  { bg: '#3b82f615', color: '#3b82f6', label: 'Scholarship' },
-  internship:   { bg: '#22c55e15', color: '#22c55e', label: 'Internship' },
-  competition:  { bg: '#8b5cf615', color: '#8b5cf6', label: 'Competition' },
-  seminar:      { bg: '#f59e0b15', color: '#f59e0b', label: 'Seminar' },
-  job:          { bg: '#ef444415', color: '#ef4444', label: 'Job' },
-  event:        { bg: '#06b6d415', color: '#06b6d4', label: 'Event' },
+const OPP_CAT_STYLE: Record<string, { color: string; label: string }> = {
+  scholarship:  { color: '#3b82f6', label: 'Scholarship' },
+  internship:   { color: '#22c55e', label: 'Internship' },
+  competition:  { color: '#8b5cf6', label: 'Competition' },
+  seminar:      { color: '#f59e0b', label: 'Seminar' },
+  job:          { color: '#ef4444', label: 'Job' },
+  event:        { color: '#06b6d4', label: 'Event' },
 };
-
-// ─── Deadline Countdown ────────────────────────────────────────────────────
 
 function DeadlineBadge({ deadline }: { deadline: string }) {
   const [display, setDisplay] = useState('');
@@ -97,14 +93,17 @@ function DeadlineBadge({ deadline }: { deadline: string }) {
     return () => clearInterval(id);
   }, [deadline]);
   const cls = {
-    ok: 'text-app-green bg-app-green/10',
-    warn: 'text-app-orange bg-app-orange/10',
-    critical: 'text-app-red bg-app-red/10',
+    ok: 'text-app-green',
+    warn: 'text-app-orange',
+    critical: 'text-app-red',
   }[level];
-  return <span className={`text-[10px] font-jakarta font-semibold px-1.5 py-0.5 rounded ${cls}`}>{display}</span>;
+  const bgCls = {
+    ok: 'bg-app-green/10',
+    warn: 'bg-app-orange/10',
+    critical: 'bg-app-red/10',
+  }[level];
+  return <span className={`text-[10px] font-jakarta font-semibold px-1.5 py-0.5 rounded ${bgCls} ${cls}`}>{display}</span>;
 }
-
-// ─── Next Class Countdown ──────────────────────────────────────────────────
 
 function ClassCountdown({ startTime }: { startTime: string }) {
   const [label, setLabel] = useState('');
@@ -125,8 +124,6 @@ function ClassCountdown({ startTime }: { startTime: string }) {
   if (!label) return null;
   return <span className="text-app-accent text-[10px] font-jakarta font-bold">in {label}</span>;
 }
-
-// ─── Main Home Component ───────────────────────────────────────────────────
 
 export function Home() {
   const navigate = useNavigate();
@@ -170,30 +167,42 @@ export function Home() {
   const nextClass = getNextClass(timetable);
   const dueItems = getDueItems(announcements);
   const recentAnnouncements = announcements.slice(0, 3);
-  const displayOpps = (opps.length > 0 ? opps : DEMO_OPPS).slice(0, 3);
+  const displayOpp = (opps.length > 0 ? opps : DEMO_OPPS)[0] ?? null;
   const courseList = courses ?? [];
   const newAnnounceCount = announcements.filter(
     a => new Date(a.created_at).getTime() > Date.now() - 86400000 * 2
   ).length;
 
+  const firstLectureStart = nextClass?.start_time
+    ? (() => {
+        const nowMins = timeToMinutes(`${new Date().getHours()}:${new Date().getMinutes()}`);
+        const classMins = timeToMinutes(nextClass.start_time);
+        const diff = classMins - nowMins;
+        if (diff <= 0) return null;
+        const h = Math.floor(diff / 60);
+        const m = diff % 60;
+        return h > 0 ? `${h}h ${m}m` : `${m}m`;
+      })()
+    : null;
+
+  const isAllClear = todayClasses.length === 0 && dueItems.length === 0 && newAnnounceCount === 0;
+
   useEffect(() => {
     if (newAnnounceCount > 0) setBadge(newAnnounceCount);
   }, [newAnnounceCount]);
 
-  // ── Loading state ──────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="px-4 pt-6 lg:px-8 lg:pt-8 max-w-2xl mx-auto">
-        <Skeleton className="h-7 w-48 mb-1" />
-        <Skeleton className="h-4 w-64 mb-6" />
-        <Skeleton className="h-24 rounded-xl mb-4" />
+        <Skeleton className="h-6 w-36 mb-1" />
+        <Skeleton className="h-4 w-56 mb-4" />
         <Skeleton className="h-20 rounded-xl mb-4" />
-        {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 rounded-xl mb-2" />)}
+        <Skeleton className="h-16 rounded-xl mb-4" />
+        {[1, 2, 3].map(i => <Skeleton key={i} className="h-14 rounded-xl mb-2" />)}
       </div>
     );
   }
 
-  // ── No space state ─────────────────────────────────────────────────────
   if (!currentSpace) {
     return (
       <div className="flex flex-col items-center justify-center min-h-dvh px-6">
@@ -217,95 +226,117 @@ export function Home() {
   }
 
   return (
-    <div className="px-4 pt-5 pb-4 lg:px-8 lg:pt-6 max-w-2xl mx-auto">
+    <div className="px-4 pt-6 pb-4 lg:px-8 lg:pt-8 max-w-2xl mx-auto">
 
       {/* ── Daily Brief ─────────────────────────────────────────────────── */}
-      <div className="mb-5 animate-fadeIn">
-        <h1 className="text-app-text font-jakarta font-bold text-lg lg:text-xl">
-          {greeting}, {user?.name?.split(' ')[0]}
+      <div className="mb-6 animate-fadeIn">
+        <h1 className="text-app-text font-jakarta font-bold text-2xl lg:text-3xl tracking-tight">
+          Today's Brief
         </h1>
-        <p className="text-app-text-dim text-xs font-inter mt-0.5">
-          {currentSpace.name}
+        <p className="text-app-text-dim text-sm font-inter mt-1">
+          {greeting}, {user?.name?.split(' ')[0]} 👋
         </p>
-        <div className="flex items-center gap-2 mt-1.5 flex-wrap text-[10px] font-jakarta font-semibold">
-          {todayClasses.length > 0 && (
-            <span className="text-app-accent bg-app-accent/10 px-2 py-0.5 rounded">
-              {todayClasses.length} class{todayClasses.length > 1 ? 'es' : ''} today
-            </span>
+        <div className="mt-3 space-y-1">
+          {isAllClear ? (
+            <p className="text-app-green text-sm font-jakarta font-semibold">You're all caught up today.</p>
+          ) : (
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              {todayClasses.length > 0 && (
+                <p className="text-app-text text-sm font-inter">
+                  📚 <span className="font-jakarta font-semibold">{todayClasses.length}</span> class{todayClasses.length > 1 ? 'es' : ''} today
+                </p>
+              )}
+              {dueItems.length > 0 && (
+                <p className="text-app-text text-sm font-inter">
+                  📝 <span className="font-jakarta font-semibold">{dueItems.length}</span> due
+                </p>
+              )}
+              {newAnnounceCount > 0 && (
+                <p className="text-app-text text-sm font-inter">
+                  📢 <span className="font-jakarta font-semibold">{newAnnounceCount}</span> unread
+                </p>
+              )}
+              {firstLectureStart && (
+                <p className="text-app-text-dim text-sm font-inter">
+                  ⏰ First lecture in <span className="font-jakarta font-semibold text-app-accent">{firstLectureStart}</span>
+                </p>
+              )}
+            </div>
           )}
-          {dueItems.length > 0 && (
-            <span className="text-app-orange bg-app-orange/10 px-2 py-0.5 rounded">
-              {dueItems.length} due
-            </span>
-          )}
-          {newAnnounceCount > 0 && (
-            <span className="text-app-green bg-app-green/10 px-2 py-0.5 rounded">
-              {newAnnounceCount} new
-            </span>
-          )}
-          <span className="text-app-text-faint">
-            {courseList.length} courses
-          </span>
         </div>
       </div>
 
       {/* ── Next Class ──────────────────────────────────────────────────── */}
       {!ttLoading && nextClass && (
-        <div className="mb-4 animate-fadeIn" style={{ animationDelay: '0.05s' }}>
-          <p className="text-app-text-faint text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-1.5">Next class</p>
-          <div className="bg-app-surface rounded-xl border border-app-border overflow-hidden relative">
-            <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-app-accent" />
-            <div className="pl-4 pr-3.5 py-2.5">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0" style={{ background: `${COURSE_COLORS[nextClass.color_index % 5]}20` }}>
-                  {nextClass.course_icon}
+        <div className="mb-5 animate-fadeInUp" style={{ animationDelay: '0.04s' }}>
+          <p className="text-app-text-dim text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-1.5">Next class</p>
+          <button
+            onClick={() => navigate(`/space/${currentSpace.id}?tab=schedule`)}
+            className="w-full bg-app-surface rounded-xl border border-app-border p-4 text-left active:scale-[0.99] transition-all duration-200 group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0" style={{ background: `${COURSE_COLORS[nextClass.color_index % 5]}18` }}>
+                {nextClass.course_icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-app-text font-jakarta font-semibold text-sm leading-tight">{nextClass.course_name}</p>
+                  <span className="text-app-text-faint text-[10px] font-jakarta font-medium">{nextClass.course_code}</span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-app-text font-jakarta font-semibold text-[13px] leading-tight">{nextClass.course_code}</p>
-                    <ClassCountdown startTime={nextClass.start_time} />
-                  </div>
-                  <p className="text-app-text-dim text-[11px] font-inter">
-                    {formatTime(nextClass.start_time)} – {formatTime(nextClass.end_time)}
-                    {nextClass.venue && ` · ${nextClass.venue}`}
-                  </p>
-                </div>
+                <p className="text-app-text-dim text-xs font-inter mt-0.5">
+                  {formatTime(nextClass.start_time)} – {formatTime(nextClass.end_time)}
+                  {nextClass.venue && ` · ${nextClass.venue}`}
+                </p>
+              </div>
+              <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                <ClassCountdown startTime={nextClass.start_time} />
+                <span className="text-app-text-faint text-[11px] group-hover:text-app-accent transition-colors">→</span>
               </div>
             </div>
-          </div>
+          </button>
         </div>
       )}
 
       {/* ── Due Today ───────────────────────────────────────────────────── */}
       {dueItems.length > 0 && (
-        <div className="mb-4 animate-fadeIn" style={{ animationDelay: '0.08s' }}>
-          <p className="text-app-text-faint text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-1.5">
+        <div className="mb-5 animate-fadeInUp" style={{ animationDelay: '0.07s' }}>
+          <p className="text-app-text-dim text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-1.5">
             Due {dueItems.length === 1 ? 'today' : 'soon'}
           </p>
           <div className="flex flex-col gap-1.5">
-            {dueItems.slice(0, 3).map(item => (
-              <div
-                key={item.id}
-                className="flex items-center gap-2.5 bg-app-surface rounded-xl border border-app-border px-3.5 py-2.5"
-              >
-                <span className={`text-[11px] font-jakarta font-bold px-1.5 py-0.5 rounded capitalize flex-shrink-0 ${
-                  item.type === 'assignment' ? 'bg-app-orange/10 text-app-orange' : 'bg-app-red/10 text-app-red'
-                }`}>
-                  {item.type === 'assignment' ? 'HW' : 'TST'}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-app-text text-[13px] font-inter font-medium leading-tight truncate">{item.title}</p>
-                  {item.course_code && (
-                    <p className="text-app-text-dim text-[10px] font-inter">{item.course_code}</p>
+            {dueItems.slice(0, 3).map(item => {
+              const isOverdue = item.deadline && new Date(item.deadline).getTime() < Date.now();
+              const isToday = item.deadline && new Date(item.deadline).toDateString() === new Date().toDateString();
+              return (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3 bg-app-surface rounded-xl border border-app-border px-4 py-3"
+                >
+                  <span className={`text-[10px] font-jakarta font-bold px-1.5 py-0.5 rounded capitalize flex-shrink-0 ${
+                    item.type === 'assignment' ? 'bg-app-orange/10 text-app-orange' : 'bg-app-red/10 text-app-red'
+                  }`}>
+                    {item.type === 'assignment' ? 'HW' : 'TST'}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-app-text text-sm font-inter font-medium leading-snug truncate">{item.title}</p>
+                    {item.course_code && (
+                      <p className="text-app-text-dim text-[11px] font-inter">{item.course_code}</p>
+                    )}
+                  </div>
+                  {item.deadline && (
+                    isOverdue
+                      ? <span className="text-[10px] font-jakarta font-semibold px-1.5 py-0.5 rounded bg-app-red/10 text-app-red">Overdue</span>
+                      : isToday
+                        ? <span className="text-[10px] font-jakarta font-semibold px-1.5 py-0.5 rounded bg-app-orange/10 text-app-orange">Today</span>
+                        : <DeadlineBadge deadline={item.deadline} />
                   )}
                 </div>
-                {item.deadline && <DeadlineBadge deadline={item.deadline} />}
-              </div>
-            ))}
+              );
+            })}
             {dueItems.length > 3 && (
               <button
                 onClick={() => navigate(`/space/${currentSpace.id}`)}
-                className="text-app-accent text-[11px] font-jakarta font-semibold text-center py-1"
+                className="text-app-accent text-xs font-jakarta font-semibold text-center py-1"
               >
                 +{dueItems.length - 3} more
               </button>
@@ -314,190 +345,167 @@ export function Home() {
         </div>
       )}
 
-      {/* ── Install prompt card ─────────────────────────────────────────── */}
+      {/* ── Install prompt ──────────────────────────────────────────────── */}
       {isInstallable && (
-        <div className="mb-4 animate-fadeIn bg-app-surface rounded-xl border border-app-border p-3.5 flex items-center gap-3">
-          <span className="text-2xl">📱</span>
+        <div className="mb-5 animate-fadeIn bg-app-surface rounded-xl border border-app-border p-3 flex items-center gap-3">
+          <span className="text-xl">📱</span>
           <div className="flex-1 min-w-0">
             <p className="text-app-text font-jakarta font-semibold text-sm">Install ClassSpace</p>
-            <p className="text-app-text-dim text-xs font-inter">Add to your home screen for quick access</p>
+            <p className="text-app-text-dim text-xs font-inter">Add to home screen for quick access</p>
           </div>
           <div className="flex gap-1.5">
-            <button
-              onClick={install}
-              className="bg-app-accent text-app-on-accent text-xs font-jakarta font-bold px-3 py-1.5 rounded-lg"
-            >
-              Install
-            </button>
-            <button
-              onClick={dismiss}
-              className="text-app-text-dim text-xs font-jakarta font-semibold px-2 py-1.5"
-            >
-              Later
-            </button>
+            <button onClick={install} className="bg-app-accent text-white text-xs font-jakarta font-bold px-3 py-1.5 rounded-lg">Install</button>
+            <button onClick={dismiss} className="text-app-text-dim text-xs font-jakarta font-semibold px-2 py-1.5">Later</button>
           </div>
         </div>
       )}
 
-      {/* ── Desktop 2-col wrapper ───────────────────────────────────────── */}
+      {/* ── Desktop 2-col ───────────────────────────────────────────────── */}
       <div className="lg:grid lg:grid-cols-[1fr_1.25fr] lg:gap-6 lg:items-start">
 
-        {/* ── Left column: Quick Actions ──────────────────────────────── */}
-        <div>
-          <div className="mb-5 mt-1 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
-            <p className="text-app-text-faint text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-1.5">Quick actions</p>
-            <div className="grid grid-cols-4 gap-2">
-              {[
-                { label: 'Announce', icon: '📢', onClick: () => navigate(`/space/${currentSpace.id}`) },
-                { label: 'Upload', icon: '📁', onClick: () => navigate(`/space/${currentSpace.id}`) },
-                { label: 'Timetable', icon: '📅', onClick: () => navigate(`/space/${currentSpace.id}?tab=schedule`) },
-                { label: 'Share', icon: '🔗', onClick: () => {
-                  const url = `https://classspace.app/join/${currentSpace.invite_code}`;
-                  if (navigator.share) navigator.share({ url });
-                  else navigator.clipboard.writeText(url);
-                }},
-              ].map(action => (
-                <button
-                  key={action.label}
-                  onClick={action.onClick}
-                  className="flex flex-col items-center gap-1 bg-app-surface rounded-xl border border-app-border py-2.5 active:scale-95 transition-all duration-200"
-                >
-                  <span className="text-base">{action.icon}</span>
-                  <span className="text-[9px] font-jakarta font-semibold text-app-text-dim">{action.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* ── Right column: Recent Announcements ──────────────────────── */}
-        <div>
-          <div className="animate-fadeIn" style={{ animationDelay: '0.12s' }}>
-            <div className="flex items-center justify-between mb-1.5">
-              <p className="text-app-text-faint text-[10px] font-jakarta font-semibold uppercase tracking-wider">Announcements</p>
+        {/* ── Quick Actions ──────────────────────────────────────────── */}
+        <div className="mb-5 lg:mb-0 animate-fadeInUp" style={{ animationDelay: '0.1s' }}>
+          <p className="text-app-text-dim text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-2">Quick actions</p>
+          <div className="grid grid-cols-4 gap-1.5">
+            {[
+              { label: 'Announce', icon: '📢', onClick: () => navigate(`/space/${currentSpace.id}`) },
+              { label: 'Upload', icon: '📁', onClick: () => navigate(`/space/${currentSpace.id}`) },
+              { label: 'Timetable', icon: '📅', onClick: () => navigate(`/space/${currentSpace.id}?tab=schedule`) },
+              { label: 'Share', icon: '🔗', onClick: () => {
+                const url = `https://classspace.app/join/${currentSpace.invite_code}`;
+                if (navigator.share) navigator.share({ url });
+                else navigator.clipboard.writeText(url);
+              }},
+            ].map(action => (
               <button
-                onClick={() => navigate(`/space/${currentSpace.id}`)}
-                className="text-app-accent text-[10px] font-jakarta font-semibold hover:opacity-80 transition-opacity"
+                key={action.label}
+                onClick={action.onClick}
+                className="flex flex-col items-center gap-0.5 bg-app-surface rounded-xl border border-app-border py-2 active:scale-95 transition-all duration-200"
               >
-                See all →
+                <span className="text-sm">{action.icon}</span>
+                <span className="text-[8px] font-jakarta font-semibold text-app-text-dim">{action.label}</span>
               </button>
-            </div>
-            {recentAnnouncements.length === 0 ? (
-              <div className="bg-app-surface rounded-xl border border-app-border p-4 text-center">
-                <p className="text-app-text-dim text-xs font-inter">No announcements yet</p>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-1.5">
-                {recentAnnouncements.map((ann) => (
-                  <button
-                    key={ann.id}
-                    onClick={() => navigate(`/space/${currentSpace.id}`)}
-                    className="bg-app-surface rounded-xl border border-app-border px-3.5 py-2.5 text-left active:scale-[0.99] transition-all duration-200"
-                  >
-                    <div className="flex items-start gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                          {ann.urgent && <span className="w-1.5 h-1.5 rounded-full bg-app-red flex-shrink-0" />}
-                          <span className="text-app-text text-[13px] font-inter font-medium leading-snug truncate">{ann.title}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-app-text-dim text-[10px] font-inter">{ann.author_name}</span>
-                          <span className="text-app-text-faint text-[9px] font-inter">
-                            {ann.created_at?.split('T')[0]}
-                          </span>
-                        </div>
-                      </div>
-                      <span className={`text-[9px] font-jakarta font-semibold px-1.5 py-0.5 rounded capitalize flex-shrink-0 ${
-                        ann.type === 'assignment' ? 'bg-app-orange/10 text-app-orange' :
-                        ann.type === 'test' ? 'bg-app-red/10 text-app-red' :
-                        ann.type === 'meeting' ? 'bg-app-accent2/10 text-app-accent2' :
-                        'bg-app-surface-2 text-app-text-faint'
-                      }`}>{ann.type === 'announcement' ? 'Info' : ann.type}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
+            ))}
           </div>
         </div>
 
-      </div>
-
-      {/* ── Opportunities ───────────────────────────────────────────────── */}
-      <div className="mt-5 mb-4 animate-fadeIn" style={{ animationDelay: '0.15s' }}>
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-app-text-faint text-[10px] font-jakarta font-semibold uppercase tracking-wider">Opportunities</p>
-          {opps.length > 0 && (
+        {/* ── Recent Announcements ────────────────────────────────────── */}
+        <div className="animate-fadeInUp" style={{ animationDelay: '0.12s' }}>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-app-text-dim text-[10px] font-jakarta font-semibold uppercase tracking-wider">Announcements</p>
             <button
               onClick={() => navigate(`/space/${currentSpace.id}`)}
               className="text-app-accent text-[10px] font-jakarta font-semibold hover:opacity-80 transition-opacity"
             >
               View all →
             </button>
-          )}
-        </div>
-        {oppsLoading ? (
-          <div className="flex gap-3 overflow-x-auto pb-1">
-            {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-56 flex-shrink-0 rounded-xl" />)}
           </div>
-        ) : (
-          <div className="flex gap-3 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4">
-            {displayOpps.map(opp => {
-              const cat = OPP_CAT_STYLE[opp.category] ?? { bg: '#ffffff0d', color: '#7a7a88', label: opp.category };
-              const daysLeft = opp.deadline
-                ? Math.ceil((new Date(opp.deadline).getTime() - Date.now()) / 86400000)
-                : null;
-              return (
-                <div
-                  key={opp.id}
-                  className="flex-shrink-0 w-[240px] bg-app-surface border border-app-border rounded-xl overflow-hidden"
-                  style={{ borderLeft: `3px solid ${cat.color}` }}
+          {recentAnnouncements.length === 0 ? (
+            <div className="bg-app-surface rounded-xl border border-app-border p-4 text-center">
+              <p className="text-app-text-dim text-xs font-inter">No announcements yet</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              {recentAnnouncements.map((ann) => (
+                <button
+                  key={ann.id}
+                  onClick={() => navigate(`/space/${currentSpace.id}/announcement/${ann.id}`)}
+                  className="bg-app-surface rounded-xl border border-app-border px-4 py-3 text-left active:scale-[0.99] transition-all duration-200"
                 >
-                  <div className="p-3 flex flex-col gap-1.5">
-                    <span
-                      className="text-[9px] font-jakarta font-bold px-1.5 py-0.5 rounded-full self-start"
-                      style={{ background: cat.bg, color: cat.color }}
-                    >
-                      {cat.label}
+                  <div className="flex items-start gap-2">
+                    <span className={`text-[10px] font-jakarta font-semibold px-1.5 py-0.5 rounded capitalize flex-shrink-0 mt-0.5 ${
+                      ann.type === 'assignment' ? 'bg-app-orange/10 text-app-orange' :
+                      ann.type === 'test' ? 'bg-app-red/10 text-app-red' :
+                      ann.type === 'meeting' ? 'bg-app-accent2/10 text-app-accent2' :
+                      'bg-app-surface-2 text-app-text-faint'
+                    }`}>
+                      {ann.type === 'announcement' ? 'Info' : ann.type === 'assignment' ? 'HW' : ann.type === 'test' ? 'TST' : ann.type}
                     </span>
-                    <p className="text-app-text font-jakarta font-semibold text-xs leading-snug line-clamp-2">
-                      {opp.title}
-                    </p>
-                    <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-app-border mt-auto">
-                      <span className={`text-[9px] font-jakarta font-semibold ${
-                        !daysLeft ? 'text-app-text-faint' :
-                        daysLeft < 0 ? 'text-app-red' :
-                        daysLeft <= 7 ? 'text-app-orange' : 'text-app-text-dim'
-                      }`}>
-                        {!daysLeft ? 'Open' : daysLeft < 0 ? 'Expired' : daysLeft === 0 ? 'Today!' : `${daysLeft}d left`}
-                      </span>
-                      {opp.link ? (
-                        <a
-                          href={opp.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-lg"
-                          style={{ background: cat.bg, color: cat.color }}
-                        >
-                          Apply →
-                        </a>
-                      ) : (
-                        <button
-                          onClick={() => navigate(`/space/${currentSpace.id}`)}
-                          className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-lg bg-app-surface-2 text-app-text-dim"
-                        >
-                          View →
-                        </button>
-                      )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        {ann.urgent && <span className="w-1.5 h-1.5 rounded-full bg-app-red flex-shrink-0" />}
+                        <span className="text-app-text text-sm font-inter font-medium leading-snug truncate">{ann.title}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {ann.course_code && <span className="text-app-text-dim text-[11px] font-inter">{ann.course_code}</span>}
+                        <span className="text-app-text-faint text-[10px] font-inter">
+                          {ann.created_at?.split('T')[0]}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
       </div>
 
+      {/* ── Featured Opportunity ──────────────────────────────────────── */}
+      {displayOpp && (
+        <div className="mt-6 animate-fadeInUp" style={{ animationDelay: '0.14s' }}>
+          <p className="text-app-text-dim text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-2">Featured opportunity</p>
+          <FeaturedOppCard opp={displayOpp} spaceId={currentSpace.id} navigate={navigate} oppsCount={opps.length} />
+          <button
+            onClick={() => navigate(`/space/${currentSpace.id}`)}
+            className="text-app-accent text-xs font-jakarta font-semibold mt-2 hover:opacity-80 transition-opacity"
+          >
+            View all opportunities →
+          </button>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+function FeaturedOppCard({ opp, spaceId, navigate, oppsCount }: { opp: Opportunity; spaceId: string; navigate: ReturnType<typeof useNavigate>; oppsCount: number }) {
+  const cat = OPP_CAT_STYLE[opp.category] ?? { color: '#5a5a6a', label: opp.category };
+  const daysLeft = opp.deadline
+    ? Math.ceil((new Date(opp.deadline).getTime() - Date.now()) / 86400000)
+    : null;
+
+  return (
+    <div className="bg-app-surface rounded-xl border border-app-border overflow-hidden" style={{ borderLeft: `3px solid ${cat.color}` }}>
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <span className="text-[10px] font-jakarta font-bold px-1.5 py-0.5 rounded-full" style={{ background: `${cat.color}18`, color: cat.color }}>
+              {cat.label}
+            </span>
+            <p className="text-app-text font-jakarta font-semibold text-sm leading-snug mt-2">{opp.title}</p>
+            <p className="text-app-text-dim text-xs font-inter mt-1 line-clamp-2">{opp.description}</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-app-border">
+          <span className={`text-[11px] font-jakarta font-semibold ${
+            !daysLeft ? 'text-app-text-faint' :
+            daysLeft < 0 ? 'text-app-red' :
+            daysLeft <= 7 ? 'text-app-orange' : 'text-app-text-dim'
+          }`}>
+            {!daysLeft ? 'Open' : daysLeft < 0 ? 'Expired' : daysLeft === 0 ? 'Closes today' : `Closes in ${daysLeft}d`}
+          </span>
+          {opp.link ? (
+            <a
+              href={opp.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-jakarta font-bold px-3 py-1 rounded-lg"
+              style={{ background: `${cat.color}18`, color: cat.color }}
+            >
+              Apply →
+            </a>
+          ) : (
+            <button
+              onClick={() => navigate(`/space/${spaceId}`)}
+              className="text-xs font-jakarta font-bold px-3 py-1 rounded-lg bg-app-surface-2 text-app-text-dim"
+            >
+              View →
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

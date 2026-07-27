@@ -2,15 +2,15 @@
 
 @theme {
   --color-app-bg: #0d0d12;
-  --color-app-surface: #141418;
-  --color-app-surface-2: #19191f;
-  --color-app-border: #22222b;
+  --color-app-surface: #181821;
+  --color-app-surface-2: #20202b;
+  --color-app-border: #262633;
   --color-app-accent: #3b82f6;
   --color-app-accent-2: #6366f1;
   --color-app-accent2: #6366f1;
-  --color-app-text: #f0f0f2;
-  --color-app-text-dim: #7a7a88;
-  --color-app-text-faint: #52525f;
+  --color-app-text: #f0f0f4;
+  --color-app-text-dim: #8a8a9a;
+  --color-app-text-faint: #5a5a6a;
   --color-app-red: #ef4444;
   --color-app-green: #22c55e;
   --color-app-orange: #f59e0b;
@@ -20,9 +20,9 @@
 
   --animate-fadeIn: fadeIn 0.3s ease-out;
   --animate-fadeInFast: fadeIn 0.2s ease-out;
-  --animate-fadeInUp: fadeInUp 0.4s ease-out;
-  --animate-fadeInUpSm: fadeInUp 0.3s ease-out;
-  --animate-fadeInScale: fadeInScale 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-fadeInUp: fadeInUp 0.35s ease-out;
+  --animate-fadeInUpSm: fadeInUp 0.25s ease-out;
+  --animate-scaleIn: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   --animate-slideUp: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   --animate-slideDown: slideDown 0.2s ease-out;
 
@@ -31,12 +31,12 @@
     to { opacity: 1; }
   }
   @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(16px); }
+    from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  @keyframes fadeInScale {
-    from { opacity: 0; transform: translateY(24px) scale(0.96); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
   }
   @keyframes slideUp {
     from { transform: translateY(100%); }
@@ -51,14 +51,14 @@
 /* ── Dark theme (default) ── */
 :root, [data-theme="dark"] {
   --app-bg: #0d0d12;
-  --app-surface: #141418;
-  --app-surface-2: #19191f;
-  --app-border: #22222b;
+  --app-surface: #181821;
+  --app-surface-2: #20202b;
+  --app-border: #262633;
   --app-accent: #3b82f6;
   --app-accent2: #6366f1;
-  --app-text: #f0f0f2;
-  --app-text-dim: #7a7a88;
-  --app-text-faint: #52525f;
+  --app-text: #f0f0f4;
+  --app-text-dim: #8a8a9a;
+  --app-text-faint: #5a5a6a;
   --app-red: #ef4444;
   --app-green: #22c55e;
   --app-orange: #f59e0b;

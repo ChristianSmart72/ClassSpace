@@ -25,7 +25,7 @@ function NavItem({ tab }: { tab: ReturnType<typeof useNavTabs>[0] }) {
       to={tab.path}
       className="flex flex-col items-center gap-0.5 px-3 py-0.5 transition-all duration-200"
     >
-      <span className={`text-lg transition-all duration-200 ${active ? '' : 'opacity-35'}`}>
+      <span className={`text-base transition-all duration-200 ${active ? '' : 'opacity-30'}`}>
         {tab.icon}
       </span>
       <span className={`text-[9px] font-jakarta font-semibold transition-all duration-200 ${

@@ -20,7 +20,7 @@ function sendToEndpoint(sub: { endpoint: string; p256dh: string; auth: string },
     endpoint: sub.endpoint,
     keys: { p256dh: sub.p256dh, auth: sub.auth },
   };
-  return webpush.sendNotification(subscription, JSON.stringify(payload)).catch((err) => {
+  return webpush.sendNotification(subscription, JSON.stringify(payload)).catch((err: Error & { statusCode?: number }) => {
     if (err.statusCode === 410 || err.statusCode === 404) {
       const db = getDb();
       db.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?').run(sub.endpoint);
