@@ -2,21 +2,24 @@ import { useState } from 'react';
 import { useContentStore } from '../../store/contentStore';
 import { useSpaceStore } from '../../store/spaceStore';
 import { ANNOUNCEMENT_TYPES } from '../../types';
+import type { Announcement } from '../../types';
+import api from '../../api/client';
 
-export function PostAnnouncementSheet({ spaceId, onClose }: { spaceId: string; onClose: () => void }) {
+export function PostAnnouncementSheet({ spaceId, onClose, announcement }: { spaceId: string; onClose: () => void; announcement?: Announcement }) {
   const { courses } = useSpaceStore();
-  const { createAnnouncement } = useContentStore();
-  const [courseId, setCourseId] = useState<number | ''>('');
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
-  const [type, setType] = useState('announcement');
-  const [urgent, setUrgent] = useState(false);
-  const [pinned, setPinned] = useState(false);
-  const [deadline, setDeadline] = useState('');
-  const [venue, setVenue] = useState('');
-  const [instructions, setInstructions] = useState('');
+  const { createAnnouncement, fetchAnnouncements } = useContentStore();
+  const [courseId, setCourseId] = useState<number | ''>(announcement?.course_id ?? '');
+  const [title, setTitle] = useState(announcement?.title ?? '');
+  const [body, setBody] = useState(announcement?.body ?? '');
+  const [type, setType] = useState(announcement?.type ?? 'announcement');
+  const [urgent, setUrgent] = useState(announcement?.urgent ?? false);
+  const [pinned, setPinned] = useState(announcement?.pinned ?? false);
+  const [deadline, setDeadline] = useState(announcement?.deadline ?? '');
+  const [venue, setVenue] = useState(announcement?.venue ?? '');
+  const [instructions, setInstructions] = useState(announcement?.instructions ?? '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const isEdit = !!announcement;
 
   const handleSubmit = async () => {
     if (!title.trim() || !body.trim()) {
@@ -26,17 +29,32 @@ export function PostAnnouncementSheet({ spaceId, onClose }: { spaceId: string; o
     setSubmitting(true);
     setError('');
     try {
-      await createAnnouncement(spaceId, {
-        course_id: courseId || null,
-        title,
-        body,
-        type: type as any,
-        urgent,
-        pinned,
-        deadline: deadline || undefined,
-        venue: venue || undefined,
-        instructions: instructions || undefined,
-      });
+      if (isEdit && announcement) {
+        await api.patch(`/announcements/${announcement.id}`, {
+          course_id: courseId || null,
+          title,
+          body,
+          type,
+          urgent,
+          pinned,
+          deadline: deadline || null,
+          venue: venue || null,
+          instructions: instructions || null,
+        });
+        await fetchAnnouncements(spaceId);
+      } else {
+        await createAnnouncement(spaceId, {
+          course_id: courseId || null,
+          title,
+          body,
+          type: type as any,
+          urgent,
+          pinned,
+          deadline: deadline || undefined,
+          venue: venue || undefined,
+          instructions: instructions || undefined,
+        });
+      }
       onClose();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to post');
@@ -50,7 +68,7 @@ export function PostAnnouncementSheet({ spaceId, onClose }: { spaceId: string; o
       <div className="absolute inset-0 bg-black/50" />
       <div className="relative w-full max-w-[430px] mx-auto bg-app-bg rounded-t-3xl max-h-[85vh] overflow-y-auto animate-slideUp" onClick={(e) => e.stopPropagation()}>
         <div className="sticky top-0 bg-app-bg border-b border-app-border px-6 py-4 flex items-center justify-between">
-          <h2 className="text-app-text font-jakarta font-bold text-base">Post Announcement</h2>
+          <h2 className="text-app-text font-jakarta font-bold text-base">{isEdit ? 'Edit Announcement' : 'Post Announcement'}</h2>
           <button onClick={onClose} className="text-app-text-dim text-lg">&times;</button>
         </div>
 
@@ -126,7 +144,7 @@ export function PostAnnouncementSheet({ spaceId, onClose }: { spaceId: string; o
 
           <button onClick={handleSubmit} disabled={submitting}
             className="w-full bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200 disabled:opacity-50">
-            {submitting ? 'Posting...' : 'Post Announcement'}
+            {submitting ? 'Saving...' : isEdit ? 'Update Announcement' : 'Post Announcement'}
           </button>
         </div>
       </div>

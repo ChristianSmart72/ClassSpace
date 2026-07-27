@@ -32,6 +32,11 @@ export async function deleteMaterial(id: number) {
   await api.delete(`/materials/${id}`);
 }
 
+export async function patchAnnouncement(id: number, updates: Partial<Announcement>) {
+  const { data } = await api.patch(`/announcements/${id}`, updates);
+  return data;
+}
+
 export async function getAnnouncement(id: number) {
   const { data } = await api.get(`/announcements/${id}`);
   return data as import('../types').Announcement & { course_name?: string; course_code?: string; course_icon?: string; space_name?: string };

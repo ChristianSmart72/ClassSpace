@@ -199,6 +199,38 @@ export function announcementRoutes(app: FastifyInstance) {
     return { success: true };
   });
 
+  app.patch('/api/announcements/:id', { preHandler: authMiddleware }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const userId = request.user!.userId;
+    const body = request.body as any;
+    const db = getDb();
+
+    const ann = db.prepare('SELECT * FROM announcements WHERE id = ?').get(Number(id)) as any;
+    if (!ann) return reply.status(404).send({ error: 'Not found' });
+
+    const isRep = db.prepare(
+      'SELECT 1 FROM space_members WHERE space_id = ? AND user_id = ? AND role = ?'
+    ).get(ann.space_id, userId, 'rep');
+    if (!isRep) return reply.status(403).send({ error: 'Not authorized' });
+
+    const fields: string[] = [];
+    const vals: any[] = [];
+
+    if (body.pinned !== undefined) { fields.push('pinned = ?'); vals.push(body.pinned ? 1 : 0); }
+    if (body.urgent !== undefined) { fields.push('urgent = ?'); vals.push(body.urgent ? 1 : 0); }
+    if (body.title !== undefined) { fields.push('title = ?'); vals.push(body.title); }
+    if (body.body !== undefined) { fields.push('body = ?'); vals.push(body.body); }
+    if (body.type !== undefined) { fields.push('type = ?'); vals.push(body.type); }
+    if (body.course_id !== undefined) { fields.push('course_id = ?'); vals.push(body.course_id); }
+
+    if (fields.length > 0) {
+      vals.push(Number(id));
+      db.prepare(`UPDATE announcements SET ${fields.join(', ')} WHERE id = ?`).run(...vals);
+    }
+
+    return { success: true };
+  });
+
   app.get('/api/announcements/shared/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     const db = getDb();

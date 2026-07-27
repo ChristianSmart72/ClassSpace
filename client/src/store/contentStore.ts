@@ -33,6 +33,7 @@ interface ContentState {
   fetchAnnouncements: (spaceId: string, filter?: string) => Promise<void>;
   createAnnouncement: (spaceId: string, ann: Partial<Announcement>) => Promise<Announcement>;
   deleteAnnouncement: (id: number) => Promise<void>;
+  updateAnnouncement: (id: number, updates: Partial<Announcement>) => Promise<void>;
   fetchMaterials: (courseId: number) => Promise<void>;
   uploadMaterial: (courseId: number, payload: Parameters<typeof contentApi.uploadMaterial>[1]) => Promise<Material>;
   deleteMaterial: (id: number) => Promise<void>;
@@ -83,6 +84,13 @@ export const useContentStore = create<ContentState>((set) => ({
   deleteAnnouncement: async (id) => {
     await contentApi.deleteAnnouncement(id);
     set((state) => ({ announcements: state.announcements.filter((a) => a.id !== id) }));
+  },
+
+  updateAnnouncement: async (id, updates) => {
+    await contentApi.patchAnnouncement(id, updates);
+    set((state) => ({
+      announcements: state.announcements.map(a => a.id === id ? { ...a, ...updates } : a),
+    }));
   },
 
   fetchMaterials: async (courseId) => {
