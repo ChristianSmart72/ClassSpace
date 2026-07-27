@@ -128,7 +128,7 @@ function ClassCountdown({ startTime }: { startTime: string }) {
 export function Home() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { currentSpace, courses, loading: spaceLoading } = useSpaceStore();
+  const { currentSpace, loading: spaceLoading } = useSpaceStore();
   const { announcements, fetchAnnouncements } = useContentStore();
   const [greeting, setGreeting] = useState('');
   const [timetable, setTimetable] = useState<TimetableEntry[]>([]);
@@ -136,7 +136,6 @@ export function Home() {
   const { isInstallable, install, dismiss } = useInstallPrompt();
   const setBadge = useBadgeStore((s) => s.setBadge);
   const [opps, setOpps] = useState<Opportunity[]>([]);
-  const [oppsLoading, setOppsLoading] = useState(false);
 
   useEffect(() => {
     const h = new Date().getHours();
@@ -151,11 +150,9 @@ export function Home() {
         .then(data => setTimetable(data || []))
         .catch(() => setTimetable([]))
         .finally(() => setTtLoading(false));
-      setOppsLoading(true);
       getOpportunities(currentSpace.id)
         .then(data => setOpps(data ?? []))
         .catch(() => setOpps([]))
-        .finally(() => setOppsLoading(false));
     }
   }, [currentSpace]);
 
@@ -168,7 +165,6 @@ export function Home() {
   const dueItems = getDueItems(announcements);
   const recentAnnouncements = announcements.slice(0, 3);
   const displayOpp = (opps.length > 0 ? opps : DEMO_OPPS)[0] ?? null;
-  const courseList = courses ?? [];
   const newAnnounceCount = announcements.filter(
     a => new Date(a.created_at).getTime() > Date.now() - 86400000 * 2
   ).length;
@@ -446,7 +442,7 @@ export function Home() {
       {displayOpp && (
         <div className="mt-6 animate-fadeInUp" style={{ animationDelay: '0.14s' }}>
           <p className="text-app-text-dim text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-2">Featured opportunity</p>
-          <FeaturedOppCard opp={displayOpp} spaceId={currentSpace.id} navigate={navigate} oppsCount={opps.length} />
+          <FeaturedOppCard opp={displayOpp} spaceId={currentSpace.id} navigate={navigate} />
           <button
             onClick={() => navigate(`/space/${currentSpace.id}`)}
             className="text-app-accent text-xs font-jakarta font-semibold mt-2 hover:opacity-80 transition-opacity"
@@ -460,7 +456,7 @@ export function Home() {
   );
 }
 
-function FeaturedOppCard({ opp, spaceId, navigate, oppsCount }: { opp: Opportunity; spaceId: string; navigate: ReturnType<typeof useNavigate>; oppsCount: number }) {
+function FeaturedOppCard({ opp, spaceId, navigate }: { opp: Opportunity; spaceId: string; navigate: ReturnType<typeof useNavigate> }) {
   const cat = OPP_CAT_STYLE[opp.category] ?? { color: '#5a5a6a', label: opp.category };
   const daysLeft = opp.deadline
     ? Math.ceil((new Date(opp.deadline).getTime() - Date.now()) / 86400000)
