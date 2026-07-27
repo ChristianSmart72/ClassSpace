@@ -42,7 +42,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 lg:hidden bg-app-bg border-t border-app-border z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-      <div className="flex items-stretch justify-around h-14 max-w-[430px] mx-auto">
+      <div className="flex items-stretch justify-around h-12 max-w-[430px] mx-auto">
         {tabs.map((tab) => (
           <NavItem key={tab.label} tab={tab} />
         ))}

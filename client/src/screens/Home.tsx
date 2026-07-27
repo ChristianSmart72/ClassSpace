@@ -226,13 +226,16 @@ export function Home() {
 
       {/* ── Daily Brief ─────────────────────────────────────────────────── */}
       <div className="mb-6 animate-fadeIn">
-        <h1 className="text-app-text font-jakarta font-bold text-2xl lg:text-3xl tracking-tight">
+        <h1 className="text-app-text font-jakarta font-bold text-xl lg:text-2xl tracking-tight">
           Today's Brief
         </h1>
-        <p className="text-app-text-dim text-sm font-inter mt-1">
+        <p className="text-app-text-dim text-sm font-inter mt-0.5">
           {greeting}, {user?.name?.split(' ')[0]} 👋
         </p>
-        <div className="mt-3 space-y-1">
+        <p className="text-app-text-faint text-[11px] font-jakarta font-semibold mt-3 mb-1.5">
+          Today at a glance
+        </p>
+        <div className="space-y-1">
           {isAllClear ? (
             <p className="text-app-green text-sm font-jakarta font-semibold">You're all caught up today.</p>
           ) : (
