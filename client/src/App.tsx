@@ -2,9 +2,12 @@ import { useEffect, Component, lazy, Suspense, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { useSpaceStore } from './store/spaceStore';
+import { useUpdateStore } from './store/updateStore';
 import { FloatingThemeToggle } from './components/ui/FloatingThemeToggle';
 import { MainLayout } from './components/layout/MainLayout';
 import { LogoSplash } from './components/ui/Logo';
+import { UpdatePrompt } from './components/ui/UpdatePrompt';
+import { useConnectivityStore } from './store/connectivityStore'; // ensure connectivity listeners register
 
 const Landing = lazy(() => import('./screens/Landing').then(m => ({ default: m.Landing })));
 const Login = lazy(() => import('./screens/Login').then(m => ({ default: m.Login })));
@@ -87,8 +90,29 @@ function AppRoutes() {
 export default function App() {
   const { init, initialized } = useAuthStore();
   const { fetchSpace } = useSpaceStore();
+  const setUpdateAvailable = useUpdateStore((s) => s.setUpdateAvailable);
 
   useEffect(() => {
+    // Init connectivity store listeners
+    useConnectivityStore.getState().setOnline(
+      (() => { try { return navigator.onLine } catch { return true } })()
+    );
+
+    // Watch for SW updates
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then((reg) => {
+        reg.addEventListener('updatefound', () => {
+          const installing = reg.installing;
+          if (!installing) return;
+          installing.addEventListener('statechange', () => {
+            if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+              setUpdateAvailable(true, reg);
+            }
+          });
+        });
+      });
+    }
+
     init().then(() => {
       const spaceId = (() => { try { return localStorage.getItem('spaceId') } catch { return null } })();
       if (spaceId) fetchSpace(spaceId).catch(() => {});
@@ -107,6 +131,7 @@ export default function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <AppRoutes />
+        <UpdatePrompt />
       </BrowserRouter>
     </ErrorBoundary>
   );

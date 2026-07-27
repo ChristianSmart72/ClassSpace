@@ -4,6 +4,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useSpaceStore } from '../store/spaceStore';
 import { useContentStore } from '../store/contentStore';
 import { useAuthStore } from '../store/authStore';
+import { useBadgeStore } from '../store/badgeStore';
 import { FilterBar, Fab } from '../components/layout';
 import { Badge, EmptyState, Skeleton } from '../components/ui/Shared';
 import { PostAnnouncementSheet } from '../components/sheets/PostAnnouncement';
@@ -93,6 +94,7 @@ export function Space() {
 
   useEffect(() => { if (id) fetchSpace(id); }, [id]);
   useEffect(() => { if (id) fetchAnnouncements(id, filter); }, [id, filter]);
+  useEffect(() => { if (tab === 'ann') useBadgeStore.getState().clearBadge(); }, [tab, announcements]);
   useEffect(() => {
     if (id && tab === 'schedule') {
       getTimetable(id).then(data => setTimetable(data || [])).catch(() => setTimetable([]));

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { User } from '../types';
 import { login as apiLogin, register as apiRegister, getMe } from '../api/auth';
+import { registerPushSubscription, unregisterPushSubscription } from '../lib/push';
 
 interface AuthState {
   user: User | null;
@@ -51,6 +52,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         useSpaceStore.getState().setSpace(space, space.courses ?? []);
       }
       set({ user, token, loading: false });
+      registerPushSubscription(space?.id || '').catch(() => {});
     } catch (err: any) {
       set({ loading: false });
       throw new Error(err.response?.data?.error || 'Login failed');
@@ -70,6 +72,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: () => {
+    unregisterPushSubscription().catch(() => {});
     try { localStorage.removeItem('token'); localStorage.removeItem('spaceId') } catch {}
     set({ user: null, token: null });
   },

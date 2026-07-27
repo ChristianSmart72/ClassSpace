@@ -15,6 +15,7 @@ import { reactionRoutes } from './routes/reactions.js';
 import { timetableRoutes } from './routes/timetable.js';
 import { pollRoutes } from './routes/polls.js';
 import { opportunityRoutes } from './routes/opportunities.js';
+import { pushRoutes } from './routes/push.js';
 import { createTables } from './db/schema.js';
 import { seedDatabase } from './db/seed.js';
 import { getDb } from './db/connection.js';
@@ -49,6 +50,7 @@ async function main() {
   timetableRoutes(app);
   pollRoutes(app);
   opportunityRoutes(app);
+  pushRoutes(app);
 
   app.get('/api/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
 

@@ -1,14 +1,21 @@
 import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useSpaceStore } from '../store/spaceStore';
+import { useNotificationStore } from '../store/notificationStore';
+import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { ShareSheet } from '../components/sheets/ShareSheet';
 
 import { useThemeStore } from '../store/themeStore';
 
 export function Profile() {
+  const { isInstallable, install, dismiss } = useInstallPrompt();
   const { user, logout } = useAuthStore();
   const { currentSpace, courses: rawCourses, leaveSpace } = useSpaceStore();
   const courses = rawCourses ?? [];
+  const {
+    permission, setPermission: setPerm,
+    preferences: prefs, setPreference: setPref,
+  } = useNotificationStore();
   const [showShare, setShowShare] = useState(false);
   const [copied, setCopied] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -156,14 +163,73 @@ export function Profile() {
               <div className="px-4 py-3.5 border-b border-app-border flex items-center gap-2">
                 <span>🔔</span>
                 <p className="text-app-text font-jakarta font-semibold text-sm">Notifications</p>
+                {permission === 'granted' && <span className="text-[10px] text-app-green bg-app-green/10 px-1.5 py-0.5 rounded font-semibold">Active</span>}
+                {permission === 'denied' && <span className="text-[10px] text-app-red bg-app-red/10 px-1.5 py-0.5 rounded font-semibold">Blocked</span>}
+                {permission === 'default' && <span className="text-[10px] text-app-orange bg-app-orange/10 px-1.5 py-0.5 rounded font-semibold">Not set</span>}
               </div>
               <div className="divide-y divide-app-border">
-                <ToggleRow label="All announcements" desc="New posts from your class rep" defaultOn />
-                <ToggleRow label="Urgent alerts only" desc="Only high-priority notifications" />
-                <ToggleRow label="New materials" desc="When files are uploaded" defaultOn />
-                <ToggleRow label="Test & assignment reminders" desc="Deadline alerts" defaultOn />
+                <ToggleRow
+                  label="All announcements"
+                  desc="New posts from your class rep"
+                  checked={prefs.allAnnouncements}
+                  onChange={(v) => setPref('allAnnouncements', v)}
+                />
+                <ToggleRow
+                  label="Urgent alerts only"
+                  desc="Only high-priority notifications"
+                  checked={prefs.urgentOnly}
+                  onChange={(v) => setPref('urgentOnly', v)}
+                />
+                <ToggleRow
+                  label="New materials"
+                  desc="When files are uploaded"
+                  checked={prefs.newMaterials}
+                  onChange={(v) => setPref('newMaterials', v)}
+                />
+                <ToggleRow
+                  label="Test & assignment reminders"
+                  desc="Deadline alerts"
+                  checked={prefs.testReminders}
+                  onChange={(v) => setPref('testReminders', v)}
+                />
+                {permission === 'default' && (
+                  <button
+                    onClick={() => Notification.requestPermission().then((r) => setPerm(r))}
+                    className="w-full px-4 py-3 text-app-accent text-sm font-jakarta font-semibold text-left hover:bg-app-surface-2 transition-colors"
+                  >
+                    Enable push notifications
+                  </button>
+                )}
               </div>
             </div>
+
+            {isInstallable && (
+              <div className="bg-app-surface border border-app-border rounded-2xl overflow-hidden animate-fadeIn">
+                <div className="px-4 py-3.5 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">📱</span>
+                    <div>
+                      <p className="text-app-text font-jakarta font-semibold text-sm">Install App</p>
+                      <p className="text-app-text-dim text-xs font-inter">Add to your home screen</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={install}
+                      className="bg-app-accent text-app-on-accent text-xs font-jakarta font-bold px-3 py-1.5 rounded-lg"
+                    >
+                      Install
+                    </button>
+                    <button
+                      onClick={dismiss}
+                      className="text-app-text-dim text-xs font-jakarta font-semibold px-2 py-1.5"
+                    >
+                      Later
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <p className="text-app-text-dim text-xs font-inter text-center mt-6 lg:text-left opacity-50">
               ClassSpace · Made for Nigerian students 🇳🇬
@@ -203,7 +269,7 @@ function ThemeRow() {
   );
 }
 
-function ToggleRow({ label, desc, defaultOn }: { label: string; desc: string; defaultOn?: boolean }) {
+function ToggleRow({ label, desc, checked, onChange }: { label: string; desc: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <div className="flex items-center justify-between px-4 py-3.5 gap-3">
       <div className="flex-1 min-w-0">
@@ -211,7 +277,7 @@ function ToggleRow({ label, desc, defaultOn }: { label: string; desc: string; de
         <span className="text-app-text-dim text-xs font-inter block mt-0.5 opacity-70">{desc}</span>
       </div>
       <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
-        <input type="checkbox" defaultChecked={defaultOn} className="sr-only peer" />
+        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="sr-only peer" />
         <div className="w-9 h-5 bg-app-border rounded-full peer peer-checked:bg-app-accent transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4" />
       </label>
     </div>

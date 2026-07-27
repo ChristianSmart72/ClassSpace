@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import { BottomNav, SideNav } from './index';
+import { OfflineBanner } from '../ui/OfflineBanner';
 
 export function MainLayout() {
   return (
@@ -17,6 +18,7 @@ export function MainLayout() {
         </div>
         {/* Mobile bottom nav — fixed, doesn't affect document flow */}
         <BottomNav />
+        <OfflineBanner />
       </div>
     </div>
   );

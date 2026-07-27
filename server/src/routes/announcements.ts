@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { getDb } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
+import { sendPushToSpaceMembers } from '../lib/push.js';
 
 interface CreateAnnBody {
   course_id: number | null;
@@ -124,10 +125,23 @@ export function announcementRoutes(app: FastifyInstance) {
     );
 
     const ann = db.prepare(`
-      SELECT a.*, u.name as author_name
-      FROM announcements a JOIN users u ON a.author_id = u.id
+      SELECT a.*, u.name as author_name, c.name as course_name, c.code as course_code
+      FROM announcements a
+      JOIN users u ON a.author_id = u.id
+      LEFT JOIN courses c ON a.course_id = c.id
       WHERE a.id = ?
     `).get(result.lastInsertRowid) as any;
+
+    // Send push notification to space members
+    const authorName = (db.prepare('SELECT name FROM users WHERE id = ?').get(userId) as any)?.name || 'Someone';
+    const prefix = body.urgent ? '🚨' : '📢';
+    sendPushToSpaceMembers(id, {
+      title: `${prefix} ${body.title}`,
+      body: `${authorName} — ${ann.course_code || 'General'}`,
+      tag: `announcement-${result.lastInsertRowid}`,
+      data: { url: `/space/${id}/announcement/${result.lastInsertRowid}`, type: 'announcement' },
+      requireInteraction: !!body.urgent,
+    });
 
     return {
       announcement: {

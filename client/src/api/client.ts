@@ -23,4 +23,8 @@ api.interceptors.response.use(
   }
 );
 
+export function isOfflineError(error: any): boolean {
+  return !error.response && (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error'));
+}
+
 export default api;

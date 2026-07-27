@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useSpaceStore } from '../store/spaceStore';
 import { useContentStore } from '../store/contentStore';
+import { useBadgeStore } from '../store/badgeStore';
 import { Skeleton, EmptyState } from '../components/ui/Shared';
 import { Logo } from '../components/ui/Logo';
+import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { getTimetable } from '../api/timetable';
 import { getOpportunities } from '../api/opportunities';
 import { DAYS, COURSE_COLORS } from '../types';
@@ -134,6 +136,8 @@ export function Home() {
   const [greeting, setGreeting] = useState('');
   const [timetable, setTimetable] = useState<TimetableEntry[]>([]);
   const [ttLoading, setTtLoading] = useState(false);
+  const { isInstallable, install, dismiss } = useInstallPrompt();
+  const setBadge = useBadgeStore((s) => s.setBadge);
   const [opps, setOpps] = useState<Opportunity[]>([]);
   const [oppsLoading, setOppsLoading] = useState(false);
 
@@ -171,6 +175,10 @@ export function Home() {
   const newAnnounceCount = announcements.filter(
     a => new Date(a.created_at).getTime() > Date.now() - 86400000 * 2
   ).length;
+
+  useEffect(() => {
+    if (newAnnounceCount > 0) setBadge(newAnnounceCount);
+  }, [newAnnounceCount]);
 
   // ── Loading state ──────────────────────────────────────────────────────
   if (loading) {
@@ -302,6 +310,31 @@ export function Home() {
                 +{dueItems.length - 3} more
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Install prompt card ─────────────────────────────────────────── */}
+      {isInstallable && (
+        <div className="mb-4 animate-fadeIn bg-app-surface rounded-xl border border-app-border p-3.5 flex items-center gap-3">
+          <span className="text-2xl">📱</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-app-text font-jakarta font-semibold text-sm">Install ClassSpace</p>
+            <p className="text-app-text-dim text-xs font-inter">Add to your home screen for quick access</p>
+          </div>
+          <div className="flex gap-1.5">
+            <button
+              onClick={install}
+              className="bg-app-accent text-app-on-accent text-xs font-jakarta font-bold px-3 py-1.5 rounded-lg"
+            >
+              Install
+            </button>
+            <button
+              onClick={dismiss}
+              className="text-app-text-dim text-xs font-jakarta font-semibold px-2 py-1.5"
+            >
+              Later
+            </button>
           </div>
         </div>
       )}

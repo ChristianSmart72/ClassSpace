@@ -140,7 +140,20 @@ export function createTables(): void {
     CREATE INDEX IF NOT EXISTS idx_polls_space ON polls(space_id);
     CREATE INDEX IF NOT EXISTS idx_poll_options_poll ON poll_options(poll_id);
     CREATE INDEX IF NOT EXISTS idx_poll_votes_poll ON poll_votes(poll_id);
+    CREATE TABLE IF NOT EXISTS push_subscriptions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      space_id TEXT NOT NULL REFERENCES spaces(id) ON DELETE CASCADE,
+      endpoint TEXT NOT NULL,
+      p256dh TEXT NOT NULL,
+      auth TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(endpoint)
+    );
+
     CREATE INDEX IF NOT EXISTS idx_opportunities_space ON opportunities(space_id);
     CREATE INDEX IF NOT EXISTS idx_space_members_user ON space_members(user_id);
+    CREATE INDEX IF NOT EXISTS idx_push_user ON push_subscriptions(user_id);
+    CREATE INDEX IF NOT EXISTS idx_push_space ON push_subscriptions(space_id);
   `);
 }

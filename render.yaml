@@ -11,3 +11,9 @@ services:
         value: production
       - key: JWT_SECRET
         generateValue: true
+      - key: VAPID_PUBLIC_KEY
+        value: BK-fNRDB2k-Vkap_EPjRkJ_r4QT4cPfYZFCh_rjGs_hrmWYrCde-uK9H-2ZAdtU9Xlils6wA2pfbP_1ZXwWCqCU
+      - key: VAPID_PRIVATE_KEY
+        value: onDjUGHMOlXCsyB8_FL9gKD_Qm0xjHWCQFK9yg-Wr84
+      - key: VAPID_SUBJECT
+        value: mailto:webdaddyempire@gmail.com
