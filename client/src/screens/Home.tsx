@@ -24,10 +24,10 @@ function getTodayName(): string {
 }
 
 function getTomorrowName(): string {
-  let idx = getTodayIndex();
-  if (idx === -1) idx = 0;
-  idx = (idx + 1) % 5;
-  return WEEKDAYS[idx];
+  const today = new Date().getDay();
+  if (today === 0 || today === 6) return 'Monday';
+  const idx = today - 1;
+  return WEEKDAYS[(idx + 1) % 5];
 }
 
 function timeToMinutes(t: string): number {
@@ -122,10 +122,19 @@ function getOppStatus(opp: Opportunity): { label: string; color: string } {
   return { label: `${days} Days Left`, color: 'text-app-text-dim' };
 }
 
+function futureDate(daysFromNow: number): string {
+  const d = new Date(Date.now() + daysFromNow * 86400000);
+  return d.toISOString().split('T')[0];
+}
+
+function pastDate(daysAgo: number): string {
+  return new Date(Date.now() - daysAgo * 86400000).toISOString();
+}
+
 const DEMO_OPPS: Opportunity[] = [
-  { id: -1, space_id: '', author_id: 0, author_name: 'ClassSpace', title: 'Shell Nigeria STEM Scholarship 2025', description: 'Open to 300L and 400L engineering students with a minimum CGPA of 3.5.', category: 'scholarship', link: 'https://shell.com/scholarship', deadline: '2025-12-31', created_at: new Date(Date.now() - 86400000 * 5).toISOString() },
-  { id: -2, space_id: '', author_id: 0, author_name: 'ClassSpace', title: 'MTN Foundation Summer Internship', description: 'Paid 3-month internship for penultimate year students.', category: 'internship', link: 'https://mtn.com/internship', deadline: '2025-07-15', created_at: new Date(Date.now() - 86400000 * 2).toISOString() },
-  { id: -3, space_id: '', author_id: 0, author_name: 'ClassSpace', title: 'IEEE Nigeria Student Competition', description: 'Submit your FYP abstract. Win ₦500,000 and IEEE membership.', category: 'competition', link: 'https://ieee.org/nigeria', deadline: '2025-09-10', created_at: new Date(Date.now() - 86400000 * 30).toISOString() },
+  { id: -1, space_id: '', author_id: 0, author_name: 'ClassSpace', title: 'Shell Nigeria STEM Scholarship 2025', description: 'Open to 300L and 400L engineering students with a minimum CGPA of 3.5.', category: 'scholarship', link: 'https://shell.com/scholarship', deadline: futureDate(60), created_at: pastDate(5) },
+  { id: -2, space_id: '', author_id: 0, author_name: 'ClassSpace', title: 'MTN Foundation Summer Internship', description: 'Paid 3-month internship for penultimate year students.', category: 'internship', link: 'https://mtn.com/internship', deadline: futureDate(3), created_at: pastDate(2) },
+  { id: -3, space_id: '', author_id: 0, author_name: 'ClassSpace', title: 'IEEE Nigeria Student Competition', description: 'Submit your FYP abstract. Win ₦500,000 and IEEE membership.', category: 'competition', link: 'https://ieee.org/nigeria', deadline: futureDate(14), created_at: pastDate(30) },
 ];
 
 const OPP_CAT_STYLE: Record<string, { color: string; label: string }> = {
