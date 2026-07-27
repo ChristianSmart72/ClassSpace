@@ -2,6 +2,29 @@ import { create } from 'zustand';
 import type { User } from '../types';
 import { login as apiLogin, register as apiRegister, getMe } from '../api/auth';
 import { registerPushSubscription, unregisterPushSubscription } from '../lib/push';
+import { isOfflineError } from '../api/client';
+
+function safeGet(key: string): string | null {
+  try { return localStorage.getItem(key) } catch { return null }
+}
+function safeSet(key: string, val: string) {
+  try { localStorage.setItem(key, val) } catch {}
+}
+function safeRemove(key: string) {
+  try { localStorage.removeItem(key) } catch {}
+}
+
+function getCachedUser(): User | null {
+  const raw = safeGet('cachedUser');
+  if (!raw) return null;
+  try { return JSON.parse(raw) } catch { return null }
+}
+function setCachedUser(user: User) {
+  safeSet('cachedUser', JSON.stringify(user));
+}
+function clearCachedUser() {
+  safeRemove('cachedUser');
+}
 
 interface AuthState {
   user: User | null;
@@ -15,28 +38,41 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  token: (() => { try { return localStorage.getItem('token') } catch { return null } })(),
+  user: getCachedUser(),
+  token: safeGet('token'),
   loading: false,
   initialized: false,
 
   init: async () => {
-    const token = (() => { try { return localStorage.getItem('token') } catch { return null } })();
+    const token = safeGet('token');
     if (!token) {
-      set({ initialized: true });
+      clearCachedUser();
+      set({ user: null, token: null, initialized: true });
       return;
     }
     try {
       const res = await getMe();
       const { user, space } = res as any;
+      if (user) setCachedUser(user);
       if (space) {
-        try { localStorage.setItem('spaceId', space.id) } catch {}
+        safeSet('spaceId', space.id);
         const { useSpaceStore } = await import('./spaceStore');
+        useSpaceStore.getState().restoreCache();
         useSpaceStore.getState().fetchSpace(space.id);
       }
       set({ user, token, initialized: true });
-    } catch {
-      try { localStorage.removeItem('token') } catch {}
+    } catch (err: any) {
+      if (isOfflineError(err)) {
+        const cachedUser = getCachedUser();
+        if (cachedUser) {
+          set({ user: cachedUser, token, initialized: true });
+          const { useSpaceStore } = await import('./spaceStore');
+          useSpaceStore.getState().restoreCache();
+          return;
+        }
+      }
+      safeRemove('token');
+      clearCachedUser();
       set({ token: null, user: null, initialized: true });
     }
   },
@@ -45,9 +81,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ loading: true });
     try {
       const { token, user, space } = await apiLogin(email, password) as any;
-      localStorage.setItem('token', token);
+      safeSet('token', token);
+      if (user) setCachedUser(user);
       if (space) {
-        localStorage.setItem('spaceId', space.id);
+        safeSet('spaceId', space.id);
         const { useSpaceStore } = await import('./spaceStore');
         useSpaceStore.getState().setSpace(space, space.courses ?? []);
       }
@@ -63,7 +100,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ loading: true });
     try {
       const { token, user } = await apiRegister(name, email, password);
-      localStorage.setItem('token', token);
+      safeSet('token', token);
+      if (user) setCachedUser(user);
       set({ user, token, loading: false });
     } catch (err: any) {
       set({ loading: false });
@@ -73,7 +111,9 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: () => {
     unregisterPushSubscription().catch(() => {});
-    try { localStorage.removeItem('token'); localStorage.removeItem('spaceId') } catch {}
+    safeRemove('token');
+    safeRemove('spaceId');
+    clearCachedUser();
     set({ user: null, token: null });
   },
 }));

@@ -114,6 +114,13 @@ export function announcementRoutes(app: FastifyInstance) {
     }
 
     const db = getDb();
+
+    const membership = db.prepare(
+      'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
+    ).get(id, userId) as any;
+    if (!membership || membership.role !== 'rep') {
+      return reply.status(403).send({ error: 'Only class reps can create announcements' });
+    }
     const result = db.prepare(
       `INSERT INTO announcements (space_id, course_id, title, body, type, author_id, urgent, pinned, deadline, venue, instructions, submission_method, format)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`

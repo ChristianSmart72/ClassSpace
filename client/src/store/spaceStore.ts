@@ -1,6 +1,46 @@
 import { create } from 'zustand';
 import type { Space, Course } from '../types';
 import { createSpace as apiCreateSpace, getSpace as apiGetSpace, joinSpace as apiJoinSpace } from '../api/spaces';
+import { isOfflineError } from '../api/client';
+
+function safeGet(key: string): string | null {
+  try { return localStorage.getItem(key) } catch { return null }
+}
+function safeSet(key: string, val: string) {
+  try { localStorage.setItem(key, val) } catch {}
+}
+function safeRemove(key: string) {
+  try { localStorage.removeItem(key) } catch {}
+}
+
+const CACHE_KEYS = { space: 'cachedSpace', courses: 'cachedCourses', role: 'cachedRole' };
+
+function cacheSpace(space: Space, courses: Course[], role: string | null) {
+  safeSet(CACHE_KEYS.space, JSON.stringify(space));
+  safeSet(CACHE_KEYS.courses, JSON.stringify(courses));
+  if (role) safeSet(CACHE_KEYS.role, role);
+}
+
+function restoreSpaceCache(): { space: Space | null; courses: Course[]; role: string | null } {
+  try {
+    const spaceRaw = safeGet(CACHE_KEYS.space);
+    const coursesRaw = safeGet(CACHE_KEYS.courses);
+    const roleRaw = safeGet(CACHE_KEYS.role);
+    return {
+      space: spaceRaw ? JSON.parse(spaceRaw) : null,
+      courses: coursesRaw ? JSON.parse(coursesRaw) : [],
+      role: roleRaw || null,
+    };
+  } catch {
+    return { space: null, courses: [], role: null };
+  }
+}
+
+function clearSpaceCache() {
+  safeRemove(CACHE_KEYS.space);
+  safeRemove(CACHE_KEYS.courses);
+  safeRemove(CACHE_KEYS.role);
+}
 
 interface SpaceState {
   currentSpace: Space | null;
@@ -16,14 +56,18 @@ interface SpaceState {
   setSpace: (space: Space, courses: Course[]) => void;
   leaveSpace: () => void;
   clearError: () => void;
+  restoreCache: () => void;
+  clearCache: () => void;
 }
 
+const initialCached = restoreSpaceCache();
+
 export const useSpaceStore = create<SpaceState>((set) => ({
-  currentSpace: null,
-  courses: [],
+  currentSpace: initialCached.space,
+  courses: initialCached.courses,
   members: [],
-  isMember: false,
-  memberRole: null,
+  isMember: !!initialCached.space,
+  memberRole: initialCached.role,
   loading: false,
   error: null,
 
@@ -31,16 +75,10 @@ export const useSpaceStore = create<SpaceState>((set) => ({
     set({ loading: true, error: null });
     try {
       const { space, token } = await apiCreateSpace(data);
-      if (token) localStorage.setItem('token', token);
-      localStorage.setItem('spaceId', space.id);
-      set({
-        currentSpace: space,
-        courses: space.courses ?? [],
-        isMember: true,
-        memberRole: 'rep',
-        loading: false,
-        error: null,
-      });
+      if (token) safeSet('token', token);
+      safeSet('spaceId', space.id);
+      cacheSpace(space, space.courses ?? [], 'rep');
+      set({ currentSpace: space, courses: space.courses ?? [], isMember: true, memberRole: 'rep', loading: false, error: null });
       return space;
     } catch (err) {
       set({ loading: false, error: 'Failed to create space' });
@@ -53,10 +91,18 @@ export const useSpaceStore = create<SpaceState>((set) => ({
     try {
       const { space, members, isMember, memberRole } = await apiGetSpace(id);
       const courses: Course[] = space.courses ?? [];
-      localStorage.setItem('spaceId', id);
+      safeSet('spaceId', id);
+      cacheSpace(space, courses, memberRole);
       set({ currentSpace: space, courses, members, isMember, memberRole, loading: false, error: null });
-    } catch {
-      localStorage.removeItem('spaceId');
+    } catch (err: any) {
+      if (isOfflineError(err)) {
+        const cached = restoreSpaceCache();
+        if (cached.space) {
+          set({ currentSpace: cached.space, courses: cached.courses, isMember: true, memberRole: cached.role, loading: false, error: null });
+          return;
+        }
+      }
+      safeRemove('spaceId');
       set({ loading: false, error: 'Could not load space', currentSpace: null });
     }
   },
@@ -65,15 +111,9 @@ export const useSpaceStore = create<SpaceState>((set) => ({
     set({ loading: true, error: null });
     try {
       const { space } = await apiJoinSpace(code);
-      localStorage.setItem('spaceId', space.id);
-      set({
-        currentSpace: space,
-        courses: space.courses ?? [],
-        isMember: true,
-        memberRole: 'member',
-        loading: false,
-        error: null,
-      });
+      safeSet('spaceId', space.id);
+      cacheSpace(space, space.courses ?? [], 'member');
+      set({ currentSpace: space, courses: space.courses ?? [], isMember: true, memberRole: 'member', loading: false, error: null });
       return space;
     } catch (err) {
       set({ loading: false, error: 'Failed to join space' });
@@ -82,14 +122,25 @@ export const useSpaceStore = create<SpaceState>((set) => ({
   },
 
   setSpace: (space, courses) => {
-    try { localStorage.setItem('spaceId', space.id) } catch {}
+    safeSet('spaceId', space.id);
+    cacheSpace(space, courses, 'member');
     set({ currentSpace: space, courses, isMember: true, memberRole: 'member', error: null });
   },
 
   leaveSpace: () => {
-    try { localStorage.removeItem('spaceId') } catch {}
+    safeRemove('spaceId');
+    clearSpaceCache();
     set({ currentSpace: null, courses: [], members: [], isMember: false, memberRole: null, error: null });
   },
 
   clearError: () => set({ error: null }),
+
+  restoreCache: () => {
+    const cached = restoreSpaceCache();
+    if (cached.space && !useSpaceStore.getState().currentSpace) {
+      set({ currentSpace: cached.space, courses: cached.courses, isMember: true, memberRole: cached.role });
+    }
+  },
+
+  clearCache: () => clearSpaceCache(),
 }));

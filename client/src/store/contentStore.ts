@@ -3,6 +3,23 @@ import type { Announcement, Material, Poll, Opportunity } from '../types';
 import * as contentApi from '../api/content';
 import * as pollsApi from '../api/polls';
 import * as opportunitiesApi from '../api/opportunities';
+import { isOfflineError } from '../api/client';
+
+function safeGet(key: string): string | null {
+  try { return localStorage.getItem(key) } catch { return null }
+}
+function safeSet(key: string, val: string) {
+  try { localStorage.setItem(key, val) } catch {}
+}
+function cacheAnnouncements(announcements: Announcement[]) {
+  safeSet('cachedAnnouncements', JSON.stringify(announcements));
+}
+function restoreAnnouncements(): Announcement[] {
+  try {
+    const raw = safeGet('cachedAnnouncements');
+    return raw ? JSON.parse(raw) : [];
+  } catch { return [] }
+}
 
 interface ContentState {
   announcements: Announcement[];
@@ -30,7 +47,7 @@ interface ContentState {
 }
 
 export const useContentStore = create<ContentState>((set) => ({
-  announcements: [],
+  announcements: restoreAnnouncements(),
   materials: [],
   polls: [],
   opportunities: [],
@@ -43,8 +60,16 @@ export const useContentStore = create<ContentState>((set) => ({
     set({ loading: true });
     try {
       const announcements = await contentApi.getAnnouncements(spaceId, filter);
+      cacheAnnouncements(announcements);
       set({ announcements, loading: false });
-    } catch {
+    } catch (err: any) {
+      if (isOfflineError(err)) {
+        const cached = restoreAnnouncements();
+        if (cached.length > 0) {
+          set({ announcements: cached, loading: false });
+          return;
+        }
+      }
       set({ loading: false });
     }
   },

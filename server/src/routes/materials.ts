@@ -25,6 +25,16 @@ export function materialRoutes(app: FastifyInstance) {
     const userId = request.user!.userId;
     const db = getDb();
 
+    const course = db.prepare('SELECT space_id FROM courses WHERE id = ?').get(Number(id)) as any;
+    if (!course) return reply.status(404).send({ error: 'Course not found' });
+
+    const membership = db.prepare(
+      'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
+    ).get(course.space_id, userId) as any;
+    if (!membership || membership.role !== 'rep') {
+      return reply.status(403).send({ error: 'Only class reps can upload materials' });
+    }
+
     const data = request.body as {
       name: string;
       file_data?: string;

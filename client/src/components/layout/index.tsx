@@ -148,7 +148,7 @@ export function Fab({ onClick, icon = '+' }: { onClick: () => void; icon?: strin
   return (
     <button
       onClick={onClick}
-      className="fixed bottom-20 right-4 lg:bottom-6 lg:right-8 z-30 w-11 h-11 rounded-full bg-app-accent text-white flex items-center justify-center text-xl shadow-lg shadow-app-accent/25 hover:shadow-app-accent/35 active:scale-90 transition-all duration-200"
+      className="fixed bottom-28 right-4 lg:bottom-6 lg:right-8 z-30 w-11 h-11 rounded-full bg-app-accent text-white flex items-center justify-center text-xl shadow-lg shadow-app-accent/25 hover:shadow-app-accent/35 active:scale-90 transition-all duration-200"
     >
       {icon}
     </button>

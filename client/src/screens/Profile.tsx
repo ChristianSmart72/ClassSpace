@@ -10,7 +10,7 @@ import { useThemeStore } from '../store/themeStore';
 export function Profile() {
   const { isInstallable, install, dismiss } = useInstallPrompt();
   const { user, logout } = useAuthStore();
-  const { currentSpace, courses: rawCourses, leaveSpace } = useSpaceStore();
+  const { currentSpace, courses: rawCourses, memberRole, leaveSpace } = useSpaceStore();
   const courses = rawCourses ?? [];
   const {
     permission, setPermission: setPerm,
@@ -45,7 +45,7 @@ export function Profile() {
   }
 
   const avatarLetter = user.name?.charAt(0)?.toUpperCase() || '?';
-  const isRep = user.role === 'rep';
+  const isRep = memberRole === 'rep';
 
   return (
     <div className="pb-8">
