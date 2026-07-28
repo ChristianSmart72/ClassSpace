@@ -37,6 +37,7 @@ interface ContentState {
   fetchMaterials: (courseId: number) => Promise<void>;
   uploadMaterial: (courseId: number, payload: Parameters<typeof contentApi.uploadMaterial>[1]) => Promise<Material>;
   deleteMaterial: (id: number) => Promise<void>;
+  updateMaterial: (id: number, updates: Partial<Material>) => Promise<void>;
   clearMaterials: () => void;
   fetchPolls: (spaceId: string) => Promise<void>;
   createPoll: (spaceId: string, payload: { question: string; options: string[]; closes_at?: string }) => Promise<Poll>;
@@ -112,6 +113,13 @@ export const useContentStore = create<ContentState>((set) => ({
   deleteMaterial: async (id) => {
     await contentApi.deleteMaterial(id);
     set((state) => ({ materials: state.materials.filter((m) => m.id !== id) }));
+  },
+
+  updateMaterial: async (id, updates) => {
+    await contentApi.patchMaterial(id, updates);
+    set((state) => ({
+      materials: state.materials.map(m => m.id === id ? { ...m, ...updates } : m),
+    }));
   },
 
   clearMaterials: () => set({ materials: [] }),

@@ -32,6 +32,16 @@ export async function deleteMaterial(id: number) {
   await api.delete(`/materials/${id}`);
 }
 
+export async function patchMaterial(id: number, updates: Partial<Material>) {
+  const { data } = await api.patch(`/materials/${id}`, updates);
+  return data;
+}
+
+export async function getMaterialsSummary(spaceId: string) {
+  const { data } = await api.get(`/spaces/${spaceId}/materials/summary`);
+  return data as { courses: { course_id: number; count: number; latest: { name: string; created_at: string } | null }[] };
+}
+
 export async function patchAnnouncement(id: number, updates: Partial<Announcement>) {
   const { data } = await api.patch(`/announcements/${id}`, updates);
   return data;

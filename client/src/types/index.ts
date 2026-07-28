@@ -68,6 +68,8 @@ export interface Material {
   created_at: string;
   course_name?: string;
   course_code?: string;
+  pinned?: boolean;
+  downloads?: number;
 }
 
 export interface TimetableEntry {
@@ -146,8 +148,8 @@ export const ANNOUNCEMENT_TYPES = [
 ] as const;
 
 export const MATERIAL_CATEGORIES = [
-  'Notes', 'Slides', 'Assignments', 'Past Questions',
-  'Textbooks', 'Lab Resources', 'Templates', 'Other',
+  'Slides', 'Assignments', 'Past Questions',
+  'Lab Resources', 'Books', 'Templates', 'Other',
 ] as const;
 
 export const FILE_ICONS: Record<string, string> = {

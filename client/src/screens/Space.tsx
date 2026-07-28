@@ -8,6 +8,7 @@ import { Skeleton, EmptyState } from '../components/ui/Shared';
 import { PostAnnouncementSheet } from '../components/sheets/PostAnnouncement';
 import { UploadMaterialSheet } from '../components/sheets/UploadMaterial';
 import { getTimetable } from '../api/timetable';
+import { getMaterialsSummary } from '../api/content';
 import type { Announcement, TimetableEntry } from '../types';
 import { COURSE_COLORS, COURSE_BG_COLORS, DAYS } from '../types';
 import { ShareSheet } from '../components/sheets/ShareSheet';
@@ -83,6 +84,7 @@ export function Space() {
   const todayIndex = (() => { const d = new Date().getDay(); return d === 0 || d === 6 ? 0 : d - 1; })();
   const [scheduleDay, setScheduleDay] = useState(todayIndex);
   const [shareTarget, setShareTarget] = useState<{ type: string; id: string | number } | null>(null);
+  const [courseSummary, setCourseSummary] = useState<Record<number, { count: number; latest: { name: string; created_at: string } | null }>>({});
 
   const isRep = memberRole === 'rep';
   const courseList = courses ?? [];
@@ -103,6 +105,13 @@ export function Space() {
   useEffect(() => {
     if (spaceId && tab === 'timetable') {
       getTimetable(spaceId).then(d => setTimetable(d || [])).catch(() => setTimetable([]));
+    }
+    if (spaceId && tab === 'files') {
+      getMaterialsSummary(spaceId).then(data => {
+        const map: Record<number, { count: number; latest: { name: string; created_at: string } | null }> = {};
+        for (const c of data.courses) map[c.course_id] = { count: c.count, latest: c.latest };
+        setCourseSummary(map);
+      }).catch(() => {});
     }
   }, [spaceId, tab]);
 
@@ -282,23 +291,46 @@ export function Space() {
             <div className="flex flex-col gap-2">
               {filteredCourses.map((course, i) => {
                 const ci = (course.color_index ?? i) % 5;
+                const summary = courseSummary[course.id];
+                const count = summary?.count ?? 0;
+                const latest = summary?.latest ?? null;
+
+                let isNew = false;
+                if (latest) {
+                  try {
+                    const lv = Number(localStorage.getItem(`spaceLastVisit:${spaceId}`)) || 0;
+                    isNew = new Date(latest.created_at).getTime() > lv;
+                  } catch {}
+                }
+
                 return (
-                  <div key={course.id} className="bg-app-surface rounded-xl border border-app-border relative overflow-hidden flex items-center">
+                  <div key={course.id} className="bg-app-surface rounded-xl border border-app-border relative overflow-hidden cursor-pointer active:scale-[0.99] transition-all duration-200"
+                    onClick={() => navigate(`/space/${currentSpace.id}/course/${course.id}`)}>
                     <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: COURSE_COLORS[ci] }} />
-                    <button
-                      onClick={() => navigate(`/space/${currentSpace.id}/course/${course.id}`)}
-                      className="flex-1 text-left active:scale-[0.99] transition-all duration-200 flex items-center gap-3 min-w-0 py-3.5 pl-4 pr-2">
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0" style={{ background: COURSE_BG_COLORS[ci] }}>
-                        {course.icon}
+                    <div className="pl-4 pr-3.5 py-3.5">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0 mt-0.5" style={{ background: COURSE_BG_COLORS[ci] }}>
+                          {course.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-app-text font-jakarta font-semibold text-sm leading-snug truncate">{course.name}</p>
+                            {isNew && <span className="text-[10px] font-jakarta font-bold text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded-full flex-shrink-0">New</span>}
+                          </div>
+                          <p className="text-app-text-dim text-xs font-inter mt-0.5">{course.code}</p>
+                          <div className="flex items-center gap-1.5 text-app-text-faint text-[11px] font-inter mt-1.5">
+                            <span>{count} {count === 1 ? 'resource' : 'resources'}</span>
+                            {latest && (
+                              <>
+                                <span>·</span>
+                                <span className="truncate">Latest: {latest.name}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-app-text-faint text-xs font-inter flex-shrink-0 mt-1">→</span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-app-text font-jakarta font-semibold text-sm leading-snug truncate">{course.name}</p>
-                        <p className="text-app-text-dim text-xs font-inter mt-0.5">{course.code}</p>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => navigate(`/space/${currentSpace.id}/course/${course.id}`)}
-                      className="pr-3.5 text-app-text-faint text-xs font-inter flex-shrink-0">→</button>
+                    </div>
                   </div>
                 );
               })}

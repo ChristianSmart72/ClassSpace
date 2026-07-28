@@ -156,4 +156,8 @@ export function createTables(): void {
     CREATE INDEX IF NOT EXISTS idx_push_user ON push_subscriptions(user_id);
     CREATE INDEX IF NOT EXISTS idx_push_space ON push_subscriptions(space_id);
   `);
+
+  // Migrations for columns added after initial schema
+  try { db.exec('ALTER TABLE materials ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0'); } catch {}
+  try { db.exec('ALTER TABLE materials ADD COLUMN downloads INTEGER NOT NULL DEFAULT 0'); } catch {}
 }
