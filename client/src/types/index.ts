@@ -52,6 +52,9 @@ export interface Announcement {
   course_icon?: string;
   reactions?: Record<string, number>;
   my_reaction?: string | null;
+  file_data?: string;
+  file_name?: string;
+  file_size?: number;
 }
 
 export interface Material {

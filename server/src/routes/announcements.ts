@@ -15,6 +15,9 @@ interface CreateAnnBody {
   instructions?: string;
   submission_method?: string;
   format?: string;
+  file_data?: string;
+  file_name?: string;
+  file_size?: number;
 }
 
 export function announcementRoutes(app: FastifyInstance) {
@@ -122,13 +125,14 @@ export function announcementRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: 'Only class reps can create announcements' });
     }
     const result = db.prepare(
-      `INSERT INTO announcements (space_id, course_id, title, body, type, author_id, urgent, pinned, deadline, venue, instructions, submission_method, format)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO announcements (space_id, course_id, title, body, type, author_id, urgent, pinned, deadline, venue, instructions, submission_method, format, file_data, file_name, file_size)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       id, body.course_id || null, body.title, body.body, body.type || 'announcement',
       userId, body.urgent ? 1 : 0, body.pinned ? 1 : 0,
       body.deadline || null, body.venue || null, body.instructions || null,
-      body.submission_method || null, body.format || null
+      body.submission_method || null, body.format || null,
+      body.file_data || null, body.file_name || null, body.file_size || null
     );
 
     const ann = db.prepare(`
@@ -222,6 +226,9 @@ export function announcementRoutes(app: FastifyInstance) {
     if (body.body !== undefined) { fields.push('body = ?'); vals.push(body.body); }
     if (body.type !== undefined) { fields.push('type = ?'); vals.push(body.type); }
     if (body.course_id !== undefined) { fields.push('course_id = ?'); vals.push(body.course_id); }
+    if (body.file_data !== undefined) { fields.push('file_data = ?'); vals.push(body.file_data); }
+    if (body.file_name !== undefined) { fields.push('file_name = ?'); vals.push(body.file_name); }
+    if (body.file_size !== undefined) { fields.push('file_size = ?'); vals.push(body.file_size); }
 
     if (fields.length > 0) {
       vals.push(Number(id));
@@ -229,6 +236,21 @@ export function announcementRoutes(app: FastifyInstance) {
     }
 
     return { success: true };
+  });
+
+  app.get('/api/announcements/:id/download', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const db = getDb();
+
+    const ann = db.prepare('SELECT file_data, file_name FROM announcements WHERE id = ?').get(Number(id)) as any;
+    if (!ann || !ann.file_data) return reply.status(404).send({ error: 'File not found' });
+
+    const base64 = ann.file_data.includes(',') ? ann.file_data.split(',')[1] : ann.file_data;
+    const buf = Buffer.from(base64, 'base64');
+    reply.header('Content-Type', 'application/octet-stream');
+    reply.header('Content-Disposition', `attachment; filename="${ann.file_name || 'download'}"`);
+    reply.header('Cache-Control', 'public, max-age=86400');
+    return buf;
   });
 
   app.get('/api/announcements/shared/:id', async (request, reply) => {

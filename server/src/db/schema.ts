@@ -160,4 +160,7 @@ export function createTables(): void {
   // Migrations for columns added after initial schema
   try { db.exec('ALTER TABLE materials ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0'); } catch {}
   try { db.exec('ALTER TABLE materials ADD COLUMN downloads INTEGER NOT NULL DEFAULT 0'); } catch {}
+  try { db.exec("ALTER TABLE announcements ADD COLUMN file_data TEXT"); } catch {}
+  try { db.exec("ALTER TABLE announcements ADD COLUMN file_name TEXT"); } catch {}
+  try { db.exec("ALTER TABLE announcements ADD COLUMN file_size INTEGER"); } catch {}
 }

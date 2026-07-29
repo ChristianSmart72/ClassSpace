@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useContentStore } from '../../store/contentStore';
 import { useSpaceStore } from '../../store/spaceStore';
 import { ANNOUNCEMENT_TYPES } from '../../types';
@@ -19,6 +19,8 @@ export function PostAnnouncementSheet({ spaceId, onClose, announcement }: { spac
   const [instructions, setInstructions] = useState(announcement?.instructions ?? '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const isEdit = !!announcement;
 
   const handleSubmit = async () => {
@@ -29,6 +31,20 @@ export function PostAnnouncementSheet({ spaceId, onClose, announcement }: { spac
     setSubmitting(true);
     setError('');
     try {
+      let fileData: string | undefined;
+      let fileName: string | undefined;
+      let fileSize: number | undefined;
+      if (file) {
+        fileData = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        fileName = file.name;
+        fileSize = file.size;
+      }
+
       if (isEdit && announcement) {
         await api.patch(`/announcements/${announcement.id}`, {
           course_id: courseId || null,
@@ -53,7 +69,10 @@ export function PostAnnouncementSheet({ spaceId, onClose, announcement }: { spac
           deadline: deadline || undefined,
           venue: venue || undefined,
           instructions: instructions || undefined,
-        });
+          file_data: fileData,
+          file_name: fileName,
+          file_size: fileSize,
+        } as any);
       }
       onClose();
     } catch (err: any) {
@@ -127,6 +146,13 @@ export function PostAnnouncementSheet({ spaceId, onClose, announcement }: { spac
             <label className="text-app-text-dim text-xs font-jakarta font-semibold uppercase tracking-wider mb-1.5 block">Instructions</label>
             <textarea value={instructions} onChange={(e) => setInstructions(e.target.value)} placeholder="Full instructions..." rows={3}
               className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-inter text-sm placeholder:text-app-text-faint focus:border-app-accent transition-colors resize-none" />
+          </div>
+
+          <div>
+            <label className="text-app-text-dim text-xs font-jakarta font-semibold uppercase tracking-wider mb-1.5 block">Attachment (optional)</label>
+            <input ref={fileRef} type="file" onChange={e => setFile(e.target.files?.[0] ?? null)}
+              className="w-full text-app-text text-sm font-inter file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border file:border-app-border file:bg-app-surface file:text-app-text file:text-xs file:font-jakarta file:font-semibold hover:file:bg-app-surface-2 cursor-pointer" />
+            {file && <p className="text-app-text-dim text-xs font-inter mt-1">{file.name} ({(file.size / 1024).toFixed(0)} KB)</p>}
           </div>
 
           <div className="flex gap-4">

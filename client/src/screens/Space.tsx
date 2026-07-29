@@ -7,7 +7,7 @@ import { Fab } from '../components/layout';
 import { Skeleton, EmptyState } from '../components/ui/Shared';
 import { PostAnnouncementSheet } from '../components/sheets/PostAnnouncement';
 import { UploadMaterialSheet } from '../components/sheets/UploadMaterial';
-import { getTimetable } from '../api/timetable';
+import { getTimetable, createTimetableEntry, deleteTimetableEntry } from '../api/timetable';
 import { getMaterialsSummary } from '../api/content';
 import type { Announcement, TimetableEntry } from '../types';
 import { COURSE_COLORS, COURSE_BG_COLORS, DAYS } from '../types';
@@ -165,6 +165,42 @@ export function Space() {
 
   const handleEdit = (ann: Announcement) => {
     setEditAnnouncement(ann);
+  };
+
+  // Timetable CRUD
+  const [showScheduleForm, setShowScheduleForm] = useState(false);
+  const [newClassCourse, setNewClassCourse] = useState<number | ''>('');
+  const [newClassDay, setNewClassDay] = useState(0);
+  const [newClassStart, setNewClassStart] = useState('08:00');
+  const [newClassEnd, setNewClassEnd] = useState('09:00');
+  const [newClassVenue, setNewClassVenue] = useState('');
+  const [classSubmitting, setClassSubmitting] = useState(false);
+
+  const handleAddClass = async () => {
+    if (!newClassCourse) return;
+    setClassSubmitting(true);
+    try {
+      await createTimetableEntry(spaceId!, {
+        course_id: newClassCourse as number,
+        day: DAYS[newClassDay],
+        start_time: newClassStart,
+        end_time: newClassEnd,
+        venue: newClassVenue || undefined,
+      });
+      getTimetable(spaceId!).then(d => setTimetable(d || [])).catch(() => {});
+      setShowScheduleForm(false);
+      setNewClassCourse('');
+      setNewClassDay(0);
+      setNewClassStart('08:00');
+      setNewClassEnd('09:00');
+      setNewClassVenue('');
+    } catch {}
+    setClassSubmitting(false);
+  };
+
+  const handleDeleteClass = async (entryId: number) => {
+    if (!confirm('Delete this class?')) return;
+    try { await deleteTimetableEntry(entryId); setTimetable(prev => prev.filter(e => e.id !== entryId)); } catch {}
   };
 
   if (spaceLoading) {
@@ -342,6 +378,43 @@ export function Space() {
       {/* ─── Timetable Tab ─── */}
       {tab === 'timetable' && (
         <div className="px-4 animate-fadeIn">
+          {isRep && showScheduleForm && (
+            <div className="bg-app-surface rounded-xl border border-app-border p-4 mb-4 animate-fadeIn">
+              <p className="text-app-text font-jakarta font-semibold text-sm mb-3">Add Class</p>
+              <div className="flex flex-col gap-2.5">
+                <select value={newClassCourse} onChange={e => setNewClassCourse(e.target.value ? Number(e.target.value) : '')}
+                  className="w-full bg-app-bg border border-app-border rounded-lg px-3 py-2 text-app-text font-inter text-sm">
+                  <option value="">Select course</option>
+                  {courseList.map(c => <option key={c.id} value={c.id}>{c.code} — {c.name}</option>)}
+                </select>
+                <div className="flex gap-1.5 overflow-x-auto scrollbar-none">
+                  {['Mon','Tue','Wed','Thu','Fri'].map((d, i) => (
+                    <button key={d} onClick={() => setNewClassDay(i)}
+                      className={`flex-shrink-0 px-2.5 py-1 text-xs font-jakarta font-semibold rounded-lg border transition-colors ${
+                        newClassDay === i ? 'bg-app-accent text-app-bg border-app-accent' : 'bg-app-bg text-app-text-dim border-app-border'
+                      }`}>{d}</button>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input type="time" value={newClassStart} onChange={e => setNewClassStart(e.target.value)}
+                    className="flex-1 bg-app-bg border border-app-border rounded-lg px-3 py-2 text-app-text font-inter text-sm" />
+                  <input type="time" value={newClassEnd} onChange={e => setNewClassEnd(e.target.value)}
+                    className="flex-1 bg-app-bg border border-app-border rounded-lg px-3 py-2 text-app-text font-inter text-sm" />
+                </div>
+                <input value={newClassVenue} onChange={e => setNewClassVenue(e.target.value)} placeholder="Venue (optional)"
+                  className="w-full bg-app-bg border border-app-border rounded-lg px-3 py-2 text-app-text font-inter text-sm placeholder:text-app-text-faint" />
+                <div className="flex gap-2">
+                  <button onClick={handleAddClass} disabled={classSubmitting || !newClassCourse}
+                    className="flex-1 bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-lg py-2 disabled:opacity-50">
+                    {classSubmitting ? 'Adding...' : 'Add'}
+                  </button>
+                  <button onClick={() => setShowScheduleForm(false)}
+                    className="px-4 bg-app-bg border border-app-border text-app-text-dim font-jakarta font-semibold text-sm rounded-lg">Cancel</button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-1.5 mb-4 overflow-x-auto scrollbar-none pb-1">
             {['Mon','Tue','Wed','Thu','Fri'].map((d, i) => (
               <button key={d}
@@ -379,9 +452,15 @@ export function Space() {
                       <div className="pl-3">
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <p className="text-app-text font-jakarta font-bold text-sm leading-snug flex-1">{entry.course_name}</p>
-                          <span className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: COURSE_BG_COLORS[ci], color: COURSE_COLORS[ci] }}>
-                            {entry.course_code}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            {isRep && (
+                              <button onClick={() => handleDeleteClass(entry.id)}
+                                className="text-app-text-faint hover:text-app-red transition-colors text-xs px-1">✕</button>
+                            )}
+                            <span className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: COURSE_BG_COLORS[ci], color: COURSE_COLORS[ci] }}>
+                              {entry.course_code}
+                            </span>
+                          </div>
                         </div>
                         <p className="text-app-text-dim text-xs font-inter">{entry.start_time.slice(0,5)} – {entry.end_time.slice(0,5)}</p>
                         {entry.venue && <p className="text-app-text-faint text-xs font-inter mt-0.5">📍 {entry.venue}</p>}
@@ -397,6 +476,7 @@ export function Space() {
 
       {isRep && tab === 'feed' && <Fab onClick={() => setShowPost(true)} icon="+" />}
       {isRep && tab === 'files' && <Fab onClick={() => setShowUpload(true)} icon="+" />}
+      {isRep && tab === 'timetable' && <Fab onClick={() => setShowScheduleForm(prev => !prev)} icon="+" />}
 
       {showPost && spaceId && (
         <PostAnnouncementSheet spaceId={spaceId} onClose={() => setShowPost(false)} />
