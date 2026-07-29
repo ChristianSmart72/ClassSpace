@@ -21,6 +21,7 @@ const CourseFiles = lazy(() => import('./screens/CourseFiles').then(m => ({ defa
 const Profile = lazy(() => import('./screens/Profile').then(m => ({ default: m.Profile })));
 const Timetable = lazy(() => import('./screens/Timetable').then(m => ({ default: m.Timetable })));
 const AnnouncementDetail = lazy(() => import('./screens/AnnouncementDetail').then(m => ({ default: m.AnnouncementDetail })));
+const Opportunities = lazy(() => import('./screens/Opportunities').then(m => ({ default: m.Opportunities })));
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null };
@@ -77,6 +78,7 @@ function AppRoutes() {
             <Route path="/space/:id" element={<Space />} />
             <Route path="/space/:id/announcement/:annId" element={<AnnouncementDetail />} />
             <Route path="/space/:id/course/:cid" element={<CourseFiles />} />
+            <Route path="/space/:id/opportunities" element={<Opportunities />} />
             <Route path="/timetable" element={<Timetable />} />
             <Route path="/profile" element={<Profile />} />
           </Route>
