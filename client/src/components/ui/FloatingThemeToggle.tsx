@@ -1,7 +1,15 @@
 import { useThemeStore } from '../../store/themeStore';
+import { useSpaceStore } from '../../store/spaceStore';
 
 export function FloatingThemeToggle() {
   const { theme, toggle } = useThemeStore();
+  const { memberRole } = useSpaceStore();
+  const isRep = memberRole === 'rep';
+
+  // Admin: brightness only in profile tab, not floating
+  // Student: floating brightness toggle only
+  if (isRep) return null;
+
   return (
     <button
       onClick={toggle}

@@ -1,0 +1,25 @@
+# AI context exclusion — files the AI agent should ignore
+# Works like .gitignore but for AI tooling (reading, searching, grepping)
+
+node_modules/
+client/dist/
+server/dist/
+server/data/
+client/node_modules/
+server/node_modules/
+.git/
+.gitignore
+.opencodeignore
+AGENTS.md
+*.log
+.DS_Store
+.env
+test-results/
+attached_assets/
+package-lock.json
+client/package-lock.json
+server/package-lock.json
+client/dist/
+render.yaml
+CNAME
+.replit

@@ -8,6 +8,7 @@ import { UploadMaterialSheet } from '../components/sheets/UploadMaterial';
 import { ShareSheet } from '../components/sheets/ShareSheet';
 import { FILE_ICONS } from '../types';
 import type { Material } from '../types';
+import api from '../api/client';
 
 const FILTER_CATEGORIES = [
   'All', 'Slides', 'Assignments', 'Past Questions',
@@ -66,6 +67,7 @@ export function CourseFiles() {
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [sort, setSort] = useState('newest');
   const [search, setSearch] = useState('');
+  const [summary, setSummary] = useState<{ count: number; contributors: number; total_downloads: number } | null>(null);
 
   const course = courses.find((c) => c.id === Number(cid));
   const isRep = memberRole === 'rep';
@@ -73,6 +75,15 @@ export function CourseFiles() {
   useEffect(() => {
     if (cid) fetchMaterials(Number(cid));
   }, [cid]);
+
+  useEffect(() => {
+    if (cid && spaceId) {
+      api.get(`/spaces/${spaceId}/materials/summary`).then(({ data }) => {
+        const c = data.courses.find((c: any) => c.course_id === Number(cid));
+        if (c) setSummary({ count: c.count, contributors: c.contributors, total_downloads: c.total_downloads });
+      }).catch(() => {});
+    }
+  }, [cid, spaceId]);
 
   const filtered = useMemo(() => {
     let result = [...materials];
@@ -147,6 +158,18 @@ export function CourseFiles() {
             Share
           </button>
         </div>
+
+        {/* ─── Course Summary Row ─── */}
+        {summary && summary.count > 0 && (
+          <div className="px-4 pb-2">
+            <div className="flex items-center gap-3 text-app-text-faint text-[11px] font-inter">
+              <span>📄 {summary.count} {summary.count === 1 ? 'Resource' : 'Resources'}</span>
+              <span>👤 {summary.contributors} {summary.contributors === 1 ? 'Contributor' : 'Contributors'}</span>
+              <span>⬇️ {summary.total_downloads.toLocaleString()} Downloads</span>
+            </div>
+          </div>
+        )}
+
         <div className="px-4 pb-3">
           <div className="relative">
             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-text-faint text-xs leading-none pointer-events-none">🔍</span>
@@ -189,7 +212,7 @@ export function CourseFiles() {
         {matLoading ? (
           <div className="flex flex-col gap-2">
             {[1, 2, 3].map(i => (
-              <Skeleton key={i} className="h-16 w-full rounded-xl" />
+              <Skeleton key={i} className="h-20 w-full rounded-xl" />
             ))}
           </div>
         ) : materials.length === 0 ? (
@@ -210,6 +233,7 @@ export function CourseFiles() {
                       onDelete={() => handleDelete(mat.id)}
                       onPin={() => handlePin(mat)}
                       onShare={() => setShareTarget({ type: 'mat', id: mat.id })}
+                      onClick={() => navigate(`/space/${spaceId}/material/${mat.id}`)}
                     />
                   ))}
                 </div>
@@ -230,6 +254,7 @@ export function CourseFiles() {
                       onDelete={() => handleDelete(mat.id)}
                       onPin={() => handlePin(mat)}
                       onShare={() => setShareTarget({ type: 'mat', id: mat.id })}
+                      onClick={() => navigate(`/space/${spaceId}/material/${mat.id}`)}
                     />
                   ))}
                 </div>
@@ -257,31 +282,24 @@ export function CourseFiles() {
   );
 }
 
-function ResourceCard({ material: m, canDelete, deleting, onDelete, onPin, onShare }: {
+function ResourceCard({ material: m, canDelete, deleting, onDelete, onPin, onShare, onClick }: {
   material: Material;
   canDelete: boolean;
   deleting: boolean;
   onDelete: () => void;
   onPin: () => void;
   onShare: () => void;
+  onClick: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const icon = FILE_ICONS[m.file_type] || '📁';
   const colorClass = CARD_FILE_COLORS[m.file_type] || 'text-app-text-dim';
   const extLabel = FILE_EXT_LABELS[m.file_type] || m.file_type.toUpperCase();
 
-  const handleDownload = () => {
-    if (!m.file_data) {
-      alert('Demo file — download available when uploaded');
-      return;
-    }
-    window.open(`/api/materials/${m.id}/download`, '_blank');
-  };
-
   return (
-    <div className="bg-app-surface rounded-xl border border-app-border overflow-hidden relative">
-      <div onClick={handleDownload} className="flex items-center gap-3 active:scale-[0.99] transition-all duration-200 cursor-pointer py-3 pl-3.5 pr-10">
-        <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0" style={{ background: 'var(--app-surface-2)' }}>
+    <div className="bg-app-surface rounded-xl border border-app-border overflow-hidden relative card-hover">
+      <div onClick={onClick} className="flex items-start gap-3 active:scale-[0.99] transition-all duration-200 cursor-pointer py-3 pl-3.5 pr-10">
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0 mt-0.5" style={{ background: 'var(--app-surface-2)' }}>
           <span className={colorClass}>{icon}</span>
         </div>
         <div className="flex-1 min-w-0">
@@ -297,36 +315,43 @@ function ResourceCard({ material: m, canDelete, deleting, onDelete, onPin, onSha
             <span>·</span>
             <span>{formatRelativeTime(m.created_at)}</span>
           </div>
+          <div className="flex items-center gap-2 text-app-text-faint text-[10px] font-inter mt-1">
+            {m.uploader_name && (
+              <span className="truncate">Uploaded by <span className="text-app-text-dim font-medium">{m.uploader_name}</span></span>
+            )}
+            <span>·</span>
+            <span>⬇ {(m.downloads || 0).toLocaleString()} downloads</span>
+          </div>
         </div>
       </div>
 
-      <div className="absolute right-2 top-1/2 -translate-y-1/2 z-10" onClick={e => e.stopPropagation()}>
+      <div className="absolute right-2 top-3 z-10" onClick={e => e.stopPropagation()}>
         <button onClick={() => setMenuOpen(o => !o)}
           className="p-1.5 text-app-text-faint hover:text-app-text transition-colors rounded-lg hover:bg-app-surface-2 text-sm leading-none tracking-wider font-bold">
           ···
         </button>
         {menuOpen && (
           <>
-            <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-            <div className="absolute right-0 top-full mt-1 z-20 bg-app-bg border border-app-border rounded-lg shadow-lg py-1 min-w-[140px]">
-              <button onClick={() => { handleDownload(); setMenuOpen(false); }}
-                className="w-full text-left px-3 py-2 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2">
-                ⬇ Download
+            <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+            <div className="absolute right-0 top-full mt-1 z-50 bg-app-bg border border-app-border rounded-xl shadow-xl py-1 min-w-[160px] animate-fadeIn">
+              <button onClick={() => { window.open(`/api/materials/${m.id}/download`, '_blank'); setMenuOpen(false); }}
+                className="w-full text-left px-3.5 py-2.5 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2">
+                <span className="text-sm">⬇</span> Download
               </button>
               <button onClick={() => { onShare(); setMenuOpen(false); }}
-                className="w-full text-left px-3 py-2 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2">
-                🔗 Share
+                className="w-full text-left px-3.5 py-2.5 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2">
+                <span className="text-sm">🔗</span> Share
               </button>
               {canDelete && (
                 <>
-                  <div className="h-px bg-app-border mx-2" />
+                  <div className="h-px bg-app-border mx-3" />
                   <button onClick={() => { onPin(); setMenuOpen(false); }}
-                    className="w-full text-left px-3 py-2 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2">
-                    {m.pinned ? '📍 Unpin' : '📌 Pin'}
+                    className="w-full text-left px-3.5 py-2.5 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2">
+                    <span className="text-sm">{m.pinned ? '📍' : '📌'}</span> {m.pinned ? 'Unpin' : 'Pin'}
                   </button>
                   <button onClick={() => { onDelete(); setMenuOpen(false); }} disabled={deleting}
-                    className="w-full text-left px-3 py-2 text-xs font-jakarta font-medium text-app-red hover:bg-app-surface transition-colors flex items-center gap-2 disabled:opacity-40">
-                    🗑 Delete
+                    className="w-full text-left px-3.5 py-2.5 text-xs font-jakarta font-medium text-app-red hover:bg-app-surface transition-colors flex items-center gap-2 disabled:opacity-40">
+                    <span className="text-sm">🗑</span> Delete
                   </button>
                 </>
               )}

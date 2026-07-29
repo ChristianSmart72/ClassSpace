@@ -156,6 +156,8 @@ export function materialRoutes(app: FastifyInstance) {
     const rows = db.prepare(`
       SELECT c.id as course_id, c.name as course_name, c.code as course_code,
              COUNT(m.id) as count,
+             COUNT(DISTINCT m.uploader_id) as contributors,
+             COALESCE(SUM(m.downloads), 0) as total_downloads,
              (SELECT m2.name FROM materials m2 WHERE m2.course_id = c.id ORDER BY m2.created_at DESC LIMIT 1) as latest_name,
              (SELECT m2.created_at FROM materials m2 WHERE m2.course_id = c.id ORDER BY m2.created_at DESC LIMIT 1) as latest_created_at
       FROM courses c
@@ -169,6 +171,8 @@ export function materialRoutes(app: FastifyInstance) {
       courses: rows.map(r => ({
         course_id: r.course_id,
         count: r.count,
+        contributors: r.contributors,
+        total_downloads: r.total_downloads,
         latest: r.latest_name ? { name: r.latest_name, created_at: r.latest_created_at } : null,
       })),
     };

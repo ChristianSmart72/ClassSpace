@@ -210,7 +210,7 @@ function LiveCountdown({ startTime, endTime }: { startTime: string; endTime: str
   return null;
 }
 
-function NextClassSection({ timetable, ttLoading, spaceId, navigate }: { timetable: TimetableEntry[]; ttLoading: boolean; spaceId: string; navigate: ReturnType<typeof useNavigate> }) {
+function NextClassSection({ timetable, ttLoading, navigate }: { timetable: TimetableEntry[]; ttLoading: boolean; spaceId?: string; navigate: ReturnType<typeof useNavigate> }) {
   const [, forceUpdate] = useState(0);
   useEffect(() => {
     const id = setInterval(() => forceUpdate(t => t + 1), 30000);
@@ -234,7 +234,7 @@ function NextClassSection({ timetable, ttLoading, spaceId, navigate }: { timetab
       <div className="mb-5 animate-fadeInUp" style={{ animationDelay: '0.04s' }}>
         <p className="text-app-text-dim text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-1.5">Current class</p>
         <button
-          onClick={() => navigate(`/space/${spaceId}?tab=schedule`)}
+          onClick={() => navigate('/timetable')}
           className="w-full bg-app-surface rounded-xl border border-app-border p-4 text-left active:scale-[0.99] transition-all duration-200 group"
         >
           <div className="flex items-center gap-3">
@@ -265,7 +265,7 @@ function NextClassSection({ timetable, ttLoading, spaceId, navigate }: { timetab
       <div className="mb-5 animate-fadeInUp" style={{ animationDelay: '0.04s' }}>
         <p className="text-app-text-dim text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-1.5">Next class</p>
         <button
-          onClick={() => navigate(`/space/${spaceId}?tab=schedule`)}
+          onClick={() => navigate('/timetable')}
           className="w-full bg-app-surface rounded-xl border border-app-border p-4 text-left active:scale-[0.99] transition-all duration-200 group"
         >
           <div className="flex items-center gap-3">
@@ -377,19 +377,24 @@ export function Home() {
   const quickActions = isRep
     ? [
         { label: 'Announce', icon: '📢', onClick: () => navigate(`/space/${currentSpace!.id}`) },
-        { label: 'Upload', icon: '📁', onClick: () => navigate(`/space/${currentSpace!.id}`) },
-        { label: 'Timetable', icon: '📅', onClick: () => navigate(`/space/${currentSpace!.id}?tab=schedule`) },
+        { label: 'Upload', icon: '📁', onClick: () => navigate(`/space/${currentSpace!.id}?tab=files`) },
+        { label: 'Timetable', icon: '📅', onClick: () => navigate('/timetable') },
         { label: 'Share', icon: '🔗', onClick: () => {
           const url = `https://classspace.app/join/${currentSpace!.invite_code}`;
           if (navigator.share) navigator.share({ url });
           else navigator.clipboard.writeText(url);
         }},
+        { label: 'Opps', icon: '🎯', onClick: () => navigate(`/space/${currentSpace!.id}/opportunities`) },
       ]
     : [
-        { label: 'Timetable', icon: '📅', onClick: () => navigate(`/space/${currentSpace!.id}?tab=schedule`) },
-        { label: 'Files', icon: '📁', onClick: () => navigate(`/space/${currentSpace!.id}`) },
-        { label: 'Opps', icon: '🎯', onClick: () => navigate(`/space/${currentSpace!.id}`) },
-        { label: 'Search', icon: '🔍', onClick: () => navigate(`/space/${currentSpace!.id}`) },
+        { label: 'Timetable', icon: '📅', onClick: () => navigate('/timetable') },
+        { label: 'Files', icon: '📁', onClick: () => navigate(`/space/${currentSpace!.id}?tab=files`) },
+        { label: 'Opps', icon: '🎯', onClick: () => navigate(`/space/${currentSpace!.id}/opportunities`) },
+        { label: 'Share', icon: '🔗', onClick: () => {
+          const url = `https://classspace.app/join/${currentSpace!.invite_code}`;
+          if (navigator.share) navigator.share({ url });
+          else navigator.clipboard.writeText(url);
+        }},
       ];
 
   const isAllClear = todayClasses.length === 0 && dueItems.length === 0 && newAnnounceCount === 0;
