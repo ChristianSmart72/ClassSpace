@@ -1,0 +1,159 @@
+You are a senior Product Designer and Flutter developer.
+
+The app is in MVP stage and I am recording a demo today. Do not redesign the app. Do not change navigation or visual style. Only implement the improvements below while keeping the existing dark/light themes, spacing, typography, and component design.
+
+1. Opportunities Demo Data (Highest Priority)
+
+The Opportunities page currently shows an empty state.
+
+Populate it with realistic sample opportunities.
+
+Examples:
+
+MTN Foundation Scholarship 2026
+
+Shell SIWES Internship
+
+Google AI for Students Workshop
+
+University Engineering Design Competition
+
+Industrial Training Placement at Dangote
+
+
+Each opportunity should include:
+
+Title
+
+Category
+
+Deadline
+
+Short description
+
+CTA button ("View Details")
+
+Optional "New" or "Closing Soon" badge
+
+
+Categories should work with existing filters.
+
+
+---
+
+2. Material Details Screen
+
+Improve the Material Details page.
+
+Reduce the size by 15%
+
+Keep the existing information but add a bookmark icon so students can have easily bookmark important materials
+
+
+---
+
+3. Fix Three-dot Menu
+
+The overflow menu currently opens dark rectangle with only the download option
+
+Fix it.
+
+Student options:
+
+Download
+
+Share
+
+Save
+
+
+Admin options:
+
+Pin
+
+Share
+
+Download
+
+Delete
+
+
+Menus should open correctly and dismiss properly.
+Can be just small icons to save space 
+
+---
+
+5. Timetable
+
+The new Timetable UI is better than the old one in the space tab 
+
+Replace every route leading to the old timetable with this new timetable interface.
+
+There should only be one timetable experience throughout the app.
+
+Add the feature where a course rep can cancel a class and it will come up as a notification 
+
+---
+
+6. Opportunities Navigation
+
+Ensure every Opportunities entry point opens the Opportunities page correctly.
+
+This includes:
+
+Home quick action
+
+"See all opportunities"
+
+Opportunities button
+
+Bottom navigation if applicable
+
+
+No route should accidentally open Announcements.
+
+
+---
+
+9. Performance
+
+For demo purposes:
+
+No loading delays
+
+No empty states
+
+No broken navigation
+
+No console errors
+
+Smooth scrolling
+
+Fast transitions
+
+
+Everything should feel like a polished, working MVP.
+
+
+---
+
+10. Do NOT Change
+
+Do not redesign:
+
+Home screen
+
+Feed layout
+
+Course cards
+
+Color palette
+
+Typography
+
+Bottom navigation
+
+
+Only polish, fix bugs, and improve interactions.
+
+Goal: Make the app feel complete, smooth, and production-ready for a 3–5 minute demo where every interaction works flawlessly.

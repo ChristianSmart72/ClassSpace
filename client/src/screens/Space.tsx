@@ -242,7 +242,10 @@ export function Space() {
           { key: 'files' as Tab, label: 'Files', icon: '📁' },
           { key: 'timetable' as Tab, label: 'Timetable', icon: '📅' },
         ].map(t => (
-          <button key={t.key} onClick={() => { setTab(t.key); setSearchParams({ tab: t.key }); }}
+          <button key={t.key} onClick={() => {
+            if (t.key === 'timetable') { navigate('/timetable'); return; }
+            setTab(t.key); setSearchParams({ tab: t.key });
+          }}
             className={`flex-1 py-2.5 text-sm font-jakarta font-semibold transition-all duration-200 relative ${
               tab === t.key ? 'text-app-accent' : 'text-app-text-dim hover:text-app-text'
             }`}>
@@ -552,34 +555,55 @@ const FeedCard = memo(function FeedCard({ ann, spaceId, canDelete, deleting, onD
 
           <div className="flex-1" />
 
-          {canDelete && (
-            <div className="relative" onClick={e => e.stopPropagation()}>
-              <button onClick={() => setMenuOpen(o => !o)}
-                className="px-1.5 py-0.5 text-app-text-faint hover:text-app-text transition-colors rounded hover:bg-app-surface-2 text-sm leading-none tracking-wider font-bold">
-                ···
-              </button>
-              {menuOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-20 bg-app-bg border border-app-border rounded-lg shadow-lg py-1 min-w-[130px]">
-                    <button onClick={() => { onEdit(); setMenuOpen(false); }}
-                      className="w-full text-left px-3 py-2 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2">
-                      ✏️ Edit
-                    </button>
-                    <button onClick={() => { onPin(); setMenuOpen(false); }}
-                      className="w-full text-left px-3 py-2 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2">
-                      {ann.pinned ? '📍 Unpin' : '📌 Pin'}
-                    </button>
-                    <div className="h-px bg-app-border mx-2" />
-                    <button onClick={() => { onDelete(); setMenuOpen(false); }} disabled={deleting}
-                      className="w-full text-left px-3 py-2 text-xs font-jakarta font-medium text-app-red hover:bg-app-surface transition-colors flex items-center gap-2 disabled:opacity-40">
-                      🗑 Delete
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+          <div className="relative" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setMenuOpen(o => !o)}
+              className="px-1.5 py-0.5 text-app-text-faint hover:text-app-text transition-colors rounded hover:bg-app-surface-2 text-sm leading-none tracking-wider font-bold">
+              ···
+            </button>
+            {menuOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+                <div className="absolute right-0 top-full mt-1 z-20 bg-app-bg border border-app-border rounded-xl shadow-xl py-1.5 min-w-[150px] animate-fadeIn">
+                  <button onClick={() => {
+                    const url = `${window.location.origin}/space/${spaceId}/announcement/${ann.id}`;
+                    if (navigator.share) navigator.share({ url, title: ann.title }).catch(() => navigator.clipboard.writeText(url));
+                    else navigator.clipboard.writeText(url);
+                    setMenuOpen(false);
+                  }}
+                    className="w-full text-left px-3 py-2 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2.5">
+                    <span className="w-4 text-center text-sm">🔗</span> Share
+                  </button>
+                  <button onClick={() => {
+                    try {
+                      const saved: number[] = JSON.parse(localStorage.getItem('savedAnnouncements') || '[]');
+                      if (!saved.includes(ann.id)) { saved.push(ann.id); localStorage.setItem('savedAnnouncements', JSON.stringify(saved)); }
+                    } catch {}
+                    setMenuOpen(false);
+                  }}
+                    className="w-full text-left px-3 py-2 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2.5">
+                    <span className="w-4 text-center text-sm">🔖</span> Save
+                  </button>
+                  {canDelete && (
+                    <>
+                      <div className="h-px bg-app-border mx-2 my-1" />
+                      <button onClick={() => { onEdit(); setMenuOpen(false); }}
+                        className="w-full text-left px-3 py-2 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2.5">
+                        <span className="w-4 text-center text-sm">✏️</span> Edit
+                      </button>
+                      <button onClick={() => { onPin(); setMenuOpen(false); }}
+                        className="w-full text-left px-3 py-2 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2.5">
+                        <span className="w-4 text-center text-sm">{ann.pinned ? '📍' : '📌'}</span> {ann.pinned ? 'Unpin' : 'Pin'}
+                      </button>
+                      <button onClick={() => { onDelete(); setMenuOpen(false); }} disabled={deleting}
+                        className="w-full text-left px-3 py-2 text-xs font-jakarta font-medium text-app-red hover:bg-app-surface transition-colors flex items-center gap-2.5 disabled:opacity-40">
+                        <span className="w-4 text-center text-sm">🗑</span> Delete
+                      </button>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         <h3 className="text-app-text font-jakarta font-bold text-sm leading-snug mb-1">{ann.title}</h3>

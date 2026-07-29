@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
-
 import { useSpaceStore } from '../store/spaceStore';
 import { getTimetable } from '../api/timetable';
 import { Skeleton, EmptyState } from '../components/ui/Shared';
 import { DAYS, COURSE_COLORS, COURSE_BG_COLORS, type TimetableEntry } from '../types';
+import api from '../api/client';
 
 const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 
@@ -75,7 +75,7 @@ function CountdownToClass({ entry }: { entry: TimetableEntry }) {
   return <span className="text-amber-400 text-[10px] font-jakarta font-bold">{label}</span>;
 }
 
-function ClassCard({ entry, isToday, showStatus = true }: { entry: TimetableEntry; isToday: boolean; showStatus?: boolean }) {
+function ClassCard({ entry, isToday, showStatus = true, onCancel }: { entry: TimetableEntry; isToday: boolean; showStatus?: boolean; onCancel?: (entry: TimetableEntry) => void }) {
   const status = isToday ? getClassStatus(entry) : 'upcoming';
   const ci = entry.color_index % 5;
   const color = COURSE_COLORS[ci];
@@ -135,6 +135,14 @@ function ClassCard({ entry, isToday, showStatus = true }: { entry: TimetableEntr
               <span>👨‍🏫</span><span>{entry.lecturer}</span>
             </div>
           )}
+          {onCancel && (
+            <button
+              onClick={e => { e.stopPropagation(); onCancel(entry); }}
+              className="ml-auto flex items-center gap-1 text-[10px] font-jakarta font-bold text-app-red/80 hover:text-app-red bg-app-red/8 hover:bg-app-red/15 px-2 py-1 rounded-lg transition-colors"
+            >
+              ✕ Cancel class
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -179,12 +187,14 @@ const ACADEMIC_CALENDAR = [
 type TimetableTab = 'schedule' | 'calendar';
 
 export function Timetable() {
-  const { currentSpace } = useSpaceStore();
+  const { currentSpace, memberRole } = useSpaceStore();
+  const isRep = memberRole === 'rep';
   const [entries, setEntries] = useState<TimetableEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState(getTodayIndex());
   const [weekOffset, setWeekOffset] = useState(0);
   const [activeTab, setActiveTab] = useState<TimetableTab>('schedule');
+  const [cancelToast, setCancelToast] = useState<string | null>(null);
 
   const todayIndex = getTodayIndex();
 
@@ -199,6 +209,26 @@ export function Timetable() {
       setLoading(false);
     }
   }, [currentSpace]);
+
+  const handleCancelClass = useCallback(async (entry: TimetableEntry) => {
+    if (!currentSpace || !isRep) return;
+    if (!confirm(`Cancel ${entry.course_name} (${entry.day} ${entry.start_time.slice(0,5)})? This will notify the class.`)) return;
+    try {
+      await api.post(`/spaces/${currentSpace.id}/announcements`, {
+        course_id: entry.course_id,
+        title: `❌ Class cancelled — ${entry.course_code} (${entry.day} ${entry.start_time.slice(0,5)})`,
+        body: `The ${entry.course_name} class scheduled for ${entry.day} from ${formatTimeRange(entry.start_time, entry.end_time)}${entry.venue ? ` in ${entry.venue}` : ''} has been cancelled. Check with your lecturer for further updates.`,
+        type: 'update',
+        urgent: true,
+        pinned: false,
+      });
+      setCancelToast(`${entry.course_code} class cancelled — classmates have been notified`);
+      setTimeout(() => setCancelToast(null), 4000);
+    } catch {
+      setCancelToast('Could not post cancellation — check your connection');
+      setTimeout(() => setCancelToast(null), 3000);
+    }
+  }, [currentSpace, isRep]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -248,6 +278,12 @@ export function Timetable() {
 
   return (
     <div className="pb-4">
+      {/* Cancel toast */}
+      {cancelToast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-app-surface border border-app-border rounded-xl px-4 py-3 shadow-xl animate-fadeIn max-w-[320px] w-full mx-4">
+          <p className="text-app-text font-jakarta font-semibold text-xs text-center">{cancelToast}</p>
+        </div>
+      )}
       {/* Header */}
       <div className="px-4 pt-5 pb-3 border-b border-app-border lg:px-8 lg:pt-8">
         <div className="flex items-start justify-between mb-3">
@@ -353,7 +389,7 @@ export function Timetable() {
                   <div className="flex flex-col gap-3 animate-fadeIn">
                     {dayEntries.map(entry => (
                       <div key={entry.id}>
-                        <ClassCard entry={entry} isToday={isToday} />
+                        <ClassCard entry={entry} isToday={isToday} onCancel={isRep ? handleCancelClass : undefined} />
                       </div>
                     ))}
                     <div className="bg-app-surface rounded-xl p-3 border border-app-border flex items-center justify-between mt-1">
