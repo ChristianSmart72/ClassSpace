@@ -235,7 +235,7 @@ function NextClassSection({ timetable, ttLoading, navigate }: { timetable: Timet
         <p className="text-app-text-dim text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-1.5">Current class</p>
         <button
           onClick={() => navigate('/timetable')}
-          className="w-full bg-app-surface rounded-xl border border-app-border p-4 text-left active:scale-[0.99] transition-all duration-200 group"
+          className="w-full bg-app-surface rounded-xl border border-app-border p-4 text-left card-hover group"
         >
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0" style={{ background: `${COURSE_COLORS[inProgress.color_index % 5]}18` }}>
@@ -266,7 +266,7 @@ function NextClassSection({ timetable, ttLoading, navigate }: { timetable: Timet
         <p className="text-app-text-dim text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-1.5">Next class</p>
         <button
           onClick={() => navigate('/timetable')}
-          className="w-full bg-app-surface rounded-xl border border-app-border p-4 text-left active:scale-[0.99] transition-all duration-200 group"
+          className="w-full bg-app-surface rounded-xl border border-app-border p-4 text-left card-hover group"
         >
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0" style={{ background: `${COURSE_COLORS[upcoming.color_index % 5]}18` }}>
@@ -514,9 +514,10 @@ export function Home() {
               const isOverdue = item.deadline && new Date(item.deadline).getTime() < Date.now();
               const isToday = item.deadline && new Date(item.deadline).toDateString() === new Date().toDateString();
               return (
-                <div
+                <button
                   key={item.id}
-                  className="flex items-center gap-3 bg-app-surface rounded-xl border border-app-border px-4 py-3"
+                  onClick={() => navigate(`/space/${currentSpace!.id}/announcement/${item.id}`)}
+                  className="w-full flex items-center gap-3 bg-app-surface rounded-xl border border-app-border px-4 py-3 card-hover text-left"
                 >
                   <span className={`text-[10px] font-jakarta font-bold px-1.5 py-0.5 rounded capitalize flex-shrink-0 ${
                     item.type === 'assignment' ? 'bg-app-orange/10 text-app-orange' : 'bg-app-red/10 text-app-red'
@@ -536,10 +537,10 @@ export function Home() {
                         ? <span className="text-[10px] font-jakarta font-semibold px-1.5 py-0.5 rounded bg-app-orange/10 text-app-orange">Today</span>
                         : <DeadlineBadge deadline={item.deadline} />
                   )}
-                </div>
-              );
-            })}
-            {dueItems.length > 3 && (
+                  </button>
+               );
+             })}
+             {dueItems.length > 3 && (
               <button
                 onClick={() => navigate(`/space/${currentSpace.id}`)}
                 className="text-app-accent text-xs font-jakarta font-semibold text-center py-1"
@@ -607,7 +608,7 @@ export function Home() {
                 <button
                   key={ann.id}
                   onClick={() => navigate(`/space/${currentSpace.id}/announcement/${ann.id}`)}
-                  className="bg-app-surface rounded-xl border border-app-border px-4 py-3 text-left active:scale-[0.99] transition-all duration-200"
+                  className="bg-app-surface rounded-xl border border-app-border px-4 py-3 text-left card-hover"
                 >
                   <div className="flex items-start gap-2">
                     <span className={`text-[10px] font-jakarta font-semibold px-1.5 py-0.5 rounded capitalize flex-shrink-0 mt-0.5 ${

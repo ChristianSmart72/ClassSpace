@@ -220,6 +220,7 @@ export const OPPORTUNITY_CATEGORIES = [
   { value: 'internship', label: 'Internship', icon: '💼', color: '#52ffa0' },
   { value: 'job', label: 'Job', icon: '🧑‍💻', color: '#ffb347' },
   { value: 'competition', label: 'Competition', icon: '🥇', color: '#ff5252' },
+  { value: 'bootcamp', label: 'Bootcamp', icon: '🔥', color: '#f97316' },
   { value: 'event', label: 'Event', icon: '📅', color: '#a78bfa' },
   { value: 'other', label: 'Other', icon: '📌', color: '#7a7a88' },
 ] as const;

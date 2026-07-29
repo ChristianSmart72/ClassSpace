@@ -340,7 +340,7 @@ export function Space() {
                 }
 
                 return (
-                  <div key={course.id} className="bg-app-surface rounded-xl border border-app-border relative overflow-hidden cursor-pointer active:scale-[0.99] transition-all duration-200"
+                  <div key={course.id} className="bg-app-surface rounded-xl border border-app-border relative overflow-hidden cursor-pointer card-hover"
                     onClick={() => navigate(`/space/${currentSpace.id}/course/${course.id}`)}>
                     <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: COURSE_COLORS[ci] }} />
                     <div className="pl-4 pr-3.5 py-3.5">
@@ -538,7 +538,7 @@ function FeedCard({ ann, spaceId, canDelete, deleting, onDelete, onPin, onEdit, 
 
   return (
     <div onClick={handleClick}
-      className="bg-app-surface rounded-xl border border-app-border overflow-hidden active:scale-[0.99] transition-all duration-200 relative cursor-pointer">
+      className="bg-app-surface rounded-xl border border-app-border overflow-hidden card-hover relative cursor-pointer">
       {accentBar && <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${accentBar}`} />}
 
       <div className="p-3.5 pl-4">
