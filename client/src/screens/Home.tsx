@@ -10,6 +10,7 @@ import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { getTimetable } from '../api/timetable';
 import { getOpportunities } from '../api/opportunities';
 import { COURSE_COLORS } from '../types';
+import { formatRelativeTime, formatTime } from '../lib/time';
 import type { TimetableEntry, Opportunity, Announcement } from '../types';
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -40,31 +41,7 @@ function nowMinutes(): number {
   return d.getHours() * 60 + d.getMinutes();
 }
 
-function formatTime(t: string): string {
-  const [h, m] = t.split(':').map(Number);
-  const period = h >= 12 ? 'pm' : 'am';
-  const hr = h > 12 ? h - 12 : h === 0 ? 12 : h;
-  return `${hr}:${m.toString().padStart(2, '0')}${period}`;
-}
 
-function formatRelativeTime(dateStr: string): string {
-  const now = Date.now();
-  const date = new Date(dateStr).getTime();
-  const diffSec = Math.floor((now - date) / 1000);
-  if (diffSec < 60) return 'Just now';
-  const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin} min ago`;
-  const diffHours = Math.floor(diffMin / 60);
-  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays === 1) return 'Yesterday';
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const d = new Date(dateStr);
-  const dayOfWeek = d.getDay();
-  if (diffDays < 7) return dayNames[dayOfWeek];
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${months[d.getMonth()]} ${d.getDate()}`;
-}
 
 function getClassesToday(entries: TimetableEntry[]): TimetableEntry[] {
   const today = getTodayName();
@@ -347,22 +324,22 @@ export function Home() {
   }, []);
 
   useEffect(() => {
-    if (currentSpace) {
-      fetchAnnouncements(currentSpace.id);
-      setTtLoading(true);
-      getTimetable(currentSpace.id)
-        .then(data => setTimetable(data || []))
-        .catch(() => setTimetable([]))
-        .finally(() => setTtLoading(false));
-      getOpportunities(currentSpace.id)
-        .then(data => setOpps(data ?? []))
-        .catch(() => setOpps([]))
-    }
+    if (!currentSpace) return;
+    const cancelled = { current: false };
+    fetchAnnouncements(currentSpace.id);
+    setTtLoading(true);
+    getTimetable(currentSpace.id)
+      .then(data => { if (!cancelled.current) setTimetable(data || []); })
+      .catch(() => { if (!cancelled.current) setTimetable([]); })
+      .finally(() => { if (!cancelled.current) setTtLoading(false); });
+    getOpportunities(currentSpace.id)
+      .then(data => { if (!cancelled.current) setOpps(data ?? []); })
+      .catch(() => { if (!cancelled.current) setOpps([]); });
+    return () => { cancelled.current = true; };
   }, [currentSpace]);
 
-  const loading = (!currentSpace && !!(
-    () => { try { return localStorage.getItem('spaceId') } catch { return null } }
-  )()) || spaceLoading;
+  const hasPendingSpace = (() => { try { return !!localStorage.getItem('spaceId') } catch { return false } })();
+  const loading = (!currentSpace && hasPendingSpace) || spaceLoading;
 
   const todayClasses = getClassesToday(timetable);
   const dueItems = getDueItems(announcements);
@@ -380,7 +357,7 @@ export function Home() {
         { label: 'Upload', icon: '📁', onClick: () => navigate(`/space/${currentSpace!.id}?tab=files`) },
         { label: 'Timetable', icon: '📅', onClick: () => navigate('/timetable') },
         { label: 'Share', icon: '🔗', onClick: () => {
-          const url = `https://classspace.app/join/${currentSpace!.invite_code}`;
+          const url = `${window.location.origin}/join/space/${currentSpace!.invite_code}`;
           if (navigator.share) navigator.share({ url });
           else navigator.clipboard.writeText(url);
         }},
@@ -391,7 +368,7 @@ export function Home() {
         { label: 'Files', icon: '📁', onClick: () => navigate(`/space/${currentSpace!.id}?tab=files`) },
         { label: 'Opps', icon: '🎯', onClick: () => navigate(`/space/${currentSpace!.id}/opportunities`) },
         { label: 'Share', icon: '🔗', onClick: () => {
-          const url = `https://classspace.app/join/${currentSpace!.invite_code}`;
+          const url = `${window.location.origin}/join/space/${currentSpace!.invite_code}`;
           if (navigator.share) navigator.share({ url });
           else navigator.clipboard.writeText(url);
         }},

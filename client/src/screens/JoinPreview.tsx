@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getShareData } from '../api/auth';
 import { useAuthStore } from '../store/authStore';
 import { useSpaceStore } from '../store/spaceStore';
+import { canGoBack } from '../lib/time';
 import type { ShareData, SharedSpace, SharedAnnouncement, SharedMaterial, SharedCourse } from '../types';
 
 export function JoinPreview() {
@@ -76,7 +77,7 @@ export function JoinPreview() {
 
   return (
     <div className="min-h-dvh flex flex-col px-6 py-8 bg-app-bg">
-      <button onClick={() => navigate(-1)} className="text-app-text-dim hover:text-app-text text-lg mb-4 self-start">← Back</button>
+      <button onClick={() => canGoBack() ? navigate(-1) : navigate('/')} className="text-app-text-dim hover:text-app-text text-lg mb-4 self-start">← Back</button>
 
       {data.type === 'space' && <SpacePreview data={data} user={user} onJoin={handleJoin} joining={joining} error={error} />}
       {data.type === 'announcement' && <AnnouncementPreview data={data} onJoin={handleJoin} user={user} />}

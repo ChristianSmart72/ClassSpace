@@ -4,20 +4,8 @@ import { useSpaceStore } from '../store/spaceStore';
 import { useContentStore } from '../store/contentStore';
 import { FILE_ICONS, FILE_COLORS } from '../types';
 import api from '../api/client';
+import { formatSize, formatDate, canGoBack } from '../lib/time';
 import type { Material } from '../types';
-
-function formatSize(bytes: number): string {
-  if (bytes <= 0) return '';
-  const mb = bytes / 1024 / 1024;
-  if (mb < 1) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${mb.toFixed(1)} MB`;
-}
-
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
-}
 
 export function MaterialDetail() {
   const { id: spaceId, mid } = useParams<{ id: string; mid: string }>();
@@ -32,14 +20,16 @@ export function MaterialDetail() {
   const isRep = memberRole === 'rep';
 
   useEffect(() => {
+    const cancelled = { current: false };
     const mat = materials.find(m => m.id === Number(mid));
     if (mat) {
       setMaterial(mat);
     } else {
       api.get(`/materials/shared/${mid}`).then(({ data }) => {
-        setMaterial(data);
+        if (!cancelled.current) setMaterial(data);
       }).catch(() => {});
     }
+    return () => { cancelled.current = true; };
   }, [mid, materials]);
 
   const handleDownload = async () => {
@@ -85,7 +75,7 @@ export function MaterialDetail() {
     try {
       await updateMaterial(material.id, { pinned: !material.pinned });
       setMaterial({ ...material, pinned: !material.pinned });
-    } catch {}
+    } catch (err) { console.warn('Pin failed:', err); }
   };
 
   const handleShare = () => {
@@ -110,7 +100,7 @@ export function MaterialDetail() {
     <div className="animate-slideInRight min-h-dvh bg-app-bg">
       <div className="sticky top-0 bg-app-bg/95 backdrop-blur-lg z-30 border-b border-app-border">
         <div className="flex items-center gap-3 px-4 h-14">
-          <button onClick={() => navigate(-1)} className="text-app-text-dim hover:text-app-text text-xl transition-colors">←</button>
+          <button onClick={() => canGoBack() ? navigate(-1) : navigate(`/space/${spaceId}`)} className="text-app-text-dim hover:text-app-text text-xl transition-colors">←</button>
           <h1 className="text-app-text font-jakarta font-semibold text-base truncate">Material Details</h1>
         </div>
       </div>

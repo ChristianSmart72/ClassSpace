@@ -97,6 +97,8 @@ export default function App() {
   const setUpdateAvailable = useUpdateStore((s) => s.setUpdateAvailable);
 
   useEffect(() => {
+    const cancelled = { current: false };
+
     // Init connectivity store listeners
     useConnectivityStore.getState().setOnline(
       (() => { try { return navigator.onLine } catch { return true } })()
@@ -105,6 +107,7 @@ export default function App() {
     // Watch for SW updates
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.ready.then((reg) => {
+        if (cancelled.current) return;
         reg.addEventListener('updatefound', () => {
           const installing = reg.installing;
           if (!installing) return;
@@ -118,9 +121,12 @@ export default function App() {
     }
 
     init().then(() => {
+      if (cancelled.current) return;
       const spaceId = (() => { try { return localStorage.getItem('spaceId') } catch { return null } })();
-      if (spaceId) fetchSpace(spaceId).catch(() => {});
-    }).catch(() => {});
+      if (spaceId) fetchSpace(spaceId).catch((err) => console.warn('Failed to fetch space:', err));
+    }).catch((err) => console.warn('Init failed:', err));
+
+    return () => { cancelled.current = true; };
   }, []);
 
   if (!initialized) {

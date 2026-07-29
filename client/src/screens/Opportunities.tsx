@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Skeleton, EmptyState } from '../components/ui/Shared';
 import { getOpportunities } from '../api/opportunities';
+import { formatRelativeTime, canGoBack } from '../lib/time';
 import type { Opportunity } from '../types';
 
 const OPP_SECTIONS = [
@@ -16,21 +17,6 @@ const OPP_SECTIONS = [
 
 const OPP_SECTION_MAP: Record<string, typeof OPP_SECTIONS[number]> = {};
 for (const s of OPP_SECTIONS) OPP_SECTION_MAP[s.value] = s;
-
-function formatRelativeTime(dateStr: string): string {
-  const diffSec = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (diffSec < 60) return 'Just now';
-  const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin} min ago`;
-  const diffHours = Math.floor(diffMin / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays}d ago`;
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const d = new Date(dateStr);
-  return `${months[d.getMonth()]} ${d.getDate()}`;
-}
 
 function getDeadlineLabel(deadline: string | null): { label: string; color: string } {
   if (!deadline) return { label: 'Open', color: 'text-app-text-faint' };
@@ -66,12 +52,16 @@ export function Opportunities() {
 
   useEffect(() => {
     if (!spaceId) return;
+    const cancelled = { current: false };
     setLoading(true);
     getOpportunities(spaceId).then(data => {
-      setOpps(data || []);
+      if (!cancelled.current) setOpps(data || []);
     }).catch(() => {
-      setOpps([]);
-    }).finally(() => setLoading(false));
+      if (!cancelled.current) setOpps([]);
+    }).finally(() => {
+      if (!cancelled.current) setLoading(false);
+    });
+    return () => { cancelled.current = true; };
   }, [spaceId]);
 
   const sectionedOpps = useMemo(() => {
@@ -100,7 +90,7 @@ export function Opportunities() {
     <div className="pb-4">
       <div className="sticky top-0 bg-app-bg/95 backdrop-blur-lg z-30 border-b border-app-border">
         <div className="flex items-center gap-3 px-4 h-14">
-          <button onClick={() => navigate(-1)} className="text-app-text-dim hover:text-app-text text-xl transition-colors">←</button>
+          <button onClick={() => canGoBack() ? navigate(-1) : navigate(`/space/${spaceId}`)} className="text-app-text-dim hover:text-app-text text-xl transition-colors">←</button>
           <h1 className="text-app-text font-jakarta font-semibold text-base">Opportunities</h1>
           <button
             onClick={() => { setShowBookmarked(!showBookmarked); setActiveSection(null); }}

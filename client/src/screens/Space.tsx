@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, memo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useSpaceStore } from '../store/spaceStore';
 import { useContentStore } from '../store/contentStore';
@@ -11,6 +11,7 @@ import { getTimetable, createTimetableEntry, deleteTimetableEntry } from '../api
 import { getMaterialsSummary } from '../api/content';
 import type { Announcement, TimetableEntry } from '../types';
 import { COURSE_COLORS, COURSE_BG_COLORS, DAYS } from '../types';
+import { formatRelativeTime } from '../lib/time';
 import { ShareSheet } from '../components/sheets/ShareSheet';
 
 const CONTENT_FILTERS = [
@@ -33,24 +34,6 @@ const TYPE_STYLES: Record<string, { label: string; color: string; bg: string; ic
   update: { label: 'Update', color: '#d97706', bg: 'rgba(217,119,6,0.12)', icon: '📡' },
   announcement: { label: 'Announcement', color: '#6b7280', bg: 'rgba(107,114,128,0.12)', icon: '📢' },
 };
-
-function formatRelativeTime(dateStr: string): string {
-  const now = Date.now();
-  const date = new Date(dateStr).getTime();
-  const diffSec = Math.floor((now - date) / 1000);
-  if (diffSec < 60) return 'Just now';
-  const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin} min ago`;
-  const diffHours = Math.floor(diffMin / 60);
-  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays === 1) return 'Yesterday';
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const d = new Date(dateStr);
-  if (diffDays < 7) return dayNames[d.getDay()];
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${months[d.getMonth()]} ${d.getDate()}`;
-}
 
 function getLastVisitKey(spaceId: string) {
   return `spaceLastVisit:${spaceId}`;
@@ -103,16 +86,20 @@ export function Space() {
   }, [tab, announcements]);
 
   useEffect(() => {
-    if (spaceId && tab === 'timetable') {
-      getTimetable(spaceId).then(d => setTimetable(d || [])).catch(() => setTimetable([]));
+    if (!spaceId) return;
+    const cancelled = { current: false };
+    if (tab === 'timetable') {
+      getTimetable(spaceId).then(d => { if (!cancelled.current) setTimetable(d || []); }).catch(() => { if (!cancelled.current) setTimetable([]); });
     }
-    if (spaceId && tab === 'files') {
+    if (tab === 'files') {
       getMaterialsSummary(spaceId).then(data => {
+        if (cancelled.current) return;
         const map: Record<number, { count: number; latest: { name: string; created_at: string } | null }> = {};
         for (const c of data.courses) map[c.course_id] = { count: c.count, latest: c.latest };
         setCourseSummary(map);
       }).catch(() => {});
     }
+    return () => { cancelled.current = true; };
   }, [spaceId, tab]);
 
   const lastVisit = useMemo(() => {
@@ -160,7 +147,7 @@ export function Space() {
   };
 
   const handlePin = async (ann: Announcement) => {
-    try { await updateAnnouncement(ann.id, { pinned: !ann.pinned }); } catch {}
+    try { await updateAnnouncement(ann.id, { pinned: !ann.pinned }); } catch (err) { console.warn('Pin failed:', err); }
   };
 
   const handleEdit = (ann: Announcement) => {
@@ -492,7 +479,7 @@ export function Space() {
   );
 }
 
-function FeedCard({ ann, spaceId, canDelete, deleting, onDelete, onPin, onEdit, onClick }: {
+const FeedCard = memo(function FeedCard({ ann, spaceId, canDelete, deleting, onDelete, onPin, onEdit, onClick }: {
   ann: Announcement;
   spaceId: string;
   canDelete: boolean;
@@ -609,4 +596,4 @@ function FeedCard({ ann, spaceId, canDelete, deleting, onDelete, onPin, onEdit, 
       </div>
     </div>
   );
-}
+});

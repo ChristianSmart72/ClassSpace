@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { canGoBack } from '../lib/time';
 
 const DEMO_LINKS = [
   { label: 'Space Preview', link: 'classspace.app/s/abc123' },
@@ -25,7 +26,7 @@ export function JoinInput() {
 
   return (
     <div className="min-h-dvh flex flex-col px-6 py-8">
-      <button onClick={() => navigate(-1)} className="text-app-text-dim hover:text-app-text text-lg mb-6 self-start">←</button>
+      <button onClick={() => canGoBack() ? navigate(-1) : navigate('/')} className="text-app-text-dim hover:text-app-text text-lg mb-6 self-start">←</button>
 
       <h2 className="text-xl font-jakarta font-bold text-app-text mb-1">Join a Space</h2>
       <p className="text-app-text-dim text-sm font-inter mb-6">Paste a ClassSpace link to preview and join</p>

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, memo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSpaceStore } from '../store/spaceStore';
 import { useContentStore } from '../store/contentStore';
@@ -9,6 +9,7 @@ import { ShareSheet } from '../components/sheets/ShareSheet';
 import { FILE_ICONS } from '../types';
 import type { Material } from '../types';
 import api from '../api/client';
+import { formatRelativeTime, formatSize } from '../lib/time';
 
 const FILTER_CATEGORIES = [
   'All', 'Slides', 'Assignments', 'Past Questions',
@@ -32,29 +33,7 @@ const CARD_FILE_COLORS: Record<string, string> = {
   xls: 'text-app-green', img: 'text-app-accent2', video: 'text-app-red', other: 'text-app-text-dim',
 };
 
-function formatSize(bytes: number): string {
-  if (bytes <= 0) return '';
-  const mb = bytes / 1024 / 1024;
-  if (mb < 1) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${mb.toFixed(1)} MB`;
-}
 
-function formatRelativeTime(dateStr: string): string {
-  const now = Date.now();
-  const date = new Date(dateStr).getTime();
-  const diffSec = Math.floor((now - date) / 1000);
-  if (diffSec < 60) return 'Just now';
-  const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin} min ago`;
-  const diffHours = Math.floor(diffMin / 60);
-  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays} days ago`;
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const d = new Date(dateStr);
-  return `${months[d.getMonth()]} ${d.getDate()}`;
-}
 
 export function CourseFiles() {
   const { id: spaceId, cid } = useParams<{ id: string; cid: string }>();
@@ -77,12 +56,14 @@ export function CourseFiles() {
   }, [cid]);
 
   useEffect(() => {
-    if (cid && spaceId) {
-      api.get(`/spaces/${spaceId}/materials/summary`).then(({ data }) => {
-        const c = data.courses.find((c: any) => c.course_id === Number(cid));
-        if (c) setSummary({ count: c.count, contributors: c.contributors, total_downloads: c.total_downloads });
-      }).catch(() => {});
-    }
+    if (!cid || !spaceId) return;
+    const cancelled = { current: false };
+    api.get(`/spaces/${spaceId}/materials/summary`).then(({ data }) => {
+      if (cancelled.current) return;
+      const c = data.courses.find((c: any) => c.course_id === Number(cid));
+      if (c) setSummary({ count: c.count, contributors: c.contributors, total_downloads: c.total_downloads });
+    }).catch(() => {});
+    return () => { cancelled.current = true; };
   }, [cid, spaceId]);
 
   const filtered = useMemo(() => {
@@ -126,7 +107,7 @@ export function CourseFiles() {
   };
 
   const handlePin = async (mat: Material) => {
-    try { await updateMaterial(mat.id, { pinned: !mat.pinned }); } catch {}
+    try { await updateMaterial(mat.id, { pinned: !mat.pinned }); } catch (err) { console.warn('Pin failed:', err); }
   };
 
   if (!course) {
@@ -282,7 +263,7 @@ export function CourseFiles() {
   );
 }
 
-function ResourceCard({ material: m, canDelete, deleting, onDelete, onPin, onShare, onClick }: {
+const ResourceCard = memo(function ResourceCard({ material: m, canDelete, deleting, onDelete, onPin, onShare, onClick }: {
   material: Material;
   canDelete: boolean;
   deleting: boolean;
@@ -361,4 +342,4 @@ function ResourceCard({ material: m, canDelete, deleting, onDelete, onPin, onSha
       </div>
     </div>
   );
-}
+});
