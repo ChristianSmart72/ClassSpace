@@ -55,6 +55,11 @@ Respect `.opencodeignore` — skip node_modules, dist, build artifacts, lockfile
 - `npm run build` — builds both client and server
 - `npm start` — production start (server serves client static files)
 
+## Type checking
+- `npx tsc --noEmit` — server typecheck
+- `npx tsc -b --noEmit` — client typecheck
+- `npx oxlint` — client lint
+
 ## Architecture plan
 See `ARCHITECTURE_PLAN.md` for the full security/data/polish roadmap.
 See `PWA_OVERHAUL.md` for PWA implementation details (all features are complete per changelog).

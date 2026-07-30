@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { canGoBack } from '../lib/time';
 
 const DEMO_LINKS = [
-  { label: 'Space Preview', link: 'classspace.app/s/abc123' },
-  { label: 'Announcement Preview', link: 'classspace.app/s/abc123/ann/1' },
-  { label: 'Material Preview', link: 'classspace.app/s/abc123/mat/101' },
-  { label: 'Course Folder Preview', link: 'classspace.app/s/abc123/course/1' },
+  { label: 'Space Preview', link: 'classspace.app/s/pre220' },
+  { label: 'Announcement Preview', link: 'classspace.app/s/pre220/ann/1' },
+  { label: 'Material Preview', link: 'classspace.app/s/pre220/mat/101' },
+  { label: 'Course Folder Preview', link: 'classspace.app/s/pre220/course/1' },
 ];
 
 export function JoinInput() {
@@ -85,16 +85,26 @@ export function JoinInput() {
 }
 
 function parseLink(raw: string): { type: string; id: string } | null {
-  const cleaned = raw.replace(/^https?:\/\//, '');
-  const spaceMatch = cleaned.match(/classspace\.app\/s\/([a-z0-9]+)(?:\/(ann|mat|course)\/(\d+))?/);
-  if (!spaceMatch) return null;
+  const cleaned = raw.trim().replace(/^https?:\/\//, '');
 
-  const spaceId = spaceMatch[1];
-  const subType = spaceMatch[2];
-  const subId = spaceMatch[3];
+  // Match: classspace.app/s/:id, classspace.app/s/:id/ann|mat|course/:n
+  const shortMatch = cleaned.match(/classspace\.app\/s\/([a-z0-9-]+)(?:\/(ann|mat|course)\/(\d+))?/);
+  if (shortMatch) {
+    const spaceId = shortMatch[1];
+    const subType = shortMatch[2];
+    const subId = shortMatch[3];
+    if (subType && subId) return { type: subType, id: subId };
+    return { type: 'space', id: spaceId };
+  }
 
-  if (subType && subId) return { type: subType, id: subId };
-  return { type: 'space', id: spaceId };
+  // Match: classspace.app/join/space/:code
+  const joinMatch = cleaned.match(/classspace\.app\/join\/(space|ann|mat|course)\/([a-z0-9-]+)/);
+  if (joinMatch) return { type: joinMatch[1], id: joinMatch[2] };
+
+  // Match: raw invite code (e.g. PRE220, abc123)
+  if (/^[A-Z0-9]{4,12}$/i.test(cleaned)) return { type: 'space', id: cleaned };
+
+  return null;
 }
 
 function getLinkIcon(link: string): string {
