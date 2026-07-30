@@ -17,16 +17,16 @@ export function pushRoutes(app: FastifyInstance) {
     }
 
     const db = getDb();
-    const existing = db.prepare(
+    const existing = await db.prepare(
       'SELECT id FROM push_subscriptions WHERE endpoint = ?'
     ).get(body.endpoint) as any;
 
     if (existing) {
-      db.prepare(
+      await db.prepare(
         'UPDATE push_subscriptions SET user_id = ?, space_id = ?, p256dh = ?, auth = ? WHERE id = ?'
       ).run(userId, body.spaceId, body.keys.p256dh, body.keys.auth, existing.id);
     } else {
-      db.prepare(
+      await db.prepare(
         'INSERT INTO push_subscriptions (user_id, space_id, endpoint, p256dh, auth) VALUES (?, ?, ?, ?, ?)'
       ).run(userId, body.spaceId, body.endpoint, body.keys.p256dh, body.keys.auth);
     }
@@ -40,10 +40,10 @@ export function pushRoutes(app: FastifyInstance) {
 
     const db = getDb();
     if (body.endpoint) {
-      db.prepare('DELETE FROM push_subscriptions WHERE endpoint = ? AND user_id = ?')
+      await db.prepare('DELETE FROM push_subscriptions WHERE endpoint = ? AND user_id = ?')
         .run(body.endpoint, userId);
     } else {
-      db.prepare('DELETE FROM push_subscriptions WHERE user_id = ?').run(userId);
+      await db.prepare('DELETE FROM push_subscriptions WHERE user_id = ?').run(userId);
     }
 
     return { success: true };
@@ -52,7 +52,7 @@ export function pushRoutes(app: FastifyInstance) {
   app.post('/api/push/test', { preHandler: authMiddleware }, async (request, reply) => {
     const userId = request.user!.userId;
     const db = getDb();
-    const user = db.prepare('SELECT name FROM users WHERE id = ?').get(userId) as any;
+    const user = await db.prepare('SELECT name FROM users WHERE id = ?').get(userId) as any;
 
     try {
       await sendPushToUser(userId, '', {

@@ -9,7 +9,7 @@ export function opportunityRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const items = db.prepare(`
+    const items = await db.prepare(`
       SELECT o.*, u.name as author_name
       FROM opportunities o
       JOIN users u ON o.author_id = u.id
@@ -32,7 +32,7 @@ export function opportunityRoutes(app: FastifyInstance) {
     const userId = request.user!.userId;
     const db = getDb();
 
-    const isMember = db.prepare(
+    const isMember = await db.prepare(
       'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
     ).get(id, userId) as any;
 
@@ -46,11 +46,11 @@ export function opportunityRoutes(app: FastifyInstance) {
 
     const category = ALLOWED_CATEGORIES.includes(body.category) ? body.category : 'other';
 
-    const result = db.prepare(
+    const result = await db.prepare(
       'INSERT INTO opportunities (space_id, author_id, title, description, category, link, deadline) VALUES (?, ?, ?, ?, ?, ?, ?)'
     ).run(id, userId, body.title.trim(), body.description.trim(), category, body.link || null, body.deadline || null);
 
-    const opportunity = db.prepare(`
+    const opportunity = await db.prepare(`
       SELECT o.*, u.name as author_name
       FROM opportunities o
       JOIN users u ON o.author_id = u.id
@@ -65,10 +65,10 @@ export function opportunityRoutes(app: FastifyInstance) {
     const userId = request.user!.userId;
     const db = getDb();
 
-    const opp = db.prepare('SELECT * FROM opportunities WHERE id = ?').get(Number(id)) as any;
+    const opp = await db.prepare('SELECT * FROM opportunities WHERE id = ?').get(Number(id)) as any;
     if (!opp) return reply.status(404).send({ error: 'Not found' });
 
-    const isMember = db.prepare(
+    const isMember = await db.prepare(
       'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
     ).get(opp.space_id, userId) as any;
 
@@ -76,7 +76,7 @@ export function opportunityRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: 'Only class reps can delete opportunities' });
     }
 
-    db.prepare('DELETE FROM opportunities WHERE id = ?').run(Number(id));
+    await db.prepare('DELETE FROM opportunities WHERE id = ?').run(Number(id));
     return { success: true };
   });
 }

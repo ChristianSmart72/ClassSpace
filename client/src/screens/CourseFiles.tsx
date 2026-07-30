@@ -38,8 +38,13 @@ const CARD_FILE_COLORS: Record<string, string> = {
 export function CourseFiles() {
   const { id: spaceId, cid } = useParams<{ id: string; cid: string }>();
   const navigate = useNavigate();
-  const { courses, memberRole } = useSpaceStore();
-  const { materials, matLoading, fetchMaterials, deleteMaterial, updateMaterial } = useContentStore();
+  const courses = useSpaceStore(s => s.courses);
+  const memberRole = useSpaceStore(s => s.memberRole);
+  const materials = useContentStore(s => s.materials);
+  const matLoading = useContentStore(s => s.matLoading);
+  const fetchMaterials = useContentStore(s => s.fetchMaterials);
+  const deleteMaterial = useContentStore(s => s.deleteMaterial);
+  const updateMaterial = useContentStore(s => s.updateMaterial);
   const [showUpload, setShowUpload] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [shareTarget, setShareTarget] = useState<{ type: string; id: string | number } | null>(null);

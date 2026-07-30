@@ -9,8 +9,8 @@ import type { ShareData, SharedSpace, SharedAnnouncement, SharedMaterial, Shared
 export function JoinPreview() {
   const { type, id } = useParams<{ type: string; id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
-  const { joinSpace } = useSpaceStore();
+  const user = useAuthStore(s => s.user);
+  const joinSpace = useSpaceStore(s => s.joinSpace);
   const [data, setData] = useState<ShareData | null>(null);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);

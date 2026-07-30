@@ -17,29 +17,28 @@ export function reactionRoutes(app: FastifyInstance) {
     const db = getDb();
     const annId = Number(id);
 
-    const ann = db.prepare('SELECT id FROM announcements WHERE id = ?').get(annId);
+    const ann = await db.prepare('SELECT id FROM announcements WHERE id = ?').get(annId);
     if (!ann) return reply.status(404).send({ error: 'Announcement not found' });
 
-    const existing = db.prepare(
+    const existing = await db.prepare(
       'SELECT id FROM reactions WHERE announcement_id = ? AND user_id = ? AND emoji = ?'
     ).get(annId, userId, emoji);
 
     let userReacted: boolean;
     if (existing) {
-      db.prepare('DELETE FROM reactions WHERE announcement_id = ? AND user_id = ? AND emoji = ?')
+      await db.prepare('DELETE FROM reactions WHERE announcement_id = ? AND user_id = ? AND emoji = ?')
         .run(annId, userId, emoji);
       userReacted = false;
     } else {
-      // If switching vote (upvote <-> downvote), remove the other one first
       const opposite = emoji === 'upvote' ? 'downvote' : 'upvote';
-      db.prepare('DELETE FROM reactions WHERE announcement_id = ? AND user_id = ? AND emoji = ?')
+      await db.prepare('DELETE FROM reactions WHERE announcement_id = ? AND user_id = ? AND emoji = ?')
         .run(annId, userId, opposite);
-      db.prepare('INSERT INTO reactions (announcement_id, user_id, emoji) VALUES (?, ?, ?)')
+      await db.prepare('INSERT INTO reactions (announcement_id, user_id, emoji) VALUES (?, ?, ?)')
         .run(annId, userId, emoji);
       userReacted = true;
     }
 
-    const counts = db.prepare(
+    const counts = await db.prepare(
       'SELECT emoji, COUNT(*) as count FROM reactions WHERE announcement_id = ? GROUP BY emoji'
     ).all(annId) as { emoji: string; count: number }[];
 

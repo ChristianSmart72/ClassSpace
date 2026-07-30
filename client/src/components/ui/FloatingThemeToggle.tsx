@@ -2,8 +2,9 @@ import { useThemeStore } from '../../store/themeStore';
 import { useSpaceStore } from '../../store/spaceStore';
 
 export function FloatingThemeToggle() {
-  const { theme, toggle } = useThemeStore();
-  const { memberRole } = useSpaceStore();
+  const theme = useThemeStore(s => s.theme);
+  const toggle = useThemeStore(s => s.toggle);
+  const memberRole = useSpaceStore(s => s.memberRole);
   const isRep = memberRole === 'rep';
 
   // Admin: brightness only in profile tab, not floating

@@ -15,10 +15,7 @@ Feature 1: Custom SW + Offline-First  ←── Foundation for everything
     ├── Feature 5: App Badge (needs content store + SW communication)
     │
     ├── Feature 2: Push Notifications (needs SW push/notificationclick handlers)
-    │   └── VAPID keys provided by user (stored in ~/secrets/vapid.json)
-    │       subject: mailto:webdaddyempire@gmail.com
-    │       publicKey: BK-fNRDB2k-Vkap_EPjRkJ_r4QT4cPfYZFCh_rjGs_hrmWYrCde-uK9H-2ZAdtU9Xlils6wA2pfbP_1ZXwWCqCU
-    │       privateKey: onDjUGHMOlXCsyB8_FL9gKD_Qm0xjHWCQFK9yg-Wr84
+    │   └── VAPID keys (set as Render env vars — never hardcode or commit)
     │
     ├── Feature 4: Install Prompt (standalone)
     │
@@ -282,9 +279,4 @@ No badge on app icon. Users don't know about new announcements without opening a
 
 ---
 
-## VAPID Keys (stored)
-```
-subject: mailto:webdaddyempire@gmail.com
-publicKey: BK-fNRDB2k-Vkap_EPjRkJ_r4QT4cPfYZFCh_rjGs_hrmWYrCde-uK9H-2ZAdtU9Xlils6wA2pfbP_1ZXwWCqCU
-privateKey: onDjUGHMOlXCsyB8_FL9gKD_Qm0xjHWCQFK9yg-Wr84
-```
+## VAPID Keys (set in Render env vars — do not commit)

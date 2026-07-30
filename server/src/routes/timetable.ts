@@ -7,7 +7,7 @@ export function timetableRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const entries = db.prepare(`
+    const entries = await db.prepare(`
       SELECT t.*, c.name as course_name, c.code as course_code, c.icon as course_icon, c.color_index
       FROM timetable t
       JOIN courses c ON t.course_id = c.id
@@ -36,7 +36,7 @@ export function timetableRoutes(app: FastifyInstance) {
     };
     const db = getDb();
 
-    const isMember = db.prepare(
+    const isMember = await db.prepare(
       'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
     ).get(id, request.user!.userId) as any;
 
@@ -44,11 +44,11 @@ export function timetableRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: 'Only class reps can edit the timetable' });
     }
 
-    const result = db.prepare(
+    const result = await db.prepare(
       'INSERT INTO timetable (space_id, course_id, day, start_time, end_time, venue, lecturer) VALUES (?, ?, ?, ?, ?, ?, ?)'
     ).run(id, body.course_id, body.day, body.start_time, body.end_time, body.venue || null, body.lecturer || null);
 
-    const entry = db.prepare(`
+    const entry = await db.prepare(`
       SELECT t.*, c.name as course_name, c.code as course_code, c.icon as course_icon, c.color_index
       FROM timetable t JOIN courses c ON t.course_id = c.id WHERE t.id = ?
     `).get(result.lastInsertRowid);
@@ -60,10 +60,10 @@ export function timetableRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const entry = db.prepare('SELECT * FROM timetable WHERE id = ?').get(Number(id)) as any;
+    const entry = await db.prepare('SELECT * FROM timetable WHERE id = ?').get(Number(id)) as any;
     if (!entry) return reply.status(404).send({ error: 'Not found' });
 
-    const isMember = db.prepare(
+    const isMember = await db.prepare(
       'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
     ).get(entry.space_id, request.user!.userId) as any;
 
@@ -71,7 +71,7 @@ export function timetableRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: 'Only class reps can edit the timetable' });
     }
 
-    db.prepare('DELETE FROM timetable WHERE id = ?').run(Number(id));
+    await db.prepare('DELETE FROM timetable WHERE id = ?').run(Number(id));
     return { success: true };
   });
 }

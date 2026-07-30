@@ -17,7 +17,7 @@ export function pollRoutes(app: FastifyInstance) {
       }
     } catch { /* no auth — fine */ }
 
-    const polls = db.prepare(`
+    const polls = await db.prepare(`
       SELECT p.*, u.name as author_name
       FROM polls p
       JOIN users u ON p.author_id = u.id
@@ -27,11 +27,10 @@ export function pollRoutes(app: FastifyInstance) {
 
     if (polls.length === 0) return { polls: [] };
 
-    // Batch fetch all options for all polls (2 queries total, no N+1)
     const pollIds = polls.map(p => p.id);
     const placeholders = pollIds.map(() => '?').join(',');
 
-    const allOptions = db.prepare(`
+    const allOptions = await db.prepare(`
       SELECT po.id, po.poll_id, po.text, po.display_order,
         COUNT(pv.id) as votes
       FROM poll_options po
@@ -41,7 +40,6 @@ export function pollRoutes(app: FastifyInstance) {
       ORDER BY po.display_order
     `).all(...pollIds) as any[];
 
-    // Group options by poll_id
     const optionsByPoll = new Map<number, any[]>();
     for (const opt of allOptions) {
       if (!optionsByPoll.has(opt.poll_id)) {
@@ -50,10 +48,9 @@ export function pollRoutes(app: FastifyInstance) {
       optionsByPoll.get(opt.poll_id)!.push(opt);
     }
 
-    // Batch fetch this user's votes
     let voteByPoll = new Map<number, number>();
     if (userId) {
-      const myVotes = db.prepare(`
+      const myVotes = await db.prepare(`
         SELECT poll_id, option_id FROM poll_votes
         WHERE poll_id IN (${placeholders}) AND user_id = ?
       `).all(...pollIds, userId) as any[];
@@ -62,7 +59,7 @@ export function pollRoutes(app: FastifyInstance) {
       }
     }
 
-    const enriched = polls.map((poll) => {
+    const enriched = polls.map((poll: any) => {
       const options = optionsByPoll.get(poll.id) ?? [];
       const totalVotes = options.reduce((s: number, o: any) => s + o.votes, 0);
       return {
@@ -82,7 +79,7 @@ export function pollRoutes(app: FastifyInstance) {
     const userId = request.user!.userId;
     const db = getDb();
 
-    const isMember = db.prepare(
+    const isMember = await db.prepare(
       'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
     ).get(id, userId) as any;
 
@@ -98,20 +95,22 @@ export function pollRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'At least 2 options are required' });
     }
 
-    const result = db.prepare(
+    const result = await db.prepare(
       'INSERT INTO polls (space_id, author_id, question, closes_at) VALUES (?, ?, ?, ?)'
     ).run(id, userId, body.question.trim(), body.closes_at || null);
 
-    const pollId = result.lastInsertRowid as number;
-    const insertOpt = db.prepare('INSERT INTO poll_options (poll_id, text, display_order) VALUES (?, ?, ?)');
-    opts.forEach((text, i) => insertOpt.run(pollId, text.trim(), i));
+    const pollId = result.lastInsertRowid;
 
-    const poll = db.prepare(`
+    for (const [i, text] of opts.entries()) {
+      await db.prepare('INSERT INTO poll_options (poll_id, text, display_order) VALUES (?, ?, ?)').run(pollId, text.trim(), i);
+    }
+
+    const poll = await db.prepare(`
       SELECT p.*, u.name as author_name FROM polls p
       JOIN users u ON p.author_id = u.id WHERE p.id = ?
     `).get(pollId) as any;
 
-    const options = db.prepare(`
+    const options = await db.prepare(`
       SELECT po.id, po.text, po.display_order, 0 as votes
       FROM poll_options po WHERE po.poll_id = ? ORDER BY po.display_order
     `).all(pollId) as any[];
@@ -125,24 +124,24 @@ export function pollRoutes(app: FastifyInstance) {
     const userId = request.user!.userId;
     const db = getDb();
 
-    const poll = db.prepare('SELECT * FROM polls WHERE id = ?').get(Number(id)) as any;
+    const poll = await db.prepare('SELECT * FROM polls WHERE id = ?').get(Number(id)) as any;
     if (!poll) return reply.status(404).send({ error: 'Poll not found' });
 
-    if (poll.closes_at && new Date(poll.closes_at) < new Date()) {
+    if (poll.closes_at && new Date(poll.closes_at as string) < new Date()) {
       return reply.status(400).send({ error: 'This poll is closed' });
     }
 
-    const option = db.prepare('SELECT * FROM poll_options WHERE id = ? AND poll_id = ?').get(option_id, Number(id)) as any;
+    const option = await db.prepare('SELECT * FROM poll_options WHERE id = ? AND poll_id = ?').get(option_id, Number(id)) as any;
     if (!option) return reply.status(400).send({ error: 'Invalid option' });
 
-    const existing = db.prepare('SELECT id FROM poll_votes WHERE poll_id = ? AND user_id = ?').get(Number(id), userId) as any;
+    const existing = await db.prepare('SELECT id FROM poll_votes WHERE poll_id = ? AND user_id = ?').get(Number(id), userId) as any;
     if (existing) {
-      db.prepare('UPDATE poll_votes SET option_id = ? WHERE poll_id = ? AND user_id = ?').run(option_id, Number(id), userId);
+      await db.prepare('UPDATE poll_votes SET option_id = ? WHERE poll_id = ? AND user_id = ?').run(option_id, Number(id), userId);
     } else {
-      db.prepare('INSERT INTO poll_votes (poll_id, option_id, user_id) VALUES (?, ?, ?)').run(Number(id), option_id, userId);
+      await db.prepare('INSERT INTO poll_votes (poll_id, option_id, user_id) VALUES (?, ?, ?)').run(Number(id), option_id, userId);
     }
 
-    const options = db.prepare(`
+    const options = await db.prepare(`
       SELECT po.id, po.text, po.display_order, COUNT(pv.id) as votes
       FROM poll_options po
       LEFT JOIN poll_votes pv ON pv.option_id = po.id
@@ -158,10 +157,10 @@ export function pollRoutes(app: FastifyInstance) {
     const userId = request.user!.userId;
     const db = getDb();
 
-    const poll = db.prepare('SELECT * FROM polls WHERE id = ?').get(Number(id)) as any;
+    const poll = await db.prepare('SELECT * FROM polls WHERE id = ?').get(Number(id)) as any;
     if (!poll) return reply.status(404).send({ error: 'Not found' });
 
-    const isMember = db.prepare(
+    const isMember = await db.prepare(
       'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
     ).get(poll.space_id, userId) as any;
 
@@ -169,7 +168,7 @@ export function pollRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: 'Only class reps can delete polls' });
     }
 
-    db.prepare('DELETE FROM polls WHERE id = ?').run(Number(id));
+    await db.prepare('DELETE FROM polls WHERE id = ?').run(Number(id));
     return { success: true };
   });
 }

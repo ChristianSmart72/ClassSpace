@@ -6,11 +6,11 @@ export function shareRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const space = db.prepare('SELECT * FROM spaces WHERE id = ?').get(id) as any;
+    const space = await db.prepare('SELECT * FROM spaces WHERE id = ?').get(id) as any;
     if (!space) return reply.status(404).send({ error: 'Space not found' });
 
-    const rep = db.prepare('SELECT name FROM users WHERE id = ?').get(space.rep_id) as any;
-    const latestAnn = db.prepare(
+    const rep = await db.prepare('SELECT name FROM users WHERE id = ?').get(space.rep_id) as any;
+    const latestAnn = await db.prepare(
       "SELECT title FROM announcements WHERE space_id = ? ORDER BY created_at DESC LIMIT 1"
     ).get(id) as any;
 
@@ -31,7 +31,7 @@ export function shareRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const ann = db.prepare(`
+    const ann = await db.prepare(`
       SELECT a.*, u.name as author_name, c.name as course_name, c.code as course_code, c.icon as course_icon,
              s.name as space_name, s.id as space_id
       FROM announcements a
@@ -62,7 +62,7 @@ export function shareRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const mat = db.prepare(`
+    const mat = await db.prepare(`
       SELECT m.*, u.name as uploader_name, c.name as course_name, c.code as course_code, c.icon as course_icon,
              s.name as space_name, s.id as space_id
       FROM materials m
@@ -91,7 +91,7 @@ export function shareRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const course = db.prepare(`
+    const course = await db.prepare(`
       SELECT c.*, s.name as space_name, s.id as space_id
       FROM courses c JOIN spaces s ON c.space_id = s.id
       WHERE c.id = ?
@@ -99,7 +99,7 @@ export function shareRoutes(app: FastifyInstance) {
 
     if (!course) return reply.status(404).send({ error: 'Course not found' });
 
-    const files = db.prepare(`
+    const files = await db.prepare(`
       SELECT id, name, file_type, category, file_size FROM materials WHERE course_id = ?
     `).all(id) as any[];
 

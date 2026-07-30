@@ -308,9 +308,13 @@ function NextClassSection({ timetable, ttLoading, navigate }: { timetable: Timet
 
 export function Home() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
-  const { currentSpace, memberRole, loading: spaceLoading } = useSpaceStore();
-  const { announcements, fetchAnnouncements } = useContentStore();
+  const user = useAuthStore(s => s.user);
+  const currentSpace = useSpaceStore(s => s.currentSpace);
+  const memberRole = useSpaceStore(s => s.memberRole);
+  const spaceLoading = useSpaceStore(s => s.loading);
+  const announcements = useContentStore(s => s.announcements);
+  const annLoading = useContentStore(s => s.loading);
+  const fetchAnnouncements = useContentStore(s => s.fetchAnnouncements);
   const [greeting, setGreeting] = useState('');
   const [timetable, setTimetable] = useState<TimetableEntry[]>([]);
   const [ttLoading, setTtLoading] = useState(false);
@@ -575,7 +579,16 @@ export function Home() {
               View all →
             </button>
           </div>
-          {recentAnnouncements.length === 0 ? (
+          {annLoading ? (
+            <div className="flex flex-col gap-1.5">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="bg-app-surface rounded-xl border border-app-border px-4 py-3">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-5 w-3/4" />
+                </div>
+              ))}
+            </div>
+          ) : recentAnnouncements.length === 0 ? (
             <div className="bg-app-surface rounded-xl border border-app-border p-4 text-center">
               <p className="text-app-text-dim text-xs font-inter">No announcements yet</p>
             </div>

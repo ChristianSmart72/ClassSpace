@@ -1,6 +1,24 @@
 import { FastifyInstance } from 'fastify';
-import { getDb } from '../db/connection.js';
+import { getDb, UPLOADS_DIR } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
+import fs from 'fs';
+import path from 'path';
+import { nanoid } from 'nanoid';
+
+function saveFile(data: string, prefix: string): string | null {
+  if (!data) return null;
+  const ext = 'bin';
+  const fileName = `${prefix}-${Date.now()}-${nanoid(8)}.${ext}`;
+  const buf = Buffer.from(data.includes(',') ? data.split(',')[1] : data, 'base64');
+  fs.writeFileSync(path.join(UPLOADS_DIR, fileName), buf);
+  return fileName;
+}
+
+function readFile(fileName: string): Buffer | null {
+  const fp = path.join(UPLOADS_DIR, fileName);
+  if (!fs.existsSync(fp)) return null;
+  return fs.readFileSync(fp);
+}
 
 export function materialRoutes(app: FastifyInstance) {
   app.get('/api/courses/:id/materials', async (request) => {
@@ -16,7 +34,7 @@ export function materialRoutes(app: FastifyInstance) {
     };
     const order = sortMap[query.sort || 'newest'] || 'm.created_at DESC';
 
-    const materials = db.prepare(`
+    const materials = await db.prepare(`
       SELECT m.id, m.name, m.file_type, m.category, m.file_size, m.created_at,
              m.pinned, m.downloads,
              u.name as uploader_name, c.name as course_name, c.code as course_code
@@ -37,10 +55,10 @@ export function materialRoutes(app: FastifyInstance) {
     const userId = request.user!.userId;
     const db = getDb();
 
-    const course = db.prepare('SELECT space_id FROM courses WHERE id = ?').get(Number(id)) as any;
+    const course = await db.prepare('SELECT space_id FROM courses WHERE id = ?').get(Number(id)) as any;
     if (!course) return reply.status(404).send({ error: 'Course not found' });
 
-    const membership = db.prepare(
+    const membership = await db.prepare(
       'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
     ).get(course.space_id, userId) as any;
     if (!membership || membership.role !== 'rep') {
@@ -59,16 +77,18 @@ export function materialRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'Material name is required' });
     }
 
-    const result = db.prepare(
+    const fileName = saveFile(data.file_data || '', 'mat');
+
+    const result = await db.prepare(
       `INSERT INTO materials (space_id, course_id, name, file_data, file_size, file_type, category, uploader_id)
        VALUES ((SELECT space_id FROM courses WHERE id = ?), ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       Number(id), Number(id), data.name,
-      data.file_data || null, data.file_size || 0,
+      fileName, data.file_size || 0,
       data.file_type || 'other', data.category || 'Other', userId
     );
 
-    const material = db.prepare(`
+    const material = await db.prepare(`
       SELECT m.*, u.name as uploader_name
       FROM materials m JOIN users u ON m.uploader_id = u.id
       WHERE m.id = ?
@@ -81,7 +101,7 @@ export function materialRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const material = db.prepare(
+    const material = await db.prepare(
       'SELECT name, file_data, file_type, file_size FROM materials WHERE id = ?'
     ).get(Number(id)) as any;
 
@@ -89,7 +109,12 @@ export function materialRoutes(app: FastifyInstance) {
       return reply.status(404).send({ error: 'Material not found or no file data' });
     }
 
-    db.prepare('UPDATE materials SET downloads = downloads + 1 WHERE id = ?').run(Number(id));
+    await db.prepare('UPDATE materials SET downloads = downloads + 1 WHERE id = ?').run(Number(id));
+
+    const buf = readFile(material.file_data as string);
+    if (!buf) {
+      return reply.status(404).send({ error: 'File not found on disk' });
+    }
 
     const mimeTypes: Record<string, string> = {
       pdf: 'application/pdf',
@@ -100,12 +125,11 @@ export function materialRoutes(app: FastifyInstance) {
       video: 'video/mp4',
     };
 
-    const buffer = Buffer.from(material.file_data, 'base64');
     reply.header('Content-Type', mimeTypes[material.file_type] || 'application/octet-stream');
     reply.header('Content-Disposition', `attachment; filename="${material.name}.${material.file_type}"`);
-    reply.header('Content-Length', buffer.length);
+    reply.header('Content-Length', buf.length);
     reply.header('Cache-Control', 'public, max-age=86400');
-    return reply.send(buffer);
+    return reply.send(buf);
   });
 
   app.patch('/api/materials/:id', { preHandler: authMiddleware }, async (request, reply) => {
@@ -114,16 +138,16 @@ export function materialRoutes(app: FastifyInstance) {
     const body = request.body as any;
     const db = getDb();
 
-    const mat = db.prepare('SELECT * FROM materials WHERE id = ?').get(Number(id)) as any;
+    const mat = await db.prepare('SELECT id, space_id, uploader_id FROM materials WHERE id = ?').get(Number(id)) as any;
     if (!mat) return reply.status(404).send({ error: 'Not found' });
 
-    const isRep = db.prepare(
+    const isRep = await db.prepare(
       'SELECT 1 FROM space_members WHERE space_id = ? AND user_id = ? AND role = ?'
     ).get(mat.space_id, userId, 'rep');
     if (!isRep) return reply.status(403).send({ error: 'Not authorized' });
 
     if (body.pinned !== undefined) {
-      db.prepare('UPDATE materials SET pinned = ? WHERE id = ?').run(body.pinned ? 1 : 0, Number(id));
+      await db.prepare('UPDATE materials SET pinned = ? WHERE id = ?').run(body.pinned ? 1 : 0, Number(id));
     }
 
     return { success: true };
@@ -134,10 +158,10 @@ export function materialRoutes(app: FastifyInstance) {
     const userId = request.user!.userId;
     const db = getDb();
 
-    const mat = db.prepare('SELECT * FROM materials WHERE id = ?').get(Number(id)) as any;
+    const mat = await db.prepare('SELECT id, space_id, uploader_id FROM materials WHERE id = ?').get(Number(id)) as any;
     if (!mat) return reply.status(404).send({ error: 'Not found' });
 
-    const isRep = db.prepare(
+    const isRep = await db.prepare(
       'SELECT 1 FROM space_members WHERE space_id = ? AND user_id = ? AND role = ?'
     ).get(mat.space_id, userId, 'rep');
 
@@ -145,7 +169,7 @@ export function materialRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: 'Not authorized' });
     }
 
-    db.prepare('DELETE FROM materials WHERE id = ?').run(Number(id));
+    await db.prepare('DELETE FROM materials WHERE id = ?').run(Number(id));
     return { success: true };
   });
 
@@ -153,15 +177,20 @@ export function materialRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const rows = db.prepare(`
+    const rows = await db.prepare(`
       SELECT c.id as course_id, c.name as course_name, c.code as course_code,
              COUNT(m.id) as count,
              COUNT(DISTINCT m.uploader_id) as contributors,
              COALESCE(SUM(m.downloads), 0) as total_downloads,
-             (SELECT m2.name FROM materials m2 WHERE m2.course_id = c.id ORDER BY m2.created_at DESC LIMIT 1) as latest_name,
-             (SELECT m2.created_at FROM materials m2 WHERE m2.course_id = c.id ORDER BY m2.created_at DESC LIMIT 1) as latest_created_at
+             latest.name as latest_name,
+             latest.created_at as latest_created_at
       FROM courses c
       LEFT JOIN materials m ON m.course_id = c.id
+      LEFT JOIN (
+        SELECT course_id, name, created_at,
+               ROW_NUMBER() OVER (PARTITION BY course_id ORDER BY created_at DESC) as rn
+        FROM materials
+      ) latest ON latest.course_id = c.id AND latest.rn = 1
       WHERE c.space_id = ?
       GROUP BY c.id
       ORDER BY c.name ASC
@@ -182,7 +211,7 @@ export function materialRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const material = db.prepare(`
+    const material = await db.prepare(`
       SELECT m.id, m.name, m.file_type, m.category, m.file_size, m.created_at,
              u.name as uploader_name, c.name as course_name, c.code as course_code,
              c.icon as course_icon, s.name as space_name, s.id as space_id

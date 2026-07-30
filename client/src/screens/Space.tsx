@@ -48,8 +48,17 @@ export function Space() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const { currentSpace, courses, memberRole, fetchSpace, loading: spaceLoading, error: spaceError } = useSpaceStore();
-  const { announcements, loading: annLoading, fetchAnnouncements, deleteAnnouncement, updateAnnouncement } = useContentStore();
+  const currentSpace = useSpaceStore(s => s.currentSpace);
+  const courses = useSpaceStore(s => s.courses);
+  const memberRole = useSpaceStore(s => s.memberRole);
+  const fetchSpace = useSpaceStore(s => s.fetchSpace);
+  const spaceLoading = useSpaceStore(s => s.loading);
+  const spaceError = useSpaceStore(s => s.error);
+  const announcements = useContentStore(s => s.announcements);
+  const annLoading = useContentStore(s => s.loading);
+  const fetchAnnouncements = useContentStore(s => s.fetchAnnouncements);
+  const deleteAnnouncement = useContentStore(s => s.deleteAnnouncement);
+  const updateAnnouncement = useContentStore(s => s.updateAnnouncement);
 
   const [tab, setTab] = useState<Tab>(() => {
     const t = searchParams.get('tab');
@@ -181,7 +190,7 @@ export function Space() {
       setNewClassStart('08:00');
       setNewClassEnd('09:00');
       setNewClassVenue('');
-    } catch {}
+    } catch (err) { console.warn('Add class failed:', err); }
     setClassSubmitting(false);
   };
 

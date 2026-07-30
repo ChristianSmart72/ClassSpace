@@ -8,8 +8,9 @@ export function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { register, loading } = useAuthStore();
-  const { joinSpace } = useSpaceStore();
+  const register = useAuthStore(s => s.register);
+  const loading = useAuthStore(s => s.loading);
+  const joinSpace = useSpaceStore(s => s.joinSpace);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {

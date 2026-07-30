@@ -23,8 +23,9 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [filled, setFilled] = useState<string | null>(null);
-  const { login, loading } = useAuthStore();
-  const { joinSpace } = useSpaceStore();
+  const login = useAuthStore(s => s.login);
+  const loading = useAuthStore(s => s.loading);
+  const joinSpace = useSpaceStore(s => s.joinSpace);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {

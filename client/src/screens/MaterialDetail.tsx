@@ -20,8 +20,10 @@ function toggleMaterialBookmark(id: number): boolean {
 export function MaterialDetail() {
   const { id: spaceId, mid } = useParams<{ id: string; mid: string }>();
   const navigate = useNavigate();
-  const { memberRole } = useSpaceStore();
-  const { materials, deleteMaterial, updateMaterial } = useContentStore();
+  const memberRole = useSpaceStore(s => s.memberRole);
+  const materials = useContentStore(s => s.materials);
+  const deleteMaterial = useContentStore(s => s.deleteMaterial);
+  const updateMaterial = useContentStore(s => s.updateMaterial);
   const [material, setMaterial] = useState<Material | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [downloading, setDownloading] = useState(false);

@@ -187,7 +187,8 @@ const ACADEMIC_CALENDAR = [
 type TimetableTab = 'schedule' | 'calendar';
 
 export function Timetable() {
-  const { currentSpace, memberRole } = useSpaceStore();
+  const currentSpace = useSpaceStore(s => s.currentSpace);
+  const memberRole = useSpaceStore(s => s.memberRole);
   const isRep = memberRole === 'rep';
   const [entries, setEntries] = useState<TimetableEntry[]>([]);
   const [loading, setLoading] = useState(true);

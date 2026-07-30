@@ -1,7 +1,10 @@
 import { FastifyInstance } from 'fastify';
-import { getDb } from '../db/connection.js';
+import { getDb, UPLOADS_DIR } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { sendPushToSpaceMembers } from '../lib/push.js';
+import fs from 'fs';
+import path from 'path';
+import { nanoid } from 'nanoid';
 
 interface CreateAnnBody {
   course_id: number | null;
@@ -18,6 +21,21 @@ interface CreateAnnBody {
   file_data?: string;
   file_name?: string;
   file_size?: number;
+}
+
+function saveFile(data: string, prefix: string): string | null {
+  if (!data) return null;
+  const ext = 'bin';
+  const fileName = `${prefix}-${Date.now()}-${nanoid(8)}.${ext}`;
+  const buf = Buffer.from(data.includes(',') ? data.split(',')[1] : data, 'base64');
+  fs.writeFileSync(path.join(UPLOADS_DIR, fileName), buf);
+  return fileName;
+}
+
+function readFile(fileName: string): Buffer | null {
+  const fp = path.join(UPLOADS_DIR, fileName);
+  if (!fs.existsSync(fp)) return null;
+  return fs.readFileSync(fp);
 }
 
 export function announcementRoutes(app: FastifyInstance) {
@@ -58,14 +76,13 @@ export function announcementRoutes(app: FastifyInstance) {
 
     sql += ' ORDER BY a.pinned DESC, a.urgent DESC, a.created_at DESC';
 
-    const rows = db.prepare(sql).all(...params) as any[];
+    const rows = await db.prepare(sql).all(...params) as any[];
 
-    // Batch fetch all reactions for these announcements (2 queries total, no N+1)
     const ids = rows.map(r => r.id);
     if (ids.length === 0) return { announcements: [] };
 
     const placeholders = ids.map(() => '?').join(',');
-    const reactions = db.prepare(`
+    const reactions = await db.prepare(`
       SELECT announcement_id, emoji, COUNT(*) as count
       FROM reactions
       WHERE announcement_id IN (${placeholders})
@@ -82,10 +99,9 @@ export function announcementRoutes(app: FastifyInstance) {
       if (r.emoji === 'downvote') map.downvote = r.count;
     }
 
-    // Batch fetch this user's reactions
     let myReactionMap = new Map<number, string>();
     if (userId) {
-      const myVotes = db.prepare(`
+      const myVotes = await db.prepare(`
         SELECT announcement_id, emoji FROM reactions
         WHERE announcement_id IN (${placeholders}) AND user_id = ?
       `).all(...ids, userId) as any[];
@@ -94,7 +110,7 @@ export function announcementRoutes(app: FastifyInstance) {
       }
     }
 
-    const announcements = rows.map((r) => {
+    const announcements = rows.map((r: any) => {
       const react = reactionMap.get(r.id) ?? { upvote: 0, downvote: 0 };
       return {
         ...r,
@@ -118,13 +134,16 @@ export function announcementRoutes(app: FastifyInstance) {
 
     const db = getDb();
 
-    const membership = db.prepare(
+    const membership = await db.prepare(
       'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
     ).get(id, userId) as any;
     if (!membership || membership.role !== 'rep') {
       return reply.status(403).send({ error: 'Only class reps can create announcements' });
     }
-    const result = db.prepare(
+
+    const fileName = saveFile(body.file_data || '', 'ann');
+
+    const result = await db.prepare(
       `INSERT INTO announcements (space_id, course_id, title, body, type, author_id, urgent, pinned, deadline, venue, instructions, submission_method, format, file_data, file_name, file_size)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
@@ -132,10 +151,10 @@ export function announcementRoutes(app: FastifyInstance) {
       userId, body.urgent ? 1 : 0, body.pinned ? 1 : 0,
       body.deadline || null, body.venue || null, body.instructions || null,
       body.submission_method || null, body.format || null,
-      body.file_data || null, body.file_name || null, body.file_size || null
+      fileName, body.file_name || null, body.file_size || null
     );
 
-    const ann = db.prepare(`
+    const ann = await db.prepare(`
       SELECT a.*, u.name as author_name, c.name as course_name, c.code as course_code
       FROM announcements a
       JOIN users u ON a.author_id = u.id
@@ -143,8 +162,7 @@ export function announcementRoutes(app: FastifyInstance) {
       WHERE a.id = ?
     `).get(result.lastInsertRowid) as any;
 
-    // Send push notification to space members
-    const authorName = (db.prepare('SELECT name FROM users WHERE id = ?').get(userId) as any)?.name || 'Someone';
+    const authorName = ann.author_name || 'Someone';
     const prefix = body.urgent ? '🚨' : '📢';
     sendPushToSpaceMembers(id, {
       title: `${prefix} ${body.title}`,
@@ -152,7 +170,7 @@ export function announcementRoutes(app: FastifyInstance) {
       tag: `announcement-${result.lastInsertRowid}`,
       data: { url: `/space/${id}/announcement/${result.lastInsertRowid}`, type: 'announcement' },
       requireInteraction: !!body.urgent,
-    });
+    }).catch(() => {});
 
     return {
       announcement: {
@@ -169,7 +187,7 @@ export function announcementRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const ann = db.prepare(`
+    const ann = await db.prepare(`
       SELECT a.*, u.name as author_name, c.name as course_name, c.code as course_code, c.icon as course_icon,
         s.name as space_name, s.id as space_id
       FROM announcements a
@@ -188,10 +206,10 @@ export function announcementRoutes(app: FastifyInstance) {
     const userId = request.user!.userId;
     const db = getDb();
 
-    const ann = db.prepare('SELECT * FROM announcements WHERE id = ?').get(Number(id)) as any;
+    const ann = await db.prepare('SELECT id, space_id, author_id FROM announcements WHERE id = ?').get(Number(id)) as any;
     if (!ann) return reply.status(404).send({ error: 'Not found' });
 
-    const isRep = db.prepare(
+    const isRep = await db.prepare(
       'SELECT 1 FROM space_members WHERE space_id = ? AND user_id = ? AND role = ?'
     ).get(ann.space_id, userId, 'rep');
 
@@ -199,7 +217,7 @@ export function announcementRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: 'Not authorized' });
     }
 
-    db.prepare('DELETE FROM announcements WHERE id = ?').run(Number(id));
+    await db.prepare('DELETE FROM announcements WHERE id = ?').run(Number(id));
     return { success: true };
   });
 
@@ -209,10 +227,10 @@ export function announcementRoutes(app: FastifyInstance) {
     const body = request.body as any;
     const db = getDb();
 
-    const ann = db.prepare('SELECT * FROM announcements WHERE id = ?').get(Number(id)) as any;
+    const ann = await db.prepare('SELECT id, space_id FROM announcements WHERE id = ?').get(Number(id)) as any;
     if (!ann) return reply.status(404).send({ error: 'Not found' });
 
-    const isRep = db.prepare(
+    const isRep = await db.prepare(
       'SELECT 1 FROM space_members WHERE space_id = ? AND user_id = ? AND role = ?'
     ).get(ann.space_id, userId, 'rep');
     if (!isRep) return reply.status(403).send({ error: 'Not authorized' });
@@ -226,13 +244,17 @@ export function announcementRoutes(app: FastifyInstance) {
     if (body.body !== undefined) { fields.push('body = ?'); vals.push(body.body); }
     if (body.type !== undefined) { fields.push('type = ?'); vals.push(body.type); }
     if (body.course_id !== undefined) { fields.push('course_id = ?'); vals.push(body.course_id); }
-    if (body.file_data !== undefined) { fields.push('file_data = ?'); vals.push(body.file_data); }
+    if (body.file_data !== undefined) {
+      const fileName = saveFile(body.file_data, 'ann');
+      fields.push('file_data = ?');
+      vals.push(fileName);
+    }
     if (body.file_name !== undefined) { fields.push('file_name = ?'); vals.push(body.file_name); }
     if (body.file_size !== undefined) { fields.push('file_size = ?'); vals.push(body.file_size); }
 
     if (fields.length > 0) {
       vals.push(Number(id));
-      db.prepare(`UPDATE announcements SET ${fields.join(', ')} WHERE id = ?`).run(...vals);
+      await db.prepare(`UPDATE announcements SET ${fields.join(', ')} WHERE id = ?`).run(...vals);
     }
 
     return { success: true };
@@ -242,11 +264,12 @@ export function announcementRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const ann = db.prepare('SELECT file_data, file_name FROM announcements WHERE id = ?').get(Number(id)) as any;
+    const ann = await db.prepare('SELECT file_data, file_name FROM announcements WHERE id = ?').get(Number(id)) as any;
     if (!ann || !ann.file_data) return reply.status(404).send({ error: 'File not found' });
 
-    const base64 = ann.file_data.includes(',') ? ann.file_data.split(',')[1] : ann.file_data;
-    const buf = Buffer.from(base64, 'base64');
+    const buf = readFile(ann.file_data as string);
+    if (!buf) return reply.status(404).send({ error: 'File not found on disk' });
+
     reply.header('Content-Type', 'application/octet-stream');
     reply.header('Content-Disposition', `attachment; filename="${ann.file_name || 'download'}"`);
     reply.header('Cache-Control', 'public, max-age=86400');
@@ -257,7 +280,7 @@ export function announcementRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const announcement = db.prepare(`
+    const announcement = await db.prepare(`
       SELECT a.*, u.name as author_name, c.name as course_name, c.code as course_code, c.icon as course_icon,
              s.name as space_name, s.dept, s.level, s.uni, s.id as space_id
       FROM announcements a

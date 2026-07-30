@@ -49,14 +49,16 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { token, initialized } = useAuthStore();
+  const token = useAuthStore(s => s.token);
+  const initialized = useAuthStore(s => s.initialized);
   if (!initialized) return <div className="min-h-dvh bg-app-bg flex items-center justify-center"><div className="w-6 h-6 border-2 border-app-accent border-t-transparent rounded-full animate-spin" /></div>;
   if (!token) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
 function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
-  const { token, initialized } = useAuthStore();
+  const token = useAuthStore(s => s.token);
+  const initialized = useAuthStore(s => s.initialized);
   if (!initialized) return <div className="min-h-dvh bg-app-bg flex items-center justify-center"><div className="w-6 h-6 border-2 border-app-accent border-t-transparent rounded-full animate-spin" /></div>;
   if (token) return <Navigate to="/home" replace />;
   return <>{children}</>;
@@ -92,8 +94,9 @@ function AppRoutes() {
 }
 
 export default function App() {
-  const { init, initialized } = useAuthStore();
-  const { fetchSpace } = useSpaceStore();
+  const init = useAuthStore(s => s.init);
+  const initialized = useAuthStore(s => s.initialized);
+  const fetchSpace = useSpaceStore(s => s.fetchSpace);
   const setUpdateAvailable = useUpdateStore((s) => s.setUpdateAvailable);
 
   useEffect(() => {

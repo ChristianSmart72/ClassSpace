@@ -9,7 +9,7 @@ const NAV_TABS = (currentSpacePath: string) => [
 ];
 
 function useNavTabs() {
-  const { currentSpace } = useSpaceStore();
+  const currentSpace = useSpaceStore(s => s.currentSpace);
   return NAV_TABS(currentSpace ? `/space/${currentSpace.id}` : '/setup');
 }
 
@@ -55,8 +55,8 @@ export function SideNav() {
   const tabs = useNavTabs();
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuthStore();
-  const { user } = useAuthStore();
+  const logout = useAuthStore(s => s.logout);
+  const user = useAuthStore(s => s.user);
 
   const handleLogout = () => {
     logout();
