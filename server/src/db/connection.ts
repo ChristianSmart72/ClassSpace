@@ -21,12 +21,8 @@ interface DbWrapper {
 let wrapper: DbWrapper | null = null;
 
 function createDbWrapper(): DbWrapper {
-  const url = process.env.TURSO_DB_URL;
-  const authToken = process.env.TURSO_DB_TOKEN;
-
-  if (!url) {
-    throw new Error('TURSO_DB_URL environment variable is required — set it in Render dashboard');
-  }
+  const url = process.env.TURSO_DB_URL!;
+  const authToken = process.env.TURSO_DB_TOKEN!;
 
   const client = createClient({ url, authToken });
 
@@ -78,4 +74,11 @@ export async function transaction<T>(fn: () => Promise<T>): Promise<T> {
     await db.execute('ROLLBACK').catch(() => {});
     throw e;
   }
+}
+
+export async function isSpaceMember(spaceId: string, userId: number): Promise<boolean> {
+  const row = await getDb().prepare(
+    'SELECT 1 FROM space_members WHERE space_id = ? AND user_id = ?'
+  ).get(spaceId, userId);
+  return !!row;
 }

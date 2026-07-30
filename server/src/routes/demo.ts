@@ -1,8 +1,9 @@
 import { FastifyInstance } from 'fastify';
+import { authMiddleware } from '../middleware/auth.js';
 import { resetDatabase } from '../db/reset.js';
 
 export function demoRoutes(app: FastifyInstance) {
-  app.post('/api/demo/reset', async (request, reply) => {
+  app.post('/api/demo/reset', { preHandler: authMiddleware }, async (request, reply) => {
     try {
       await resetDatabase();
       return { success: true, message: 'Database reset to demo state' };

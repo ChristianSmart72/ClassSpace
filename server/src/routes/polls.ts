@@ -1,21 +1,17 @@
 import { FastifyInstance } from 'fastify';
-import { getDb } from '../db/connection.js';
+import { getDb, isSpaceMember } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
 
 export function pollRoutes(app: FastifyInstance) {
-  app.get('/api/spaces/:id/polls', async (request) => {
+  app.get('/api/spaces/:id/polls', { preHandler: authMiddleware }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const db = getDb();
+    const userId = request.user!.userId;
 
-    let userId: number | null = null;
-    try {
-      const auth = request.headers.authorization;
-      if (auth) {
-        const { verifyToken } = await import('../lib/jwt.js');
-        const payload = verifyToken(auth.replace('Bearer ', ''));
-        if (payload) userId = (payload as any).userId;
-      }
-    } catch { /* no auth — fine */ }
+    if (!await isSpaceMember(id, userId)) {
+      return reply.status(403).send({ error: 'Not a member of this space' });
+    }
+
+    const db = getDb();
 
     const polls = await db.prepare(`
       SELECT p.*, u.name as author_name
@@ -49,14 +45,12 @@ export function pollRoutes(app: FastifyInstance) {
     }
 
     let voteByPoll = new Map<number, number>();
-    if (userId) {
-      const myVotes = await db.prepare(`
-        SELECT poll_id, option_id FROM poll_votes
-        WHERE poll_id IN (${placeholders}) AND user_id = ?
-      `).all(...pollIds, userId) as any[];
-      for (const v of myVotes) {
-        voteByPoll.set(v.poll_id, v.option_id);
-      }
+    const myVotes = await db.prepare(`
+      SELECT poll_id, option_id FROM poll_votes
+      WHERE poll_id IN (${placeholders}) AND user_id = ?
+    `).all(...pollIds, userId) as any[];
+    for (const v of myVotes) {
+      voteByPoll.set(v.poll_id, v.option_id);
     }
 
     const enriched = polls.map((poll: any) => {

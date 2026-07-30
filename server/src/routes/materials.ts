@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { getDb } from '../db/connection.js';
+import { getDb, isSpaceMember } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { uploadFile } from '../lib/upload.js';
 
@@ -23,11 +23,19 @@ function mimeFromType(fileType: string): string | undefined {
 }
 
 export function materialRoutes(app: FastifyInstance) {
-  app.get('/api/courses/:id/materials', async (request) => {
+  app.get('/api/courses/:id/materials', { preHandler: authMiddleware }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const query = request.query as { sort?: string };
+    const userId = request.user!.userId;
     const db = getDb();
 
+    const course = await db.prepare('SELECT space_id FROM courses WHERE id = ?').get(Number(id)) as any;
+    if (!course) return reply.status(404).send({ error: 'Course not found' });
+
+    if (!await isSpaceMember(course.space_id as string, userId)) {
+      return reply.status(403).send({ error: 'Not a member of this space' });
+    }
+
+    const query = request.query as { sort?: string };
     const sortMap: Record<string, string> = {
       newest: 'm.created_at DESC',
       oldest: 'm.created_at ASC',
@@ -163,8 +171,14 @@ export function materialRoutes(app: FastifyInstance) {
     return { success: true };
   });
 
-  app.get('/api/spaces/:id/materials/summary', async (request) => {
+  app.get('/api/spaces/:id/materials/summary', { preHandler: authMiddleware }, async (request, reply) => {
     const { id } = request.params as { id: string };
+    const userId = request.user!.userId;
+
+    if (!await isSpaceMember(id, userId)) {
+      return reply.status(403).send({ error: 'Not a member of this space' });
+    }
+
     const db = getDb();
 
     const rows = await db.prepare(`

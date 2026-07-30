@@ -1,5 +1,7 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import helmet from '@fastify/helmet';
+import rateLimit from '@fastify/rate-limit';
 import multipart from '@fastify/multipart';
 import staticFiles from '@fastify/static';
 import compress from '@fastify/compress';
@@ -20,6 +22,7 @@ import { pushRoutes } from './routes/push.js';
 import { createTables } from './db/schema.js';
 import { seedDatabase } from './db/seed.js';
 import { getDb, UPLOADS_DIR } from './db/connection.js';
+import { validateEnv } from './lib/config.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 3001;
@@ -27,14 +30,44 @@ const HOST = process.env.HOST || '0.0.0.0';
 const IS_PROD = process.env.NODE_ENV === 'production';
 
 async function main() {
+  validateEnv();
+
   const app = Fastify({ logger: true });
 
-  await app.register(cors, { origin: true });
+  await app.register(helmet, { contentSecurityPolicy: false });
+  await app.register(rateLimit, { max: 100, timeWindow: '1 minute' });
+  await app.register(cors, {
+    origin: IS_PROD
+      ? [/\.onrender\.com$/, 'https://classspace.app']
+      : true,
+    credentials: true,
+  });
   await app.register(multipart, { limits: { fileSize: 50 * 1024 * 1024 } });
   await app.register(compress, { global: true, threshold: 1024 });
 
-  const db = getDb();
+  app.setErrorHandler(async (error, request, reply) => {
+    const err = error as any;
+    const statusCode = err.statusCode || err.status || 500;
+    const message = IS_PROD && statusCode >= 500
+      ? 'Internal server error'
+      : err.message || 'Unknown error';
+    if (statusCode >= 500) {
+      request.log.error(err);
+    }
+    return reply.status(statusCode).send({
+      error: message,
+      ...(IS_PROD ? {} : { stack: err.stack }),
+    });
+  });
 
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  await app.register(staticFiles, {
+    root: UPLOADS_DIR,
+    prefix: '/api/uploads/',
+    decorateReply: false,
+  });
+
+  const db = getDb();
   await createTables();
 
   const userResult = await db.prepare('SELECT COUNT(*) as count FROM users').get() as any;
@@ -68,13 +101,6 @@ async function main() {
     }
   }
 
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-  await app.register(staticFiles, {
-    root: UPLOADS_DIR,
-    prefix: '/api/uploads/',
-    decorateReply: false,
-  });
-
   authRoutes(app);
   spaceRoutes(app);
   announcementRoutes(app);
@@ -103,13 +129,11 @@ async function main() {
     });
   }
 
-  try {
-    await app.listen({ port: PORT, host: HOST });
-    console.log(`ClassSpace API running on http://${HOST}:${PORT}`);
-  } catch (err) {
-    app.log.error(err);
-    process.exit(1);
-  }
+  await app.listen({ port: PORT, host: HOST });
+  console.log(`ClassSpace API running on http://${HOST}:${PORT}`);
 }
 
-main();
+main().catch(err => {
+  console.error('Failed to start:', err);
+  process.exit(1);
+});

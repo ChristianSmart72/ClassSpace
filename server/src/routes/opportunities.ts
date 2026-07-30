@@ -1,12 +1,18 @@
 import { FastifyInstance } from 'fastify';
-import { getDb } from '../db/connection.js';
+import { getDb, isSpaceMember } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
 
 const ALLOWED_CATEGORIES = ['seminar', 'scholarship', 'internship', 'job', 'event', 'competition', 'other'];
 
 export function opportunityRoutes(app: FastifyInstance) {
-  app.get('/api/spaces/:id/opportunities', async (request) => {
+  app.get('/api/spaces/:id/opportunities', { preHandler: authMiddleware }, async (request, reply) => {
     const { id } = request.params as { id: string };
+    const userId = request.user!.userId;
+
+    if (!await isSpaceMember(id, userId)) {
+      return reply.status(403).send({ error: 'Not a member of this space' });
+    }
+
     const db = getDb();
 
     const items = await db.prepare(`

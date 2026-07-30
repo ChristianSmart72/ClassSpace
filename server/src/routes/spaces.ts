@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { getDb, transaction } from '../db/connection.js';
+import { getDb, transaction, isSpaceMember } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { customAlphabet } from 'nanoid';
 
@@ -66,6 +66,14 @@ export function spaceRoutes(app: FastifyInstance) {
       return reply.status(404).send({ error: 'Space not found' });
     }
 
+    const membership = await db.prepare(
+      'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
+    ).get(id, userId) as any;
+
+    if (!membership) {
+      return reply.status(403).send({ error: 'Not a member of this space' });
+    }
+
     const courses = await db.prepare('SELECT * FROM courses WHERE space_id = ?').all(id) as any[];
     const members = await db.prepare(
       `SELECT u.id, u.name, u.email, u.role, u.avatar, sm.role as member_role
@@ -73,15 +81,11 @@ export function spaceRoutes(app: FastifyInstance) {
        WHERE sm.space_id = ?`
     ).all(id) as any[];
 
-    const membership = await db.prepare(
-      'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
-    ).get(id, userId) as any;
-
     return {
       space: { ...space, courses },
       members,
-      isMember: !!membership,
-      memberRole: membership?.role || null,
+      isMember: true,
+      memberRole: membership.role,
     };
   });
 
@@ -123,8 +127,14 @@ export function spaceRoutes(app: FastifyInstance) {
     return { space: { ...space, rep: rep?.name, courses } };
   });
 
-  app.get('/api/spaces/:id/members', { preHandler: authMiddleware }, async (request) => {
+  app.get('/api/spaces/:id/members', { preHandler: authMiddleware }, async (request, reply) => {
     const { id } = request.params as { id: string };
+    const userId = request.user!.userId;
+
+    if (!await isSpaceMember(id, userId)) {
+      return reply.status(403).send({ error: 'Not a member of this space' });
+    }
+
     const db = getDb();
 
     const members = await db.prepare(

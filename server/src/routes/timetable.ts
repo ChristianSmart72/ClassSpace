@@ -1,10 +1,16 @@
 import { FastifyInstance } from 'fastify';
-import { getDb } from '../db/connection.js';
+import { getDb, isSpaceMember } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
 
 export function timetableRoutes(app: FastifyInstance) {
-  app.get('/api/spaces/:id/timetable', async (request) => {
+  app.get('/api/spaces/:id/timetable', { preHandler: authMiddleware }, async (request, reply) => {
     const { id } = request.params as { id: string };
+    const userId = request.user!.userId;
+
+    if (!await isSpaceMember(id, userId)) {
+      return reply.status(403).send({ error: 'Not a member of this space' });
+    }
+
     const db = getDb();
 
     const entries = await db.prepare(`
