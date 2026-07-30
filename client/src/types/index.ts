@@ -100,6 +100,7 @@ export interface SharedSpace {
   rep: string;
   invite_code: string;
   announcementTeaser: string | null;
+  member_count?: number;
 }
 
 export interface SharedAnnouncement {

@@ -122,44 +122,51 @@ function SpacePreview({ data, user, onJoin, joining, error }: {
 }) {
   return (
     <div className="flex-1 flex flex-col">
-      <div className="flex-1 flex flex-col items-center text-center">
-        <div className="w-16 h-16 rounded-2xl bg-app-accent/10 border border-app-accent/20 flex items-center justify-center text-3xl mb-4">🏛️</div>
-        <h2 className="text-app-text font-jakarta font-bold text-xl">{data.name}</h2>
-        <p className="text-app-text-dim text-sm font-inter mt-1">{data.uni}</p>
-        <p className="text-app-text-faint text-xs font-inter mt-0.5">{data.dept} · Rep: {data.rep}</p>
+      <div className="flex-1 flex flex-col">
+        <div className="flex flex-col items-center text-center">
+          <div className="w-16 h-16 rounded-2xl bg-app-accent/10 border border-app-accent/20 flex items-center justify-center text-3xl mb-4">🏛️</div>
+          <h2 className="text-app-text font-jakarta font-bold text-xl">{data.name}</h2>
+          <p className="text-app-text-dim text-sm font-inter mt-1">{data.uni}</p>
+          <p className="text-app-text-faint text-xs font-inter mt-0.5">{data.dept} · Rep: {data.rep}</p>
 
-        <div className="flex gap-2 mt-4 flex-wrap justify-center">
-          <span className="text-[11px] bg-app-accent/10 text-app-accent font-jakarta font-semibold px-2.5 py-1 rounded-full">{data.level}</span>
-          <span className="text-[11px] bg-app-surface border border-app-border text-app-text-dim font-jakarta font-semibold px-2.5 py-1 rounded-full">
-            Code: {data.invite_code}
-          </span>
+          <div className="flex gap-2 mt-4 flex-wrap justify-center">
+            <span className="text-[11px] bg-app-accent/10 text-app-accent font-jakarta font-semibold px-2.5 py-1 rounded-full">{data.level}</span>
+            <span className="text-[11px] bg-app-surface border border-app-border text-app-text-dim font-jakarta font-semibold px-2.5 py-1 rounded-full">
+              {data.invite_code}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3 mt-4 text-app-text-faint text-xs font-inter">
+            <span>👥 {data.member_count ?? 0} member{(data.member_count ?? 0) !== 1 ? 's' : ''}</span>
+          </div>
+
+          {data.announcementTeaser && (
+            <div className="w-full mt-6 bg-app-surface rounded-2xl p-4 border border-app-border text-left">
+              <p className="text-app-text-faint text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-1.5">Latest announcement</p>
+              <p className="text-app-text font-inter text-sm">{data.announcementTeaser}</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="w-full mt-4 bg-app-red/10 border border-app-red/30 rounded-xl px-4 py-3">
+              <p className="text-app-red text-sm font-inter">{error}</p>
+            </div>
+          )}
         </div>
 
-        {data.announcementTeaser && (
-          <div className="w-full mt-6 bg-app-surface rounded-2xl p-4 border border-app-border relative overflow-hidden text-left">
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-app-bg/50 pointer-events-none" />
-            <p className="text-app-text-faint text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-1.5">Latest announcement</p>
-            <p className="text-app-text font-inter text-sm line-clamp-2">{data.announcementTeaser}</p>
-          </div>
-        )}
-
-        {error && (
-          <div className="w-full mt-4 bg-app-red/10 border border-app-red/30 rounded-xl px-4 py-3">
-            <p className="text-app-red text-sm font-inter">{error}</p>
-          </div>
-        )}
-
-        {user ? (
-          <button
-            onClick={onJoin}
-            disabled={joining}
-            className="w-full bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-2xl py-4 mt-6 active:scale-[0.98] transition-all duration-200 disabled:opacity-50"
-          >
-            {joining ? 'Joining...' : 'Join this Space'}
-          </button>
-        ) : (
-          <AuthPrompt inviteCode={data.invite_code} />
-        )}
+        <div className="mt-auto pt-6">
+          {user ? (
+            <button
+              onClick={onJoin}
+              disabled={joining}
+              className="w-full bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-2xl py-4 active:scale-[0.98] transition-all duration-200 disabled:opacity-50"
+            >
+              {joining ? 'Joining...' : 'Join this Space'}
+            </button>
+          ) : (
+            <AuthPrompt inviteCode={data.invite_code} />
+          )}
+        </div>
       </div>
     </div>
   );

@@ -13,6 +13,9 @@ export function shareRoutes(app: FastifyInstance) {
     const latestAnn = await db.prepare(
       "SELECT title FROM announcements WHERE space_id = ? ORDER BY created_at DESC LIMIT 1"
     ).get(id) as any;
+    const memberCount = await db.prepare(
+      "SELECT COUNT(*) as count FROM space_members WHERE space_id = ?"
+    ).get(id) as any;
 
     return {
       type: 'space',
@@ -24,6 +27,7 @@ export function shareRoutes(app: FastifyInstance) {
       announcementTeaser: latestAnn?.title || null,
       id: space.id,
       invite_code: space.invite_code,
+      member_count: memberCount?.count || 0,
     };
   });
 
