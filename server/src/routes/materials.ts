@@ -1,23 +1,25 @@
 import { FastifyInstance } from 'fastify';
-import { getDb, UPLOADS_DIR } from '../db/connection.js';
+import { getDb } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
-import fs from 'fs';
-import path from 'path';
-import { nanoid } from 'nanoid';
+import { uploadFile } from '../lib/upload.js';
 
-function saveFile(data: string, prefix: string): string | null {
-  if (!data) return null;
-  const ext = 'bin';
-  const fileName = `${prefix}-${Date.now()}-${nanoid(8)}.${ext}`;
-  const buf = Buffer.from(data.includes(',') ? data.split(',')[1] : data, 'base64');
-  fs.writeFileSync(path.join(UPLOADS_DIR, fileName), buf);
-  return fileName;
-}
+const MIME_MAP: Record<string, string> = {
+  pdf: 'application/pdf',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ppt: 'application/vnd.ms-powerpoint',
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  xls: 'application/vnd.ms-excel',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  img: 'image/png',
+  jpg: 'image/jpeg',
+  png: 'image/png',
+  video: 'video/mp4',
+  mp4: 'video/mp4',
+};
 
-function readFile(fileName: string): Buffer | null {
-  const fp = path.join(UPLOADS_DIR, fileName);
-  if (!fs.existsSync(fp)) return null;
-  return fs.readFileSync(fp);
+function mimeFromType(fileType: string): string | undefined {
+  return MIME_MAP[fileType] || MIME_MAP[fileType.split('/').pop() || ''] || undefined;
 }
 
 export function materialRoutes(app: FastifyInstance) {
@@ -77,14 +79,20 @@ export function materialRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'Material name is required' });
     }
 
-    const fileName = saveFile(data.file_data || '', 'mat');
+    let fileUrl: string | null = null;
+    if (data.file_data) {
+      const mime = mimeFromType(data.file_type || '');
+      const uploadName = `${data.name}.${data.file_type || 'bin'}`;
+      const result = await uploadFile(data.file_data, uploadName, mime);
+      fileUrl = result.url;
+    }
 
     const result = await db.prepare(
       `INSERT INTO materials (space_id, course_id, name, file_data, file_size, file_type, category, uploader_id)
        VALUES ((SELECT space_id FROM courses WHERE id = ?), ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       Number(id), Number(id), data.name,
-      fileName, data.file_size || 0,
+      fileUrl, data.file_size || 0,
       data.file_type || 'other', data.category || 'Other', userId
     );
 
@@ -111,25 +119,7 @@ export function materialRoutes(app: FastifyInstance) {
 
     await db.prepare('UPDATE materials SET downloads = downloads + 1 WHERE id = ?').run(Number(id));
 
-    const buf = readFile(material.file_data as string);
-    if (!buf) {
-      return reply.status(404).send({ error: 'File not found on disk' });
-    }
-
-    const mimeTypes: Record<string, string> = {
-      pdf: 'application/pdf',
-      doc: 'application/msword',
-      ppt: 'application/vnd.ms-powerpoint',
-      xls: 'application/vnd.ms-excel',
-      img: 'image/png',
-      video: 'video/mp4',
-    };
-
-    reply.header('Content-Type', mimeTypes[material.file_type] || 'application/octet-stream');
-    reply.header('Content-Disposition', `attachment; filename="${material.name}.${material.file_type}"`);
-    reply.header('Content-Length', buf.length);
-    reply.header('Cache-Control', 'public, max-age=86400');
-    return reply.send(buf);
+    return reply.redirect(material.file_data as string);
   });
 
   app.patch('/api/materials/:id', { preHandler: authMiddleware }, async (request, reply) => {

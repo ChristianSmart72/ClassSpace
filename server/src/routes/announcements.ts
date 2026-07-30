@@ -1,10 +1,8 @@
 import { FastifyInstance } from 'fastify';
-import { getDb, UPLOADS_DIR } from '../db/connection.js';
+import { getDb } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { sendPushToSpaceMembers } from '../lib/push.js';
-import fs from 'fs';
-import path from 'path';
-import { nanoid } from 'nanoid';
+import { uploadFile } from '../lib/upload.js';
 
 interface CreateAnnBody {
   course_id: number | null;
@@ -21,21 +19,6 @@ interface CreateAnnBody {
   file_data?: string;
   file_name?: string;
   file_size?: number;
-}
-
-function saveFile(data: string, prefix: string): string | null {
-  if (!data) return null;
-  const ext = 'bin';
-  const fileName = `${prefix}-${Date.now()}-${nanoid(8)}.${ext}`;
-  const buf = Buffer.from(data.includes(',') ? data.split(',')[1] : data, 'base64');
-  fs.writeFileSync(path.join(UPLOADS_DIR, fileName), buf);
-  return fileName;
-}
-
-function readFile(fileName: string): Buffer | null {
-  const fp = path.join(UPLOADS_DIR, fileName);
-  if (!fs.existsSync(fp)) return null;
-  return fs.readFileSync(fp);
 }
 
 export function announcementRoutes(app: FastifyInstance) {
@@ -141,7 +124,12 @@ export function announcementRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: 'Only class reps can create announcements' });
     }
 
-    const fileName = saveFile(body.file_data || '', 'ann');
+    let fileUrl: string | null = null;
+    if (body.file_data) {
+      const uploadName = body.file_name || `announcement-file.${'bin'}`;
+      const result = await uploadFile(body.file_data, uploadName);
+      fileUrl = result.url;
+    }
 
     const result = await db.prepare(
       `INSERT INTO announcements (space_id, course_id, title, body, type, author_id, urgent, pinned, deadline, venue, instructions, submission_method, format, file_data, file_name, file_size)
@@ -151,7 +139,7 @@ export function announcementRoutes(app: FastifyInstance) {
       userId, body.urgent ? 1 : 0, body.pinned ? 1 : 0,
       body.deadline || null, body.venue || null, body.instructions || null,
       body.submission_method || null, body.format || null,
-      fileName, body.file_name || null, body.file_size || null
+      fileUrl, body.file_name || null, body.file_size || null
     );
 
     const ann = await db.prepare(`
@@ -245,9 +233,10 @@ export function announcementRoutes(app: FastifyInstance) {
     if (body.type !== undefined) { fields.push('type = ?'); vals.push(body.type); }
     if (body.course_id !== undefined) { fields.push('course_id = ?'); vals.push(body.course_id); }
     if (body.file_data !== undefined) {
-      const fileName = saveFile(body.file_data, 'ann');
+      const uploadName = body.file_name || 'file.bin';
+      const { url } = await uploadFile(body.file_data, uploadName);
       fields.push('file_data = ?');
-      vals.push(fileName);
+      vals.push(url);
     }
     if (body.file_name !== undefined) { fields.push('file_name = ?'); vals.push(body.file_name); }
     if (body.file_size !== undefined) { fields.push('file_size = ?'); vals.push(body.file_size); }
@@ -267,13 +256,7 @@ export function announcementRoutes(app: FastifyInstance) {
     const ann = await db.prepare('SELECT file_data, file_name FROM announcements WHERE id = ?').get(Number(id)) as any;
     if (!ann || !ann.file_data) return reply.status(404).send({ error: 'File not found' });
 
-    const buf = readFile(ann.file_data as string);
-    if (!buf) return reply.status(404).send({ error: 'File not found on disk' });
-
-    reply.header('Content-Type', 'application/octet-stream');
-    reply.header('Content-Disposition', `attachment; filename="${ann.file_name || 'download'}"`);
-    reply.header('Cache-Control', 'public, max-age=86400');
-    return buf;
+    return reply.redirect(ann.file_data as string);
   });
 
   app.get('/api/announcements/shared/:id', async (request, reply) => {

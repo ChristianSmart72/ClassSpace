@@ -21,3 +21,5 @@ services:
         sync: false
       - key: TURSO_DB_TOKEN
         sync: false
+      - key: UPLOADTHING_SECRET
+        sync: false
