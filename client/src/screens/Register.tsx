@@ -45,6 +45,7 @@ export function Register() {
 
   return (
     <div className="min-h-dvh flex flex-col bg-app-bg px-6 py-12">
+      <button onClick={() => navigate('/')} className="text-app-text-dim hover:text-app-text text-lg mb-2 self-start">← Back</button>
       <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-4">

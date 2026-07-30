@@ -76,9 +76,12 @@ function AppRoutes() {
           <Route path="/setup" element={<ProtectedRoute><SetupWizard /></ProtectedRoute>} />
           <Route path="/join" element={<JoinInput />} />
           <Route path="/join/:type/:id" element={<JoinPreview />} />
+          {/* Public space route — redirects to join preview if not a member */}
+          <Route element={<MainLayout />}>
+            <Route path="/space/:id" element={<Space />} />
+          </Route>
           <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
             <Route path="/home" element={<Home />} />
-            <Route path="/space/:id" element={<Space />} />
             <Route path="/space/:id/announcement/:annId" element={<AnnouncementDetail />} />
             <Route path="/space/:id/course/:cid" element={<CourseFiles />} />
             <Route path="/space/:id/material/:mid" element={<MaterialDetail />} />

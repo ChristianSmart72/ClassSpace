@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useSpaceStore } from '../store/spaceStore';
 import { useContentStore } from '../store/contentStore';
 import { useBadgeStore } from '../store/badgeStore';
+import { useAuthStore } from '../store/authStore';
 import { Fab } from '../components/layout';
 import { Skeleton, EmptyState } from '../components/ui/Shared';
 import { PostAnnouncementSheet } from '../components/sheets/PostAnnouncement';
@@ -54,6 +55,7 @@ export function Space() {
   const fetchSpace = useSpaceStore(s => s.fetchSpace);
   const spaceLoading = useSpaceStore(s => s.loading);
   const spaceError = useSpaceStore(s => s.error);
+  const token = useAuthStore(s => s.token);
   const announcements = useContentStore(s => s.announcements);
   const annLoading = useContentStore(s => s.loading);
   const fetchAnnouncements = useContentStore(s => s.fetchAnnouncements);
@@ -81,7 +83,21 @@ export function Space() {
   const isRep = memberRole === 'rep';
   const courseList = courses ?? [];
 
-  useEffect(() => { if (spaceId) fetchSpace(spaceId); }, [spaceId]);
+  // Redirect non-logged-in users to the join preview page
+  useEffect(() => {
+    if (spaceId && !token) {
+      navigate(`/join/space/${spaceId}`, { replace: true });
+    }
+  }, [spaceId, token, navigate]);
+
+  // Redirect logged-in non-members to join preview
+  useEffect(() => {
+    if (spaceId && spaceError && !currentSpace && !spaceLoading && token) {
+      navigate(`/join/space/${spaceId}`, { replace: true });
+    }
+  }, [spaceId, spaceError, currentSpace, spaceLoading, token, navigate]);
+
+  useEffect(() => { if (spaceId && token) fetchSpace(spaceId); }, [spaceId, token]);
   useEffect(() => { if (spaceId) fetchAnnouncements(spaceId); }, [spaceId]);
 
   useEffect(() => {

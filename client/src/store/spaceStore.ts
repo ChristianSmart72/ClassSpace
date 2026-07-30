@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Space, Course } from '../types';
-import { createSpace as apiCreateSpace, getSpace as apiGetSpace, joinSpace as apiJoinSpace } from '../api/spaces';
+import { createSpace as apiCreateSpace, getSpace as apiGetSpace, joinSpace as apiJoinSpace, getUserSpaces as apiGetUserSpaces } from '../api/spaces';
 import { isOfflineError } from '../api/client';
 
 function safeGet(key: string): string | null {
@@ -42,6 +42,16 @@ function clearSpaceCache() {
   safeRemove(CACHE_KEYS.role);
 }
 
+interface UserSpace {
+  id: string;
+  name: string;
+  uni: string;
+  dept: string;
+  level: string;
+  invite_code: string;
+  member_role: string;
+}
+
 interface SpaceState {
   currentSpace: Space | null;
   courses: Course[];
@@ -50,6 +60,8 @@ interface SpaceState {
   memberRole: string | null;
   loading: boolean;
   error: string | null;
+  userSpaces: UserSpace[];
+  userSpacesLoading: boolean;
   createSpace: (data: Parameters<typeof apiCreateSpace>[0]) => Promise<Space>;
   fetchSpace: (id: string) => Promise<void>;
   joinSpace: (code: string) => Promise<Space>;
@@ -58,6 +70,7 @@ interface SpaceState {
   clearError: () => void;
   restoreCache: () => void;
   clearCache: () => void;
+  fetchUserSpaces: () => Promise<void>;
 }
 
 const initialCached = restoreSpaceCache();
@@ -70,6 +83,8 @@ export const useSpaceStore = create<SpaceState>((set) => ({
   memberRole: initialCached.role,
   loading: false,
   error: null,
+  userSpaces: [],
+  userSpacesLoading: false,
 
   createSpace: async (data) => {
     set({ loading: true, error: null });
@@ -143,4 +158,14 @@ export const useSpaceStore = create<SpaceState>((set) => ({
   },
 
   clearCache: () => clearSpaceCache(),
+
+  fetchUserSpaces: async () => {
+    set({ userSpacesLoading: true });
+    try {
+      const spaces = await apiGetUserSpaces();
+      set({ userSpaces: spaces, userSpacesLoading: false });
+    } catch {
+      set({ userSpaces: [], userSpacesLoading: false });
+    }
+  },
 }));

@@ -61,6 +61,9 @@ export const useAuthStore = create<AuthState>((set) => ({
         useSpaceStore.getState().fetchSpace(space.id);
       }
       set({ user, token, initialized: true });
+      // Fetch user's spaces list
+      const { useSpaceStore } = await import('./spaceStore');
+      useSpaceStore.getState().fetchUserSpaces().catch(() => {});
     } catch (err: any) {
       if (isOfflineError(err)) {
         const cachedUser = getCachedUser();
@@ -90,6 +93,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
       set({ user, token, loading: false });
       registerPushSubscription(space?.id || '').catch(() => {});
+      // Fetch user's spaces list
+      const { useSpaceStore } = await import('./spaceStore');
+      useSpaceStore.getState().fetchUserSpaces().catch(() => {});
     } catch (err: any) {
       set({ loading: false });
       throw new Error(err.response?.data?.error || 'Login failed');

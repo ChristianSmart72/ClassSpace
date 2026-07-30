@@ -321,6 +321,7 @@ export function Home() {
   const { isInstallable, install, dismiss } = useInstallPrompt();
   const setBadge = useBadgeStore((s) => s.setBadge);
   const [opps, setOpps] = useState<Opportunity[]>([]);
+  const userSpaces = useSpaceStore(s => s.userSpaces);
 
   useEffect(() => {
     const h = new Date().getHours();
@@ -443,6 +444,23 @@ export function Home() {
         <p className="text-app-text-dim text-sm font-inter mt-0.5">
           {greeting}, {user?.name?.split(' ')[0]} 👋
         </p>
+        {userSpaces.length > 1 && (
+          <div className="mt-3 flex items-center gap-2 overflow-x-auto scrollbar-none">
+            {userSpaces.map(s => (
+              <button
+                key={s.id}
+                onClick={() => navigate(`/space/${s.id}`)}
+                className={`whitespace-nowrap rounded-lg border px-3 py-1.5 text-[11px] font-jakarta font-semibold transition-all duration-200 ${
+                  s.id === currentSpace?.id
+                    ? 'bg-app-accent text-app-bg border-app-accent'
+                    : 'bg-app-surface text-app-text-dim border-app-border hover:text-app-text'
+                }`}
+              >
+                {s.name}
+              </button>
+            ))}
+          </div>
+        )}
         <p className="text-app-text-faint text-[11px] font-jakarta font-semibold mt-3 mb-1.5">
           Today at a glance
         </p>

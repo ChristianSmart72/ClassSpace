@@ -29,3 +29,8 @@ export async function joinSpace(inviteCode: string) {
   const { data } = await api.post('/spaces/join', { inviteCode });
   return data;
 }
+
+export async function getUserSpaces() {
+  const { data } = await api.get('/user/spaces');
+  return data.spaces as { id: string; name: string; uni: string; dept: string; level: string; invite_code: string; member_role: string }[];
+}

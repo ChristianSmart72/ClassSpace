@@ -160,4 +160,19 @@ export function spaceRoutes(app: FastifyInstance) {
 
     return { members };
   });
+
+  app.get('/api/user/spaces', { preHandler: authMiddleware }, async (request, reply) => {
+    const userId = request.user!.userId;
+    const db = getDb();
+
+    const rows = await db.prepare(`
+      SELECT s.id, s.name, s.uni, s.dept, s.level, s.invite_code, sm.role as member_role
+      FROM space_members sm
+      JOIN spaces s ON sm.space_id = s.id
+      WHERE sm.user_id = ?
+      ORDER BY s.created_at DESC
+    `).all(userId) as any[];
+
+    return { spaces: rows };
+  });
 }
