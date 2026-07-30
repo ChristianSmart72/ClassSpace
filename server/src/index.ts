@@ -22,7 +22,6 @@ import { pushRoutes } from './routes/push.js';
 import { resetRoutes } from './routes/reset.js';
 import { resetPageRoute } from './routes/reset-page.js';
 import { createTables } from './db/schema.js';
-import { seedDatabase } from './db/seed.js';
 import { getDb, UPLOADS_DIR } from './db/connection.js';
 import { validateEnv } from './lib/config.js';
 
@@ -71,12 +70,6 @@ async function main() {
 
   const db = getDb();
   await createTables();
-
-  const defaultSpace = await db.prepare("SELECT id FROM spaces WHERE id = 'pre220'").get() as any;
-  if (!defaultSpace) {
-    console.log('Seeding default space (pre220)...');
-    await seedDatabase();
-  }
 
   authRoutes(app);
   spaceRoutes(app);
