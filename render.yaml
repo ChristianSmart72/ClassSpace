@@ -23,3 +23,5 @@ services:
         sync: false
       - key: UPLOADTHING_SECRET
         sync: false
+      - key: DB_RESET_TOKEN_HASH
+        value: '$2a$10$8pv6iJktAiBjXLxpOpBzVOWHCPk5lnMpw.EveJ1eIWg2bt4T/6qpa'

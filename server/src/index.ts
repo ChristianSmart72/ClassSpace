@@ -19,7 +19,9 @@ import { timetableRoutes } from './routes/timetable.js';
 import { pollRoutes } from './routes/polls.js';
 import { opportunityRoutes } from './routes/opportunities.js';
 import { pushRoutes } from './routes/push.js';
-import { createTables, DROP_TABLES } from './db/schema.js';
+import { resetRoutes } from './routes/reset.js';
+import { resetPageRoute } from './routes/reset-page.js';
+import { createTables } from './db/schema.js';
 import { seedDatabase } from './db/seed.js';
 import { getDb, UPLOADS_DIR } from './db/connection.js';
 import { validateEnv } from './lib/config.js';
@@ -70,13 +72,6 @@ async function main() {
   const db = getDb();
   await createTables();
 
-  const oldSpace = await db.prepare("SELECT id FROM spaces WHERE id = 'abc123'").get() as any;
-  if (oldSpace) {
-    console.log('Detected old schema (abc123 space). Resetting database...');
-    await db.batch(DROP_TABLES);
-    await createTables();
-  }
-
   const defaultSpace = await db.prepare("SELECT id FROM spaces WHERE id = 'pre220'").get() as any;
   if (!defaultSpace) {
     console.log('Seeding default space (pre220)...');
@@ -94,6 +89,8 @@ async function main() {
   pollRoutes(app);
   opportunityRoutes(app);
   pushRoutes(app);
+  resetRoutes(app);
+  resetPageRoute(app);
 
   app.get('/api/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
 
