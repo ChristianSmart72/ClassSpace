@@ -69,6 +69,15 @@ export async function seedDatabase(): Promise<void> {
     extraHashes.push(await hashPassword(u.password));
   }
 
+  const oldSpace = await db.prepare("SELECT id FROM spaces WHERE invite_code = 'PRE-220' AND id != 'pre220'").get() as any;
+  if (oldSpace) {
+    console.log('Removing old space data to avoid conflicts...');
+    for (const table of ['announcements', 'materials', 'reactions', 'timetable', 'poll_votes', 'poll_options', 'polls', 'opportunities', 'courses', 'space_members']) {
+      await db.prepare(`DELETE FROM ${table} WHERE space_id = ?`).run(oldSpace.id);
+    }
+    await db.prepare('DELETE FROM spaces WHERE id = ?').run(oldSpace.id);
+  }
+
   await transaction(async () => {
     let repId: number;
 
