@@ -2,24 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { getDb, isSpaceMember } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { sendPushToSpaceMembers } from '../lib/push.js';
-import { uploadFile } from '../lib/upload.js';
-
-interface CreateAnnBody {
-  course_id: number | null;
-  title: string;
-  body: string;
-  type: string;
-  urgent: boolean;
-  pinned: boolean;
-  deadline?: string;
-  venue?: string;
-  instructions?: string;
-  submission_method?: string;
-  format?: string;
-  file_data?: string;
-  file_name?: string;
-  file_size?: number;
-}
+import { uploadFile, uploadFileBuffer } from '../lib/upload.js';
 
 export function announcementRoutes(app: FastifyInstance) {
   app.get('/api/spaces/:id/announcements', { preHandler: authMiddleware }, async (request, reply) => {
@@ -102,14 +85,66 @@ export function announcementRoutes(app: FastifyInstance) {
 
   app.post('/api/spaces/:id/announcements', { preHandler: authMiddleware }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const body = request.body as CreateAnnBody;
     const userId = request.user!.userId;
+    const db = getDb();
+    const ct = request.headers['content-type'] || '';
 
-    if (!body.title || !body.body) {
-      return reply.status(400).send({ error: 'Title and body are required' });
+    let courseId: number | null = null;
+    let title = '';
+    let body = '';
+    let type = 'announcement';
+    let urgent = false;
+    let pinned = false;
+    let deadline: string | null = null;
+    let venue: string | null = null;
+    let instructions: string | null = null;
+    let fileUrl: string | null = null;
+    let fileName: string | null = null;
+    let fileSize: number | null = null;
+
+    if (ct.includes('multipart/form-data')) {
+      const data = await request.file();
+      if (!data) return reply.status(400).send({ error: 'No data received' });
+      title = (data.fields.title as any)?.value || '';
+      body = (data.fields.body as any)?.value || '';
+      type = (data.fields.type as any)?.value || 'announcement';
+      urgent = (data.fields.urgent as any)?.value === 'true';
+      pinned = (data.fields.pinned as any)?.value === 'true';
+      courseId = (data.fields.course_id as any)?.value ? Number((data.fields.course_id as any).value) : null;
+      deadline = (data.fields.deadline as any)?.value || null;
+      venue = (data.fields.venue as any)?.value || null;
+      instructions = (data.fields.instructions as any)?.value || null;
+      if (data.filename) {
+        const buffer = await data.toBuffer();
+        if (buffer.length > 0) {
+          const result = await uploadFileBuffer(buffer, data.filename, data.mimetype);
+          fileUrl = result.url;
+          fileName = data.filename;
+          fileSize = buffer.length;
+        }
+      }
+    } else {
+      const json = request.body as any;
+      title = json.title;
+      body = json.body;
+      type = json.type || 'announcement';
+      urgent = !!json.urgent;
+      pinned = !!json.pinned;
+      courseId = json.course_id || null;
+      deadline = json.deadline || null;
+      venue = json.venue || null;
+      instructions = json.instructions || null;
+      if (json.file_data) {
+        const result = await uploadFile(json.file_data, json.file_name || 'file.bin');
+        fileUrl = result.url;
+        fileName = json.file_name || null;
+        fileSize = json.file_size || null;
+      }
     }
 
-    const db = getDb();
+    if (!title || !body) {
+      return reply.status(400).send({ error: 'Title and body are required' });
+    }
 
     const membership = await db.prepare(
       'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
@@ -118,22 +153,15 @@ export function announcementRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: 'Only class reps can create announcements' });
     }
 
-    let fileUrl: string | null = null;
-    if (body.file_data) {
-      const uploadName = body.file_name || `announcement-file.${'bin'}`;
-      const result = await uploadFile(body.file_data, uploadName);
-      fileUrl = result.url;
-    }
-
-    const result = await db.prepare(
+    const insertResult = await db.prepare(
       `INSERT INTO announcements (space_id, course_id, title, body, type, author_id, urgent, pinned, deadline, venue, instructions, submission_method, format, file_data, file_name, file_size)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
-      id, body.course_id || null, body.title, body.body, body.type || 'announcement',
-      userId, body.urgent ? 1 : 0, body.pinned ? 1 : 0,
-      body.deadline || null, body.venue || null, body.instructions || null,
-      body.submission_method || null, body.format || null,
-      fileUrl, body.file_name || null, body.file_size || null
+      id, courseId, title, body, type,
+      userId, urgent ? 1 : 0, pinned ? 1 : 0,
+      deadline, venue, instructions,
+      null, null,
+      fileUrl, fileName, fileSize
     );
 
     const ann = await db.prepare(`
@@ -142,16 +170,16 @@ export function announcementRoutes(app: FastifyInstance) {
       JOIN users u ON a.author_id = u.id
       LEFT JOIN courses c ON a.course_id = c.id
       WHERE a.id = ?
-    `).get(result.lastInsertRowid) as any;
+    `).get(insertResult.lastInsertRowid) as any;
 
     const authorName = ann.author_name || 'Someone';
-    const prefix = body.urgent ? '🚨' : '📢';
+    const prefix = urgent ? '🚨' : '📢';
     sendPushToSpaceMembers(id, {
-      title: `${prefix} ${body.title}`,
+      title: `${prefix} ${title}`,
       body: `${authorName} — ${ann.course_code || 'General'}`,
-      tag: `announcement-${result.lastInsertRowid}`,
-      data: { url: `/space/${id}/announcement/${result.lastInsertRowid}`, type: 'announcement' },
-      requireInteraction: !!body.urgent,
+      tag: `announcement-${insertResult.lastInsertRowid}`,
+      data: { url: `/space/${id}/announcement/${insertResult.lastInsertRowid}`, type: 'announcement' },
+      requireInteraction: !!urgent,
     }).catch(() => {});
 
     return {

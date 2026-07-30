@@ -15,18 +15,11 @@ export function SetupWizard() {
 
   const [step, setStep] = useState(1);
   const [name, setName] = useState(user?.name || '');
-  const [dept, setDept] = useState('Production Engineering');
-  const [level, setLevel] = useState('300 Level');
-  const [uni, setUni] = useState('University of Benin (UNIBEN)');
+  const [dept, setDept] = useState('');
+  const [level, setLevel] = useState('');
+  const [uni, setUni] = useState('');
   const [slug, setSlug] = useState('');
-  const suggested: CourseInput[] = [
-    { name: 'Fluid Mechanics I', code: 'PEG 301' },
-    { name: 'Thermodynamics II', code: 'PEG 303' },
-    { name: 'Manufacturing Processes I', code: 'PEG 305' },
-    { name: 'Engineering Materials', code: 'MME 302' },
-    { name: 'Engineering Mathematics III', code: 'MTH 301' },
-  ];
-  const [courses, setCourses] = useState<CourseInput[]>(suggested);
+  const [courses, setCourses] = useState<CourseInput[]>([{ name: '', code: '' }]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 

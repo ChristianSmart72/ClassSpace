@@ -7,7 +7,7 @@ import api from '../../api/client';
 
 export function PostAnnouncementSheet({ spaceId, onClose, announcement }: { spaceId: string; onClose: () => void; announcement?: Announcement }) {
   const { courses } = useSpaceStore();
-  const { createAnnouncement, fetchAnnouncements } = useContentStore();
+  const { fetchAnnouncements } = useContentStore();
   const [courseId, setCourseId] = useState<number | ''>(announcement?.course_id ?? '');
   const [title, setTitle] = useState(announcement?.title ?? '');
   const [body, setBody] = useState(announcement?.body ?? '');
@@ -31,20 +31,6 @@ export function PostAnnouncementSheet({ spaceId, onClose, announcement }: { spac
     setSubmitting(true);
     setError('');
     try {
-      let fileData: string | undefined;
-      let fileName: string | undefined;
-      let fileSize: number | undefined;
-      if (file) {
-        fileData = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-        fileName = file.name;
-        fileSize = file.size;
-      }
-
       if (isEdit && announcement) {
         await api.patch(`/announcements/${announcement.id}`, {
           course_id: courseId || null,
@@ -59,20 +45,19 @@ export function PostAnnouncementSheet({ spaceId, onClose, announcement }: { spac
         });
         await fetchAnnouncements(spaceId);
       } else {
-        await createAnnouncement(spaceId, {
-          course_id: courseId || null,
-          title,
-          body,
-          type: type as any,
-          urgent,
-          pinned,
-          deadline: deadline || undefined,
-          venue: venue || undefined,
-          instructions: instructions || undefined,
-          file_data: fileData,
-          file_name: fileName,
-          file_size: fileSize,
-        } as any);
+        const formData = new FormData();
+        formData.append('course_id', String(courseId || ''));
+        formData.append('title', title);
+        formData.append('body', body);
+        formData.append('type', type);
+        formData.append('urgent', String(urgent));
+        formData.append('pinned', String(pinned));
+        if (deadline) formData.append('deadline', deadline);
+        if (venue) formData.append('venue', venue);
+        if (instructions) formData.append('instructions', instructions);
+        if (file) formData.append('file', file);
+        await api.post(`/spaces/${spaceId}/announcements`, formData);
+        await fetchAnnouncements(spaceId);
       }
       onClose();
     } catch (err: any) {

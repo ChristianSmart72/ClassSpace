@@ -7,7 +7,16 @@ export async function getAnnouncements(spaceId: string, filter?: string) {
   return data.announcements as Announcement[];
 }
 
-export async function createAnnouncement(spaceId: string, ann: Partial<Announcement>) {
+export async function createAnnouncement(spaceId: string, ann: Record<string, any>) {
+  if (ann.file) {
+    const formData = new FormData();
+    for (const [k, v] of Object.entries(ann)) {
+      if (k === 'file') formData.append('file', v as File);
+      else if (v !== undefined && v !== null) formData.append(k, String(v));
+    }
+    const { data } = await api.post(`/spaces/${spaceId}/announcements`, formData);
+    return data.announcement as Announcement;
+  }
   const { data } = await api.post(`/spaces/${spaceId}/announcements`, ann);
   return data.announcement as Announcement;
 }
