@@ -90,6 +90,26 @@ export interface TimetableEntry {
   color_index: number;
 }
 
+export interface SharedSpaceAnnouncement {
+  id: number;
+  title: string;
+  body: string;
+  type: string;
+  urgent: boolean;
+  created_at: string;
+  course_name: string | null;
+  course_code: string | null;
+}
+
+export interface SharedSpaceCourse {
+  id: number;
+  name: string;
+  code: string;
+  icon: string;
+  color_index: number;
+  file_count: number;
+}
+
 export interface SharedSpace {
   type: 'space';
   id: string;
@@ -99,8 +119,10 @@ export interface SharedSpace {
   uni: string;
   rep: string;
   invite_code: string;
-  announcementTeaser: string | null;
   member_count?: number;
+  material_count?: number;
+  courses?: SharedSpaceCourse[];
+  recent_announcements?: SharedSpaceAnnouncement[];
 }
 
 export interface SharedAnnouncement {

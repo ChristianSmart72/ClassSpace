@@ -113,6 +113,14 @@ function AuthPrompt({ inviteCode }: { inviteCode?: string }) {
   );
 }
 
+const ANNOUNCE_TYPE_STYLE: Record<string, { label: string; bg: string; color: string }> = {
+  assignment: { label: 'HW', bg: 'bg-app-orange/10', color: 'text-app-orange' },
+  test: { label: 'TST', bg: 'bg-app-red/10', color: 'text-app-red' },
+  meeting: { label: 'MTG', bg: 'bg-app-accent2/10', color: 'text-app-accent2' },
+  update: { label: 'UPD', bg: 'bg-app-amber/10', color: 'text-app-amber' },
+  announcement: { label: 'INFO', bg: 'bg-app-surface-2', color: 'text-app-text-faint' },
+};
+
 function SpacePreview({ data, user, onJoin, joining, error }: {
   data: SharedSpace;
   user: any;
@@ -120,40 +128,87 @@ function SpacePreview({ data, user, onJoin, joining, error }: {
   joining: boolean;
   error: string;
 }) {
+  const courses = data.courses ?? [];
+  const anns = data.recent_announcements ?? [];
+
   return (
     <div className="flex-1 flex flex-col">
       <div className="flex-1 flex flex-col">
+        {/* Hero */}
         <div className="flex flex-col items-center text-center">
           <div className="w-16 h-16 rounded-2xl bg-app-accent/10 border border-app-accent/20 flex items-center justify-center text-3xl mb-4">🏛️</div>
           <h2 className="text-app-text font-jakarta font-bold text-xl">{data.name}</h2>
           <p className="text-app-text-dim text-sm font-inter mt-1">{data.uni}</p>
           <p className="text-app-text-faint text-xs font-inter mt-0.5">{data.dept} · Rep: {data.rep}</p>
-
-          <div className="flex gap-2 mt-4 flex-wrap justify-center">
-            <span className="text-[11px] bg-app-accent/10 text-app-accent font-jakarta font-semibold px-2.5 py-1 rounded-full">{data.level}</span>
-            <span className="text-[11px] bg-app-surface border border-app-border text-app-text-dim font-jakarta font-semibold px-2.5 py-1 rounded-full">
-              {data.invite_code}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3 mt-4 text-app-text-faint text-xs font-inter">
-            <span>👥 {data.member_count ?? 0} member{(data.member_count ?? 0) !== 1 ? 's' : ''}</span>
-          </div>
-
-          {data.announcementTeaser && (
-            <div className="w-full mt-6 bg-app-surface rounded-2xl p-4 border border-app-border text-left">
-              <p className="text-app-text-faint text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-1.5">Latest announcement</p>
-              <p className="text-app-text font-inter text-sm">{data.announcementTeaser}</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="w-full mt-4 bg-app-red/10 border border-app-red/30 rounded-xl px-4 py-3">
-              <p className="text-app-red text-sm font-inter">{error}</p>
-            </div>
-          )}
         </div>
 
+        {/* Tags row */}
+        <div className="flex gap-2 mt-4 flex-wrap justify-center">
+          <span className="text-[11px] bg-app-accent/10 text-app-accent font-jakarta font-semibold px-2.5 py-1 rounded-full">{data.level}</span>
+          <span className="text-[11px] bg-app-surface border border-app-border text-app-text-dim font-jakarta font-semibold px-2.5 py-1 rounded-full">{data.invite_code}</span>
+        </div>
+
+        {/* Stats row */}
+        <div className="flex items-center justify-center gap-5 mt-4 text-app-text-faint text-xs font-inter">
+          <span>👥 {data.member_count ?? 0}</span>
+          <span>📁 {data.material_count ?? 0} files</span>
+          <span>📚 {courses.length} courses</span>
+        </div>
+
+        {/* Courses */}
+        {courses.length > 0 && (
+          <div className="mt-5">
+            <p className="text-app-text-faint text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-2">Courses</p>
+            <div className="flex flex-col gap-1.5">
+              {courses.map(c => (
+                <div key={c.id} className="bg-app-surface rounded-xl px-3 py-2.5 border border-app-border flex items-center gap-2.5">
+                  <span className="text-base">{c.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-app-text text-sm font-inter font-medium truncate">{c.name}</p>
+                    <p className="text-app-text-faint text-[10px] font-inter">{c.code} · {c.file_count} file{c.file_count !== 1 ? 's' : ''}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recent announcements */}
+        {anns.length > 0 && (
+          <div className="mt-5">
+            <p className="text-app-text-faint text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-2">Recent announcements</p>
+            <div className="flex flex-col gap-1.5">
+              {anns.map(a => {
+                const style = ANNOUNCE_TYPE_STYLE[a.type] ?? ANNOUNCE_TYPE_STYLE.announcement;
+                return (
+                  <div key={a.id} className="bg-app-surface rounded-xl px-3 py-2.5 border border-app-border text-left">
+                    <div className="flex items-start gap-2">
+                      <span className={`text-[10px] font-jakarta font-semibold px-1.5 py-0.5 rounded ${style.bg} ${style.color} flex-shrink-0 mt-0.5`}>{style.label}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          {a.urgent && <span className="w-1.5 h-1.5 rounded-full bg-app-red flex-shrink-0" />}
+                          <p className="text-app-text text-sm font-inter font-medium truncate">{a.title}</p>
+                        </div>
+                        {a.course_code && (
+                          <p className="text-app-text-faint text-[10px] font-inter mt-0.5">{a.course_code}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Error */}
+        {error && (
+          <div className="w-full mt-4 bg-app-red/10 border border-app-red/30 rounded-xl px-4 py-3">
+            <p className="text-app-red text-sm font-inter">{error}</p>
+          </div>
+        )}
+
+        {/* Auth / Join */}
         <div className="mt-auto pt-6">
           {user ? (
             <button

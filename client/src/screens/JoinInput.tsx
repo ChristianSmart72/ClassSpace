@@ -5,7 +5,7 @@ import { canGoBack } from '../lib/time';
 const DEMO_LINKS = [
   { label: 'Space Preview', link: 'classspace.app/s/pre220' },
   { label: 'Announcement Preview', link: 'classspace.app/s/pre220/ann/1' },
-  { label: 'Material Preview', link: 'classspace.app/s/pre220/mat/101' },
+  { label: 'Material Preview', link: 'classspace.app/s/pre220/mat/1' },
   { label: 'Course Folder Preview', link: 'classspace.app/s/pre220/course/1' },
 ];
 

@@ -10,12 +10,24 @@ export function shareRoutes(app: FastifyInstance) {
     if (!space) return reply.status(404).send({ error: 'Space not found' });
 
     const rep = await db.prepare('SELECT name FROM users WHERE id = ?').get(space.rep_id) as any;
-    const latestAnn = await db.prepare(
-      "SELECT title FROM announcements WHERE space_id = ? ORDER BY created_at DESC LIMIT 1"
-    ).get(id) as any;
     const memberCount = await db.prepare(
       "SELECT COUNT(*) as count FROM space_members WHERE space_id = ?"
     ).get(id) as any;
+    const materialCount = await db.prepare(
+      "SELECT COUNT(*) as count FROM materials WHERE space_id = ?"
+    ).get(id) as any;
+    const courses = await db.prepare(`
+      SELECT c.*, (SELECT COUNT(*) FROM materials m WHERE m.course_id = c.id) as file_count
+      FROM courses c WHERE c.space_id = ? ORDER BY c.id
+    `).all(id) as any[];
+    const recentAnnouncements = await db.prepare(`
+      SELECT a.id, a.title, a.body, a.type, a.created_at, a.urgent,
+             c.name as course_name, c.code as course_code
+      FROM announcements a
+      LEFT JOIN courses c ON a.course_id = c.id
+      WHERE a.space_id = ?
+      ORDER BY a.created_at DESC LIMIT 3
+    `).all(id) as any[];
 
     return {
       type: 'space',
@@ -24,10 +36,19 @@ export function shareRoutes(app: FastifyInstance) {
       level: space.level,
       uni: space.uni,
       rep: rep?.name,
-      announcementTeaser: latestAnn?.title || null,
       id: space.id,
       invite_code: space.invite_code,
       member_count: memberCount?.count || 0,
+      material_count: materialCount?.count || 0,
+      courses: courses.map((c: any) => ({
+        id: c.id, name: c.name, code: c.code, icon: c.icon,
+        color_index: c.color_index, file_count: c.file_count,
+      })),
+      recent_announcements: recentAnnouncements.map((a: any) => ({
+        id: a.id, title: a.title, body: a.body, type: a.type,
+        urgent: !!a.urgent, created_at: a.created_at,
+        course_name: a.course_name, course_code: a.course_code,
+      })),
     };
   });
 
