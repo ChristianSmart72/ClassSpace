@@ -75,7 +75,7 @@ export async function transaction<T>(fn: () => Promise<T>): Promise<T> {
     await db.execute('COMMIT');
     return result;
   } catch (e) {
-    await db.execute('ROLLBACK');
+    await db.execute('ROLLBACK').catch(() => {});
     throw e;
   }
 }
