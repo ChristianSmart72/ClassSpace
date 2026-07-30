@@ -39,15 +39,22 @@ interface SeedData {
     options: string[];
     closes_at: string | null;
   }[];
+  opportunities?: {
+    title: string;
+    description: string;
+    category: string;
+    link: string | null;
+    deadline: string | null;
+  }[];
 }
 
 export async function seedDatabase(): Promise<void> {
   const db = getDb();
   await createTables();
 
-  const existing = await db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number };
-  if (existing.count > 0) {
-    console.log('Database already seeded, skipping.');
+  const existing = await db.prepare("SELECT id FROM spaces WHERE id = 'pre220'").get() as any;
+  if (existing) {
+    console.log('Default space (pre220) already exists, skipping seed.');
     return;
   }
 
@@ -63,16 +70,30 @@ export async function seedDatabase(): Promise<void> {
   }
 
   await transaction(async () => {
-    const userResult = await db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)').run(data.user.name, data.user.email, passwordHash, data.user.role);
-    const userId = userResult.lastInsertRowid;
+    let repId: number;
 
-    await db.prepare('INSERT INTO spaces (id, name, dept, level, uni, rep_id, invite_code) VALUES (?, ?, ?, ?, ?, ?, ?)').run(data.space.id, data.space.name, data.space.dept, data.space.level, data.space.uni, userId, data.space.invite_code);
-    await db.prepare('INSERT INTO space_members (space_id, user_id, role) VALUES (?, ?, ?)').run(data.space.id, userId, 'rep');
+    const existingRep = await db.prepare('SELECT id FROM users WHERE email = ?').get(data.user.email) as any;
+    if (existingRep) {
+      repId = existingRep.id;
+    } else {
+      const result = await db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)').run(data.user.name, data.user.email, passwordHash, data.user.role);
+      repId = result.lastInsertRowid;
+    }
+
+    await db.prepare('INSERT INTO spaces (id, name, dept, level, uni, rep_id, invite_code) VALUES (?, ?, ?, ?, ?, ?, ?)').run(data.space.id, data.space.name, data.space.dept, data.space.level, data.space.uni, repId, data.space.invite_code);
+    await db.prepare('INSERT OR IGNORE INTO space_members (space_id, user_id, role) VALUES (?, ?, ?)').run(data.space.id, repId, 'rep');
 
     for (let i = 0; i < (data.extra_users || []).length; i++) {
       const u = data.extra_users![i];
-      const res = await db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)').run(u.name, u.email, extraHashes[i], u.role);
-      await db.prepare('INSERT INTO space_members (space_id, user_id, role) VALUES (?, ?, ?)').run(data.space.id, res.lastInsertRowid, 'member');
+      const existingUser = await db.prepare('SELECT id FROM users WHERE email = ?').get(u.email) as any;
+      let memberId: number;
+      if (existingUser) {
+        memberId = existingUser.id;
+      } else {
+        const res = await db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)').run(u.name, u.email, extraHashes[i], u.role);
+        memberId = res.lastInsertRowid;
+      }
+      await db.prepare('INSERT OR IGNORE INTO space_members (space_id, user_id, role) VALUES (?, ?, ?)').run(data.space.id, memberId, 'member');
     }
 
     const courseIds: number[] = [];
@@ -93,7 +114,7 @@ export async function seedDatabase(): Promise<void> {
       await db.prepare(
         'INSERT INTO announcements (space_id, course_id, title, body, type, author_id, urgent, pinned, deadline, venue, instructions, submission_method, format) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
       ).run(
-        data.space.id, courseId, ann.title, ann.body, ann.type, userId,
+        data.space.id, courseId, ann.title, ann.body, ann.type, repId,
         ann.urgent ? 1 : 0, ann.pinned ? 1 : 0,
         ann.deadline || null, ann.venue || null, ann.instructions || null,
         ann.submission_method || null, ann.format || null
@@ -102,19 +123,25 @@ export async function seedDatabase(): Promise<void> {
 
     for (const mat of data.materials) {
       const courseId = courseIds[mat.course_index];
-      await db.prepare('INSERT INTO materials (space_id, course_id, name, file_type, category, file_size, uploader_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run(data.space.id, courseId, mat.name, mat.file_type, mat.category, mat.file_size, userId);
+      await db.prepare('INSERT INTO materials (space_id, course_id, name, file_type, category, file_size, uploader_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run(data.space.id, courseId, mat.name, mat.file_type, mat.category, mat.file_size, repId);
     }
 
     for (const poll of (data.polls || [])) {
-      const res = await db.prepare('INSERT INTO polls (space_id, author_id, question, closes_at) VALUES (?, ?, ?, ?)').run(data.space.id, userId, poll.question, poll.closes_at || null);
+      const res = await db.prepare('INSERT INTO polls (space_id, author_id, question, closes_at) VALUES (?, ?, ?, ?)').run(data.space.id, repId, poll.question, poll.closes_at || null);
       const pollId = res.lastInsertRowid;
       for (const [i, text] of poll.options.entries()) {
         await db.prepare('INSERT INTO poll_options (poll_id, text, display_order) VALUES (?, ?, ?)').run(pollId, text, i);
       }
     }
+
+    for (const opp of (data.opportunities || [])) {
+      await db.prepare(
+        'INSERT INTO opportunities (space_id, author_id, title, description, category, link, deadline) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).run(data.space.id, repId, opp.title, opp.description, opp.category, opp.link || null, opp.deadline || null);
+    }
   });
 
-  console.log('Database seeded successfully!');
+  console.log('Default space (pre220) seeded successfully!');
 }
 
 if (process.argv[1] && (process.argv[1].includes('seed') || process.argv[1].endsWith('seed.ts'))) {

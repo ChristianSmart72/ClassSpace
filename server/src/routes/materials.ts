@@ -1,26 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { getDb, isSpaceMember } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
-import { uploadFile } from '../lib/upload.js';
-
-const MIME_MAP: Record<string, string> = {
-  pdf: 'application/pdf',
-  doc: 'application/msword',
-  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  ppt: 'application/vnd.ms-powerpoint',
-  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  xls: 'application/vnd.ms-excel',
-  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  img: 'image/png',
-  jpg: 'image/jpeg',
-  png: 'image/png',
-  video: 'video/mp4',
-  mp4: 'video/mp4',
-};
-
-function mimeFromType(fileType: string): string | undefined {
-  return MIME_MAP[fileType] || MIME_MAP[fileType.split('/').pop() || ''] || undefined;
-}
+import { uploadFile, uploadFileBuffer } from '../lib/upload.js';
 
 export function materialRoutes(app: FastifyInstance) {
   app.get('/api/courses/:id/materials', { preHandler: authMiddleware }, async (request, reply) => {
@@ -64,6 +45,7 @@ export function materialRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const userId = request.user!.userId;
     const db = getDb();
+    const ct = request.headers['content-type'] || '';
 
     const course = await db.prepare('SELECT space_id FROM courses WHERE id = ?').get(Number(id)) as any;
     if (!course) return reply.status(404).send({ error: 'Course not found' });
@@ -75,40 +57,53 @@ export function materialRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: 'Only class reps can upload materials' });
     }
 
-    const data = request.body as {
-      name: string;
-      file_data?: string;
-      file_size?: number;
-      file_type?: string;
-      category?: string;
-    };
-
-    if (!data.name) {
-      return reply.status(400).send({ error: 'Material name is required' });
-    }
-
+    let name: string;
     let fileUrl: string | null = null;
-    if (data.file_data) {
-      const mime = mimeFromType(data.file_type || '');
-      const uploadName = `${data.name}.${data.file_type || 'bin'}`;
-      const result = await uploadFile(data.file_data, uploadName, mime);
-      fileUrl = result.url;
+    let fileSize = 0;
+    let fileType = 'other';
+    let category = 'Other';
+
+    if (ct.includes('multipart/form-data')) {
+      const data = await request.file();
+      if (!data) return reply.status(400).send({ error: 'No file data received' });
+
+      name = (data.fields.name as any)?.value || data.filename.replace(/\.[^/.]+$/, '');
+      category = (data.fields.category as any)?.value || 'Other';
+      fileType = data.filename.split('.').pop()?.toLowerCase() || 'other';
+
+      const buffer = await data.toBuffer();
+      fileSize = buffer.length;
+
+      if (buffer.length > 0) {
+        const result = await uploadFileBuffer(buffer, data.filename, data.mimetype);
+        fileUrl = result.url;
+      }
+    } else {
+      const data = request.body as {
+        name: string; file_data?: string; file_size?: number; file_type?: string; category?: string;
+      };
+      if (!data.name) return reply.status(400).send({ error: 'Material name is required' });
+      name = data.name;
+      fileType = data.file_type || 'other';
+      category = data.category || 'Other';
+      fileSize = data.file_size || 0;
+
+      if (data.file_data) {
+        const result = await uploadFile(data.file_data, `${name}.${fileType}`, undefined);
+        fileUrl = result.url;
+      }
     }
 
-    const result = await db.prepare(
+    const insertResult = await db.prepare(
       `INSERT INTO materials (space_id, course_id, name, file_data, file_size, file_type, category, uploader_id)
        VALUES ((SELECT space_id FROM courses WHERE id = ?), ?, ?, ?, ?, ?, ?, ?)`
-    ).run(
-      Number(id), Number(id), data.name,
-      fileUrl, data.file_size || 0,
-      data.file_type || 'other', data.category || 'Other', userId
-    );
+    ).run(Number(id), Number(id), name, fileUrl, fileSize, fileType, category, userId);
 
     const material = await db.prepare(`
       SELECT m.*, u.name as uploader_name
       FROM materials m JOIN users u ON m.uploader_id = u.id
       WHERE m.id = ?
-    `).get(result.lastInsertRowid) as any;
+    `).get(insertResult.lastInsertRowid) as any;
 
     return { material: { ...material, pinned: false, downloads: 0 } };
   });

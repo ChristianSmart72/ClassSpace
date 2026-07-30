@@ -18,6 +18,7 @@ export function SetupWizard() {
   const [dept, setDept] = useState('Production Engineering');
   const [level, setLevel] = useState('300 Level');
   const [uni, setUni] = useState('University of Benin (UNIBEN)');
+  const [slug, setSlug] = useState('');
   const suggested: CourseInput[] = [
     { name: 'Fluid Mechanics I', code: 'PEG 301' },
     { name: 'Thermodynamics II', code: 'PEG 303' },
@@ -63,7 +64,7 @@ export function SetupWizard() {
         color_index: colIndices[i % colIndices.length],
       }));
 
-      await createSpace({ name: `${level} ${dept}`, dept, level, uni, courses: courseData });
+      await createSpace({ name: `${level} ${dept}`, dept, level, uni, slug: slug || undefined, courses: courseData });
       navigate('/home');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to create space');
@@ -117,6 +118,16 @@ export function SetupWizard() {
                 <input value={uni} onChange={(e) => setUni(e.target.value)}
                   className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-inter text-sm placeholder:text-app-text-faint focus:border-app-accent transition-colors" />
               </div>
+            </div>
+            <div>
+              <label className="text-app-text-dim text-xs font-jakarta font-semibold uppercase tracking-wider mb-1.5 block">Space URL (optional)</label>
+              <div className="flex items-center gap-1 text-app-text-dim text-sm font-inter">
+                <span>classspace.app/space/</span>
+                <input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                  placeholder="your-slug"
+                  className="flex-1 min-w-0 bg-app-surface border border-app-border rounded-xl px-3 py-3 text-app-text font-inter text-sm placeholder:text-app-text-faint focus:border-app-accent transition-colors" />
+              </div>
+              <p className="text-app-text-faint text-xs font-inter mt-1">Leave empty to auto-generate from the space name</p>
             </div>
           </div>
 

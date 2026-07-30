@@ -14,7 +14,11 @@ function getUtapi() {
 
 export async function uploadFile(base64: string, name: string, mimeType?: string): Promise<{ url: string; key: string }> {
   const buffer = Buffer.from(base64.includes(',') ? base64.split(',')[1] : base64, 'base64');
-  const file = new UTFile([buffer], name, { type: mimeType || 'application/octet-stream' });
+  return uploadFileBuffer(buffer, name, mimeType);
+}
+
+export async function uploadFileBuffer(buffer: Buffer, name: string, mimeType?: string): Promise<{ url: string; key: string }> {
+  const file = new UTFile([new Uint8Array(buffer)], name, { type: mimeType || 'application/octet-stream' });
   const result = await getUtapi().uploadFiles([file]);
   const uploaded = result[0];
   if (uploaded.error) throw new Error(`Upload failed: ${uploaded.error.message}`);

@@ -11,7 +11,12 @@ interface CreateSpaceBody {
   dept: string;
   level: string;
   uni: string;
+  slug?: string;
   courses: { name: string; code: string; icon: string; color_index: number }[];
+}
+
+function sanitizeSlug(input: string): string {
+  return input.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
 }
 
 interface JoinSpaceBody {
@@ -20,7 +25,7 @@ interface JoinSpaceBody {
 
 export function spaceRoutes(app: FastifyInstance) {
   app.post('/api/spaces', { preHandler: authMiddleware }, async (request, reply) => {
-    const { name, dept, level, uni, courses } = request.body as CreateSpaceBody;
+    const { name, dept, level, uni, slug, courses } = request.body as CreateSpaceBody;
     const userId = request.user!.userId;
 
     if (!name || !dept || !level || !uni) {
@@ -28,7 +33,17 @@ export function spaceRoutes(app: FastifyInstance) {
     }
 
     const db = getDb();
-    const spaceId = generateId();
+    let spaceId = slug ? sanitizeSlug(slug) : sanitizeSlug(name);
+
+    if (!spaceId || spaceId.length < 3) {
+      spaceId = generateId();
+    }
+
+    const existing = await db.prepare('SELECT id FROM spaces WHERE id = ?').get(spaceId) as any;
+    if (existing) {
+      return reply.status(409).send({ error: `Slug "${spaceId}" is already taken. Choose another.` });
+    }
+
     const inviteCode = generateCode();
 
     await transaction(async () => {

@@ -6,6 +6,7 @@ interface CreateSpaceData {
   dept: string;
   level: string;
   uni: string;
+  slug?: string;
   courses: { name: string; code: string; icon: string; color_index: number }[];
 }
 

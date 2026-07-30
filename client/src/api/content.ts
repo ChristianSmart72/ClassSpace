@@ -22,9 +22,13 @@ export async function getMaterials(courseId: number) {
 }
 
 export async function uploadMaterial(courseId: number, payload: {
-  name: string; file_data: string; file_size: number; file_type: string; category: string;
+  name: string; file: File; category: string;
 }) {
-  const { data } = await api.post(`/courses/${courseId}/materials`, payload);
+  const formData = new FormData();
+  formData.append('name', payload.name);
+  formData.append('category', payload.category);
+  formData.append('file', payload.file);
+  const { data } = await api.post(`/courses/${courseId}/materials`, formData);
   return data.material as Material;
 }
 

@@ -1,5 +1,23 @@
 import { getDb } from './connection.js';
 
+const TABLES_NAMES = [
+  'push_subscriptions',
+  'poll_votes',
+  'poll_options',
+  'polls',
+  'opportunities',
+  'timetable',
+  'reactions',
+  'materials',
+  'announcements',
+  'courses',
+  'space_members',
+  'spaces',
+  'users',
+];
+
+export const DROP_TABLES = TABLES_NAMES.map(t => `DROP TABLE IF EXISTS ${t}`);
+
 const TABLES = [
   `CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
