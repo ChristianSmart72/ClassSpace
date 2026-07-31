@@ -116,8 +116,11 @@ export function materialRoutes(app: FastifyInstance) {
       'SELECT name, file_data, file_type, file_size FROM materials WHERE id = ?'
     ).get(Number(id)) as any;
 
-    if (!material || !material.file_data) {
-      return reply.status(404).send({ error: 'Material not found or no file data' });
+    if (!material) {
+      return reply.status(404).send({ error: 'Material not found' });
+    }
+    if (!material.file_data) {
+      return reply.status(404).send({ error: 'This material has no file attached (demo/seed entry). Ask the class rep to re-upload it.' });
     }
 
     await db.prepare('UPDATE materials SET downloads = downloads + 1 WHERE id = ?').run(Number(id));
