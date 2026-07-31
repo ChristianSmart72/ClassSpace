@@ -49,11 +49,12 @@ async function main() {
   app.setErrorHandler(async (error, request, reply) => {
     const err = error as any;
     const statusCode = err.statusCode || err.status || 500;
-    const message = IS_PROD && statusCode >= 500
+    const isUploadError = err.message?.includes('Upload') || err.message?.includes('UPLOADTHING') || err.message?.includes('uploadthing');
+    const message = IS_PROD && statusCode >= 500 && !isUploadError
       ? 'Internal server error'
       : err.message || 'Unknown error';
     if (statusCode >= 500) {
-      request.log.error(err);
+      request.log.error({ err: err.stack || err.message, url: request.url, body: request.body ? '<present>' : undefined }, 'Request failed');
     }
     return reply.status(statusCode).send({
       error: message,
@@ -86,6 +87,17 @@ async function main() {
   resetPageRoute(app);
 
   app.get('/api/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
+
+  app.get('/api/health/upload', async (request, reply) => {
+    const { uploadFileBuffer } = await import('./lib/upload.js');
+    try {
+      const result = await uploadFileBuffer(Buffer.from('test'), `health-${Date.now()}.txt`, 'text/plain');
+      return { status: 'ok', uploadthing: true, url: result.url, key: result.key };
+    } catch (err: any) {
+      request.log.error(err);
+      return reply.status(500).send({ status: 'error', uploadthing: false, message: err.message });
+    }
+  });
 
   if (IS_PROD) {
     const clientDist = path.join(__dirname, '../../client/dist');
