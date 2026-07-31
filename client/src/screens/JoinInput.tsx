@@ -88,7 +88,7 @@ function parseLink(raw: string): { type: string; id: string } | null {
   const cleaned = raw.trim().replace(/^https?:\/\//, '');
 
   // Match: classspace.app/s/:id, classspace.app/s/:id/ann|mat|course/:n
-  const shortMatch = cleaned.match(/classspace\.app\/s\/([a-z0-9-]+)(?:\/(ann|mat|course)\/(\d+))?/);
+  const shortMatch = cleaned.match(/classspace\.app\/s\/([a-z0-9-]+)(?:\/(ann|mat|course)\/(\d+))?/i);
   if (shortMatch) {
     const spaceId = shortMatch[1];
     const subType = shortMatch[2];
@@ -98,7 +98,7 @@ function parseLink(raw: string): { type: string; id: string } | null {
   }
 
   // Match: classspace.app/join/space/:code
-  const joinMatch = cleaned.match(/classspace\.app\/join\/(space|ann|mat|course)\/([a-z0-9-]+)/);
+  const joinMatch = cleaned.match(/classspace\.app\/join\/(space|ann|mat|course)\/([a-z0-9-]+)/i);
   if (joinMatch) return { type: joinMatch[1], id: joinMatch[2] };
 
   // Match: raw invite code (e.g. PRE220, abc123)

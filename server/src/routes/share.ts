@@ -6,7 +6,8 @@ export function shareRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const space = await db.prepare('SELECT * FROM spaces WHERE id = ?').get(id) as any;
+    const space = (await db.prepare('SELECT * FROM spaces WHERE id = ?').get(id) ||
+      await db.prepare('SELECT * FROM spaces WHERE invite_code = ?').get(id)) as any;
     if (!space) return reply.status(404).send({ error: 'Space not found' });
 
     const rep = await db.prepare('SELECT name FROM users WHERE id = ?').get(space.rep_id) as any;
