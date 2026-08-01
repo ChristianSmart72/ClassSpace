@@ -86,8 +86,8 @@ const TYPE_META: Record<string, { label: string; color: string; bg: string }> = 
   assignment: { label: 'Assignment', color: '#ffffff', bg: '#4f46e5' },
   test:       { label: 'Test',       color: '#ffffff', bg: '#dc2626' },
   meeting:    { label: 'Meeting',    color: '#ffffff', bg: '#7c3aed' },
-  update:     { label: 'Update',     color: '#0f0f11', bg: '#e8ff47' },
-  announcement:{ label: 'Announcement', color: '#0f0f11', bg: '#e8ff47' },
+  update:     { label: 'Update',     color: '#422006', bg: '#facc15' },
+  announcement:{ label: 'Announcement', color: '#422006', bg: '#facc15' },
 };
 
 // ─── Attachment card ────────────────────────────────────────────────────────

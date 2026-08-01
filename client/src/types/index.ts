@@ -240,12 +240,12 @@ export interface Opportunity {
 }
 
 export const OPPORTUNITY_CATEGORIES = [
-  { value: 'seminar', label: 'Seminar', icon: '🎓', color: '#5b6af0' },
-  { value: 'scholarship', label: 'Scholarship', icon: '🏆', color: '#e8ff47' },
-  { value: 'internship', label: 'Internship', icon: '💼', color: '#52ffa0' },
-  { value: 'job', label: 'Job', icon: '🧑‍💻', color: '#ffb347' },
-  { value: 'competition', label: 'Competition', icon: '🥇', color: '#ff5252' },
-  { value: 'bootcamp', label: 'Bootcamp', icon: '🔥', color: '#f97316' },
-  { value: 'event', label: 'Event', icon: '📅', color: '#a78bfa' },
-  { value: 'other', label: 'Other', icon: '📌', color: '#7a7a88' },
+  { value: 'seminar', label: 'Seminar', icon: '🎓', color: '#6366f1' },
+  { value: 'scholarship', label: 'Scholarship', icon: '🏆', color: '#eab308' },
+  { value: 'internship', label: 'Internship', icon: '💼', color: '#10b981' },
+  { value: 'job', label: 'Job', icon: '🧑‍💻', color: '#f59e0b' },
+  { value: 'competition', label: 'Competition', icon: '🥇', color: '#ef4444' },
+  { value: 'bootcamp', label: 'Bootcamp', icon: '🔥', color: '#ea580c' },
+  { value: 'event', label: 'Event', icon: '📅', color: '#8b5cf6' },
+  { value: 'other', label: 'Other', icon: '📌', color: '#6b7280' },
 ] as const;

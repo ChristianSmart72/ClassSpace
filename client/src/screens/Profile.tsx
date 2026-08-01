@@ -66,9 +66,9 @@ export function Profile() {
                 <div
                   className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-jakarta font-bold flex-shrink-0"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(91,106,240,0.25) 0%, rgba(232,255,71,0.08) 100%)',
-                    color: '#5b6af0',
-                    border: '1.5px solid rgba(91,106,240,0.25)',
+                    background: 'linear-gradient(135deg, rgba(99,102,241,0.20) 0%, rgba(250,204,21,0.06) 100%)',
+                    color: '#6366f1',
+                    border: '1.5px solid rgba(99,102,241,0.25)',
                   }}
                 >
                   {avatarLetter}

@@ -16,7 +16,7 @@ const FEED_ITEMS = [
     title: 'Thermodynamics II CA Test — Tomorrow 9am',
     course: 'PRE 321',
     badge: 'Test',
-    badgeColor: '#ff5252',
+    badgeColor: '#ef4444',
     time: '2m ago',
   },
   {
@@ -25,7 +25,7 @@ const FEED_ITEMS = [
     title: 'Lab Report — Fluid Flow Analysis Due Friday 5pm',
     course: 'PRE 311',
     badge: 'Assignment',
-    badgeColor: '#ffb347',
+    badgeColor: '#f59e0b',
     time: '1h ago',
   },
   {
@@ -34,7 +34,7 @@ const FEED_ITEMS = [
     title: 'Shell Scholarship 2025 — Applications Open',
     course: null,
     badge: 'Scholarship',
-    badgeColor: '#e8ff47',
+    badgeColor: '#eab308',
     time: '3h ago',
   },
   {
@@ -43,7 +43,7 @@ const FEED_ITEMS = [
     title: 'No Lectures Wednesday — Department Decision',
     course: null,
     badge: 'Update',
-    badgeColor: '#5b6af0',
+    badgeColor: '#6366f1',
     time: '5h ago',
   },
   {
@@ -52,7 +52,7 @@ const FEED_ITEMS = [
     title: 'Manufacturing Notes — Week 8 uploaded',
     course: 'PRE 331',
     badge: 'File',
-    badgeColor: '#52ffa0',
+    badgeColor: '#10b981',
     time: 'Yesterday',
   },
 ];

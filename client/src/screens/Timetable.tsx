@@ -153,7 +153,7 @@ function ClassCard({ entry, isToday, showStatus = true, onCancel }: { entry: Tim
 const ACADEMIC_CALENDAR = [
   {
     phase: '1st Semester 2025/2026',
-    color: '#5b6af0',
+    color: '#6366f1',
     events: [
       { date: 'Oct 6, 2025', label: 'First semester begins', done: true },
       { date: 'Nov 3–7, 2025', label: 'Matriculation ceremonies', done: true },
@@ -164,7 +164,7 @@ const ACADEMIC_CALENDAR = [
   },
   {
     phase: '2nd Semester 2025/2026',
-    color: '#e8ff47',
+    color: '#eab308',
     events: [
       { date: 'Mar 2, 2026', label: 'Second semester begins', done: true },
       { date: 'Mar 9–13, 2026', label: 'Late registration / add-drop', done: true },
@@ -177,7 +177,7 @@ const ACADEMIC_CALENDAR = [
   },
   {
     phase: '2026/2027 Session',
-    color: '#4ade80',
+    color: '#34d399',
     events: [
       { date: 'Oct 5, 2026', label: 'New session begins', done: false },
     ],

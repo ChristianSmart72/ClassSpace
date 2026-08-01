@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, memo } from 'react';
+import { useEffect, useState, useMemo, useRef, memo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useSpaceStore } from '../store/spaceStore';
 import { useContentStore } from '../store/contentStore';
@@ -520,6 +520,16 @@ const FeedCard = memo(function FeedCard({ ann, spaceId, canDelete, deleting, onD
   const style = TYPE_STYLES[ann.type] || TYPE_STYLES.announcement;
   const preview = ann.body.length > 120 ? ann.body.slice(0, 120) + '…' : ann.body;
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuUp, setMenuUp] = useState(false);
+  const menuBtnRef = useRef<HTMLButtonElement>(null);
+
+  const toggleMenu = () => {
+    if (!menuOpen && menuBtnRef.current) {
+      const rect = menuBtnRef.current.getBoundingClientRect();
+      setMenuUp(window.innerHeight - rect.bottom < 300);
+    }
+    setMenuOpen(o => !o);
+  };
 
   const [unread, setUnread] = useState(() => {
     try {
@@ -553,7 +563,7 @@ const FeedCard = memo(function FeedCard({ ann, spaceId, canDelete, deleting, onD
 
   return (
     <div onClick={handleClick}
-      className="bg-app-surface rounded-xl border border-app-border overflow-hidden card-hover relative cursor-pointer">
+      className="bg-app-surface rounded-xl border border-app-border card-hover relative cursor-pointer">
       {accentBar && <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${accentBar}`} />}
 
       <div className="p-3.5 pl-4">
@@ -581,14 +591,14 @@ const FeedCard = memo(function FeedCard({ ann, spaceId, canDelete, deleting, onD
           <div className="flex-1" />
 
           <div className="relative" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setMenuOpen(o => !o)}
+            <button ref={menuBtnRef} onClick={toggleMenu}
               className="px-1.5 py-0.5 text-app-text-faint hover:text-app-text transition-colors rounded hover:bg-app-surface-2 text-sm leading-none tracking-wider font-bold">
               ···
             </button>
             {menuOpen && (
               <>
-                <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-                <div className="absolute right-0 top-full mt-1 z-20 bg-app-bg border border-app-border rounded-xl shadow-xl py-1.5 min-w-[150px] animate-fadeIn">
+                <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+                <div className={`absolute right-0 z-50 bg-app-bg border border-app-border rounded-xl shadow-xl py-1.5 min-w-[168px] max-h-[70vh] overflow-y-auto animate-fadeIn ${menuUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}`}>
                   <button onClick={() => {
                     const url = `${window.location.origin}/space/${spaceId}/announcement/${ann.id}`;
                     if (navigator.share) navigator.share({ url, title: ann.title }).catch(() => navigator.clipboard.writeText(url));
@@ -597,16 +607,6 @@ const FeedCard = memo(function FeedCard({ ann, spaceId, canDelete, deleting, onD
                   }}
                     className="w-full text-left px-3 py-2 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2.5">
                     <span className="w-4 text-center text-sm">🔗</span> Share
-                  </button>
-                  <button onClick={() => {
-                    try {
-                      const saved: number[] = JSON.parse(localStorage.getItem('savedAnnouncements') || '[]');
-                      if (!saved.includes(ann.id)) { saved.push(ann.id); localStorage.setItem('savedAnnouncements', JSON.stringify(saved)); }
-                    } catch {}
-                    setMenuOpen(false);
-                  }}
-                    className="w-full text-left px-3 py-2 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2.5">
-                    <span className="w-4 text-center text-sm">🔖</span> Save
                   </button>
                   {canDelete && (
                     <>

@@ -340,42 +340,32 @@ const ResourceCard = memo(function ResourceCard({ material: m, canDelete, deleti
         {menuOpen && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-            <div className={`absolute right-0 z-50 bg-app-bg border border-app-border rounded-xl shadow-xl py-1.5 min-w-[168px] max-h-[70vh] overflow-y-auto animate-fadeIn ${menuUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}`}>
+            <div className={`absolute right-0 z-50 bg-app-bg border border-app-border rounded-xl shadow-xl py-1.5 w-12 animate-fadeIn ${menuUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}`}>
               {dl ? (
-                <button onClick={() => { window.open(`/api/materials/${m.id}/download`, '_blank'); setMenuOpen(false); }}
-                  className="w-full text-left px-3.5 py-2 text-xs font-jakarta font-medium text-app-green hover:bg-app-surface transition-colors flex items-center gap-2.5">
-                  <span className="text-sm w-4 text-center">✓</span> Downloaded
+                <button title="Downloaded" onClick={() => { window.open(`/api/materials/${m.id}/download`, '_blank'); setMenuOpen(false); }}
+                  className="w-full flex items-center justify-center py-3 text-app-green hover:bg-app-surface transition-colors text-base">
+                  ✓
                 </button>
               ) : (
-                <button onClick={() => { markDownloaded(m.id); setDl(true); window.open(`/api/materials/${m.id}/download`, '_blank'); setMenuOpen(false); }}
-                  className="w-full text-left px-3.5 py-2 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2.5">
-                  <span className="text-sm w-4 text-center">⬇</span> Download
+                <button title="Download" onClick={() => { markDownloaded(m.id); setDl(true); window.open(`/api/materials/${m.id}/download`, '_blank'); setMenuOpen(false); }}
+                  className="w-full flex items-center justify-center py-3 text-app-text hover:bg-app-surface transition-colors text-base">
+                  ⬇
                 </button>
               )}
-              <button onClick={() => { onShare(); setMenuOpen(false); }}
-                className="w-full text-left px-3.5 py-2 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2.5">
-                <span className="text-sm w-4 text-center">🔗</span> Share
-              </button>
-              <button onClick={() => {
-                try {
-                  const saved: number[] = JSON.parse(localStorage.getItem('savedMaterials') || '[]');
-                  if (!saved.includes(m.id)) { saved.push(m.id); localStorage.setItem('savedMaterials', JSON.stringify(saved)); }
-                } catch {}
-                setMenuOpen(false);
-              }}
-                className="w-full text-left px-3.5 py-2 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2.5">
-                <span className="text-sm w-4 text-center">🔖</span> Save
+              <button title="Share" onClick={() => { onShare(); setMenuOpen(false); }}
+                className="w-full flex items-center justify-center py-3 text-app-text hover:bg-app-surface transition-colors text-base">
+                🔗
               </button>
               {canDelete && (
                 <>
-                  <div className="h-px bg-app-border mx-2.5 my-1" />
-                  <button onClick={() => { onPin(); setMenuOpen(false); }}
-                    className="w-full text-left px-3.5 py-2 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2.5">
-                    <span className="text-sm w-4 text-center">{m.pinned ? '📍' : '📌'}</span> {m.pinned ? 'Unpin' : 'Pin'}
+                  <div className="h-px bg-app-border mx-1.5 my-0.5" />
+                  <button title={m.pinned ? 'Unpin' : 'Pin'} onClick={() => { onPin(); setMenuOpen(false); }}
+                    className="w-full flex items-center justify-center py-3 text-app-text hover:bg-app-surface transition-colors text-base">
+                    {m.pinned ? '📍' : '📌'}
                   </button>
-                  <button onClick={() => { onDelete(); setMenuOpen(false); }} disabled={deleting}
-                    className="w-full text-left px-3.5 py-2 text-xs font-jakarta font-medium text-app-red hover:bg-app-surface transition-colors flex items-center gap-2.5 disabled:opacity-40">
-                    <span className="text-sm w-4 text-center">🗑</span> Delete
+                  <button title="Delete" onClick={() => { onDelete(); setMenuOpen(false); }} disabled={deleting}
+                    className="w-full flex items-center justify-center py-3 text-app-red hover:bg-app-surface transition-colors text-base disabled:opacity-40">
+                    🗑
                   </button>
                 </>
               )}
