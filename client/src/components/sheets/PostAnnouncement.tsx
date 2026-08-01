@@ -4,6 +4,7 @@ import { useSpaceStore } from '../../store/spaceStore';
 import { ANNOUNCEMENT_TYPES } from '../../types';
 import type { Announcement } from '../../types';
 import api from '../../api/client';
+import { directUpload, formatBytes } from '../../lib/directUpload';
 
 export function PostAnnouncementSheet({ spaceId, onClose, announcement }: { spaceId: string; onClose: () => void; announcement?: Announcement }) {
   const { courses } = useSpaceStore();
@@ -19,6 +20,8 @@ export function PostAnnouncementSheet({ spaceId, onClose, announcement }: { spac
   const [instructions, setInstructions] = useState(announcement?.instructions ?? '');
   const [submitting, setSubmitting] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [uploadedBytes, setUploadedBytes] = useState(0);
+  const [totalBytes, setTotalBytes] = useState(0);
   const [error, setError] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -28,15 +31,8 @@ export function PostAnnouncementSheet({ spaceId, onClose, announcement }: { spac
     const picked = Array.from(e.target.files || []);
     if (picked.length === 0) return;
 
-    const oversized = picked.filter(f => f.size > 16 * 1024 * 1024);
-    if (oversized.length > 0) {
-      setError(`File too large — max 16MB per file (${oversized[0].name})`);
-      if (fileRef.current) fileRef.current.value = '';
-      return;
-    }
-
     setError('');
-    setFiles(prev => [...prev, ...picked]);
+    setFiles(prev => [...prev, ...picked].slice(0, 5));
     if (fileRef.current) fileRef.current.value = '';
   };
 
@@ -64,27 +60,37 @@ export function PostAnnouncementSheet({ spaceId, onClose, announcement }: { spac
         });
         await fetchAnnouncements(spaceId);
       } else {
-        const formData = new FormData();
-        formData.append('course_id', String(courseId || ''));
-        formData.append('title', title);
-        formData.append('body', body);
-        formData.append('type', type);
-        formData.append('urgent', String(urgent));
-        formData.append('pinned', String(pinned));
-        if (deadline) formData.append('deadline', deadline);
-        if (venue) formData.append('venue', venue);
-        if (instructions) formData.append('instructions', instructions);
-        for (const f of files) formData.append('file', f);
-        await api.post(`/spaces/${spaceId}/announcements`, formData, {
-          onUploadProgress: e => {
-            if (e.total) setProgress(Math.round((e.loaded / e.total) * 100));
-          },
+        setProgress(0);
+        setUploadedBytes(0);
+        setTotalBytes(files.reduce((sum, f) => sum + f.size, 0));
+
+        const uploaded = files.length > 0
+          ? await directUpload.uploadFiles('blob', {
+              files,
+              onUploadProgress: ({ progress: p, totalLoaded }) => {
+                setProgress(Math.round(p));
+                setUploadedBytes(totalLoaded);
+              },
+            })
+          : [];
+
+        await api.post(`/spaces/${spaceId}/announcements`, {
+          course_id: courseId || null,
+          title,
+          body,
+          type,
+          urgent,
+          pinned,
+          deadline: deadline || null,
+          venue: venue || null,
+          instructions: instructions || null,
+          files: uploaded.map(f => ({ file_url: f.url, file_name: f.name, file_size: f.size })),
         });
         await fetchAnnouncements(spaceId);
       }
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to post');
+      setError(err?.message || err?.response?.data?.error || 'Failed to post');
     } finally {
       setSubmitting(false);
     }
@@ -189,7 +195,11 @@ export function PostAnnouncementSheet({ spaceId, onClose, announcement }: { spac
 
           <button onClick={handleSubmit} disabled={submitting}
             className="w-full bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200 disabled:opacity-50">
-            {submitting ? (progress > 0 ? `Posting ${progress}%...` : 'Posting...') : isEdit ? 'Update Announcement' : 'Post Announcement'}
+            {submitting ? (
+              progress > 0
+                ? `Uploading ${progress}% — ${formatBytes(uploadedBytes)} / ${formatBytes(totalBytes)}`
+                : files.length > 0 ? 'Preparing upload...' : 'Posting...'
+            ) : isEdit ? 'Update Announcement' : 'Post Announcement'}
           </button>
           {submitting && files.length > 0 && (
             <div className="w-full h-1.5 bg-app-surface-2 rounded-full overflow-hidden">

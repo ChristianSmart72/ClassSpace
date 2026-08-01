@@ -36,16 +36,14 @@ export async function getMaterials(courseId: number) {
 }
 
 export async function uploadMaterial(courseId: number, payload: {
-  name: string; file: File; category: string; onProgress?: (percent: number) => void;
+  name: string; category: string; file_url: string; file_name: string; file_size: number;
 }) {
-  const formData = new FormData();
-  formData.append('name', payload.name);
-  formData.append('category', payload.category);
-  formData.append('file', payload.file);
-  const { data } = await api.post(`/courses/${courseId}/materials`, formData, {
-    onUploadProgress: e => {
-      if (payload.onProgress && e.total) payload.onProgress(Math.round((e.loaded / e.total) * 100));
-    },
+  const { data } = await api.post(`/courses/${courseId}/materials`, {
+    name: payload.name,
+    category: payload.category,
+    file_url: payload.file_url,
+    file_name: payload.file_name,
+    file_size: payload.file_size,
   });
   return data.material as Material;
 }

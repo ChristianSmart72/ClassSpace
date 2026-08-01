@@ -24,6 +24,7 @@ import { resetPageRoute } from './routes/reset-page.js';
 import { createTables } from './db/schema.js';
 import { getDb, UPLOADS_DIR } from './db/connection.js';
 import { validateEnv } from './lib/config.js';
+import { registerUploadRouter } from './lib/uploadrouter.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 3001;
@@ -33,7 +34,7 @@ const IS_PROD = process.env.NODE_ENV === 'production';
 async function main() {
   validateEnv();
 
-  const app = Fastify({ logger: true, bodyLimit: 50 * 1024 * 1024 });
+  const app = Fastify({ logger: true, bodyLimit: 1024 * 1024 * 1024 });
 
   await app.register(helmet, { contentSecurityPolicy: false });
   await app.register(rateLimit, { max: 100, timeWindow: '1 minute' });
@@ -43,7 +44,7 @@ async function main() {
       : true,
     credentials: true,
   });
-  await app.register(multipart, { limits: { fileSize: 50 * 1024 * 1024 } });
+  await app.register(multipart, { limits: { fileSize: 1024 * 1024 * 1024 } });
   await app.register(compress, { global: true, threshold: 1024 });
 
   app.setErrorHandler(async (error, request, reply) => {
@@ -85,6 +86,7 @@ async function main() {
   pushRoutes(app);
   resetRoutes(app);
   resetPageRoute(app);
+  registerUploadRouter(app);
 
   app.get('/api/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
 

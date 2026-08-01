@@ -1,6 +1,6 @@
 import { UTApi, UTFile } from 'uploadthing/server';
 
-export const MAX_FILE_SIZE = 16 * 1024 * 1024;
+export const MAX_FILE_SIZE = 1024 * 1024 * 1024;
 
 let utapi: UTApi | null = null;
 
@@ -20,7 +20,7 @@ export function keyFromUrl(url: string): string | null {
 }
 
 export function uploadTooLargeError(): Error & { statusCode: number } {
-  const err = new Error('File too large — max 16MB per file') as Error & { statusCode: number };
+  const err = new Error('File too large — max 1GB per file') as Error & { statusCode: number };
   err.statusCode = 413;
   return err;
 }

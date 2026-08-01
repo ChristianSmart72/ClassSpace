@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useSpaceStore } from '../../store/spaceStore';
 import { useContentStore } from '../../store/contentStore';
 import { MATERIAL_CATEGORIES, FILE_COLORS } from '../../types';
+import { directUpload, formatBytes } from '../../lib/directUpload';
 
 export function UploadMaterialSheet({ courseId: preselected, onClose }: {
   courseId?: number; onClose: () => void;
@@ -14,19 +15,13 @@ export function UploadMaterialSheet({ courseId: preselected, onClose }: {
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [uploadedBytes, setUploadedBytes] = useState(0);
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-
-    if (f.size > 16 * 1024 * 1024) {
-      setFile(null);
-      setError('File too large — max 16MB');
-      if (fileRef.current) fileRef.current.value = '';
-      return;
-    }
 
     setError('');
     setFile(f);
@@ -40,17 +35,26 @@ export function UploadMaterialSheet({ courseId: preselected, onClose }: {
 
     setSubmitting(true);
     setProgress(0);
+    setUploadedBytes(0);
     setError('');
     try {
+      const [result] = await directUpload.uploadFiles('blob', {
+        files: [file],
+        onUploadProgress: ({ progress: p, loaded }) => {
+          setProgress(Math.round(p));
+          setUploadedBytes(loaded);
+        },
+      });
       await uploadMaterial(courseId, {
         name,
-        file,
         category,
-        onProgress: setProgress,
+        file_url: result.url,
+        file_name: result.name,
+        file_size: result.size,
       });
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Upload failed');
+      setError(err?.message || err?.response?.data?.error || 'Upload failed');
     } finally {
       setSubmitting(false);
     }
@@ -113,7 +117,7 @@ export function UploadMaterialSheet({ courseId: preselected, onClose }: {
 
           <button onClick={handleSubmit} disabled={submitting || !file}
             className="w-full bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200 disabled:opacity-50">
-            {submitting ? `Uploading ${progress}%` : 'Upload Material'}
+            {submitting ? (progress > 0 ? `Uploading ${progress}% — ${formatBytes(uploadedBytes)} / ${formatBytes(file?.size || 0)}` : 'Uploading...') : 'Upload Material'}
           </button>
           {submitting && (
             <div className="w-full h-1.5 bg-app-surface-2 rounded-full overflow-hidden">

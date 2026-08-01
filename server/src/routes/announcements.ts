@@ -143,7 +143,22 @@ export function announcementRoutes(app: FastifyInstance) {
       deadline = json.deadline || null;
       venue = json.venue || null;
       instructions = json.instructions || null;
-      if (json.file_data) {
+      if (Array.isArray(json.files)) {
+        for (const f of json.files) {
+          if (f?.file_url) {
+            attachments.push({
+              fileUrl: String(f.file_url),
+              fileName: String(f.file_name || 'file'),
+              fileSize: Number(f.file_size) || 0,
+            });
+          }
+        }
+        if (attachments.length > 0) {
+          fileUrl = attachments[0].fileUrl;
+          fileName = attachments[0].fileName;
+          fileSize = attachments[0].fileSize;
+        }
+      } else if (json.file_data) {
         const result = await uploadFile(json.file_data, json.file_name || 'file.bin');
         fileUrl = result.url;
         fileName = json.file_name || null;

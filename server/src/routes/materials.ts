@@ -82,7 +82,7 @@ export function materialRoutes(app: FastifyInstance) {
       }
     } else {
       const data = request.body as {
-        name: string; file_data?: string; file_size?: number; file_type?: string; category?: string;
+        name: string; file_data?: string; file_url?: string; file_name?: string; file_size?: number; file_type?: string; category?: string;
       };
       if (!data.name) return reply.status(400).send({ error: 'Material name is required' });
       name = data.name;
@@ -90,7 +90,12 @@ export function materialRoutes(app: FastifyInstance) {
       category = data.category || 'Other';
       fileSize = data.file_size || 0;
 
-      if (data.file_data) {
+      if (data.file_url) {
+        fileUrl = data.file_url;
+        if (!fileSize && data.file_size) fileSize = data.file_size;
+        const ext = (data.file_name || '').split('.').pop()?.toLowerCase();
+        if (ext && fileType === 'other') fileType = ext;
+      } else if (data.file_data) {
         const result = await uploadFile(data.file_data, `${name}.${fileType}`, undefined);
         fileUrl = result.url;
       }
