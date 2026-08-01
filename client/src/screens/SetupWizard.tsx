@@ -16,7 +16,7 @@ export function SetupWizard() {
   const [step, setStep] = useState(1);
   const [name, setName] = useState(user?.name || '');
   const [dept, setDept] = useState('');
-  const [level, setLevel] = useState('');
+  const [level, setLevel] = useState('100 Level');
   const [uni, setUni] = useState('');
   const [slug, setSlug] = useState('');
   const [courses, setCourses] = useState<CourseInput[]>([{ name: '', code: '' }]);
@@ -35,7 +35,7 @@ export function SetupWizard() {
   };
 
   const validCourseCount = courses.filter((c) => c.name.trim() && c.code.trim()).length;
-  const step1Complete = !!(name.trim() && dept.trim() && uni.trim());
+  const step1Complete = !!(name.trim() && dept.trim() && level && uni.trim());
 
   const handleCreate = async () => {
     if (!name || !dept || !level || !uni) {

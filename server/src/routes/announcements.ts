@@ -104,9 +104,9 @@ export function announcementRoutes(app: FastifyInstance) {
     const attachments: { fileUrl: string; fileName: string; fileSize: number }[] = [];
 
     if (ct.includes('multipart/form-data')) {
-      const parts = request.files();
+      const parts = request.parts();
       for await (const part of parts) {
-        if (part.filename) {
+        if (part.type === 'file') {
           const buffer = await part.toBuffer();
           if (buffer.length > 0) {
             const result = await uploadFileBuffer(buffer, part.filename, part.mimetype);
