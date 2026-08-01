@@ -18,6 +18,7 @@ export function PostAnnouncementSheet({ spaceId, onClose, announcement }: { spac
   const [venue, setVenue] = useState(announcement?.venue ?? '');
   const [instructions, setInstructions] = useState(announcement?.instructions ?? '');
   const [submitting, setSubmitting] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -26,6 +27,15 @@ export function PostAnnouncementSheet({ spaceId, onClose, announcement }: { spac
   const handleFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     const picked = Array.from(e.target.files || []);
     if (picked.length === 0) return;
+
+    const oversized = picked.filter(f => f.size > 16 * 1024 * 1024);
+    if (oversized.length > 0) {
+      setError(`File too large — max 16MB per file (${oversized[0].name})`);
+      if (fileRef.current) fileRef.current.value = '';
+      return;
+    }
+
+    setError('');
     setFiles(prev => [...prev, ...picked]);
     if (fileRef.current) fileRef.current.value = '';
   };
@@ -65,7 +75,11 @@ export function PostAnnouncementSheet({ spaceId, onClose, announcement }: { spac
         if (venue) formData.append('venue', venue);
         if (instructions) formData.append('instructions', instructions);
         for (const f of files) formData.append('file', f);
-        await api.post(`/spaces/${spaceId}/announcements`, formData);
+        await api.post(`/spaces/${spaceId}/announcements`, formData, {
+          onUploadProgress: e => {
+            if (e.total) setProgress(Math.round((e.loaded / e.total) * 100));
+          },
+        });
         await fetchAnnouncements(spaceId);
       }
       onClose();
@@ -175,8 +189,13 @@ export function PostAnnouncementSheet({ spaceId, onClose, announcement }: { spac
 
           <button onClick={handleSubmit} disabled={submitting}
             className="w-full bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200 disabled:opacity-50">
-            {submitting ? 'Saving...' : isEdit ? 'Update Announcement' : 'Post Announcement'}
+            {submitting ? (progress > 0 ? `Posting ${progress}%...` : 'Posting...') : isEdit ? 'Update Announcement' : 'Post Announcement'}
           </button>
+          {submitting && files.length > 0 && (
+            <div className="w-full h-1.5 bg-app-surface-2 rounded-full overflow-hidden">
+              <div className="h-full bg-app-accent rounded-full transition-all duration-200" style={{ width: `${progress}%` }} />
+            </div>
+          )}
         </div>
       </div>
     </div>

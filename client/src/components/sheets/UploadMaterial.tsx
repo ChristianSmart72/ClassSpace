@@ -21,6 +21,14 @@ export function UploadMaterialSheet({ courseId: preselected, onClose }: {
     const f = e.target.files?.[0];
     if (!f) return;
 
+    if (f.size > 16 * 1024 * 1024) {
+      setFile(null);
+      setError('File too large — max 16MB');
+      if (fileRef.current) fileRef.current.value = '';
+      return;
+    }
+
+    setError('');
     setFile(f);
     if (!name) setName(f.name.replace(/\.[^/.]+$/, ''));
   };

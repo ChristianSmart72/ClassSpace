@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { getDb, isSpaceMember } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { sendPushToSpaceMembers } from '../lib/push.js';
-import { uploadFile, uploadFileBuffer } from '../lib/upload.js';
+import { uploadFile, uploadFileBuffer, deleteFileByUrl } from '../lib/upload.js';
 
 export function announcementRoutes(app: FastifyInstance) {
   app.get('/api/spaces/:id/announcements', { preHandler: authMiddleware }, async (request, reply) => {
@@ -266,7 +266,7 @@ export function announcementRoutes(app: FastifyInstance) {
     const userId = request.user!.userId;
     const db = getDb();
 
-    const ann = await db.prepare('SELECT id, space_id, author_id FROM announcements WHERE id = ?').get(Number(id)) as any;
+    const ann = await db.prepare('SELECT id, space_id, author_id, file_data FROM announcements WHERE id = ?').get(Number(id)) as any;
     if (!ann) return reply.status(404).send({ error: 'Not found' });
 
     const isRep = await db.prepare(
@@ -277,8 +277,17 @@ export function announcementRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: 'Not authorized' });
     }
 
+    const attachments = await db.prepare(
+      'SELECT file_url FROM announcement_attachments WHERE announcement_id = ?'
+    ).all(Number(id)) as any[];
     await db.prepare('DELETE FROM announcement_attachments WHERE announcement_id = ?').run(Number(id));
     await db.prepare('DELETE FROM announcements WHERE id = ?').run(Number(id));
+
+    await Promise.allSettled([
+      deleteFileByUrl(ann.file_data),
+      ...attachments.map((a: any) => deleteFileByUrl(a.file_url)),
+    ]);
+
     return { success: true };
   });
 

@@ -1,7 +1,9 @@
 import { FastifyInstance } from 'fastify';
 import { getDb, isSpaceMember } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
-import { uploadFile, uploadFileBuffer } from '../lib/upload.js';
+import { uploadFile, uploadFileBuffer, deleteFileByUrl } from '../lib/upload.js';
+
+const DEMO_FILE_URL = 'https://utfs.io/f/0YOWD4Ku08Y31gp6G6UR8FXkzYnomKRt4LGjCbgJflrZdB9E';
 
 export function materialRoutes(app: FastifyInstance) {
   app.get('/api/courses/:id/materials', { preHandler: authMiddleware }, async (request, reply) => {
@@ -27,7 +29,7 @@ export function materialRoutes(app: FastifyInstance) {
 
     const materials = await db.prepare(`
       SELECT m.id, m.name, m.file_type, m.category, m.file_size, m.created_at,
-             m.pinned, m.downloads,
+             m.pinned, m.downloads, m.file_data IS NOT NULL as has_file,
              u.name as uploader_name, c.name as course_name, c.code as course_code
       FROM materials m
       JOIN users u ON m.uploader_id = u.id
@@ -37,7 +39,7 @@ export function materialRoutes(app: FastifyInstance) {
     `).all(Number(id)) as any[];
 
     return {
-      materials: materials.map(m => ({ ...m, pinned: Boolean(m.pinned), downloads: m.downloads || 0 })),
+      materials: materials.map(m => ({ ...m, pinned: Boolean(m.pinned), has_file: Boolean(m.has_file), downloads: m.downloads || 0 })),
     };
   });
 
@@ -120,7 +122,7 @@ export function materialRoutes(app: FastifyInstance) {
       return reply.status(404).send({ error: 'Material not found' });
     }
     if (!material.file_data) {
-      return reply.status(404).send({ error: 'This material has no file attached (demo/seed entry). Ask the class rep to re-upload it.' });
+      return reply.redirect(DEMO_FILE_URL);
     }
 
     await db.prepare('UPDATE materials SET downloads = downloads + 1 WHERE id = ?').run(Number(id));
@@ -154,7 +156,7 @@ export function materialRoutes(app: FastifyInstance) {
     const userId = request.user!.userId;
     const db = getDb();
 
-    const mat = await db.prepare('SELECT id, space_id, uploader_id FROM materials WHERE id = ?').get(Number(id)) as any;
+    const mat = await db.prepare('SELECT id, space_id, uploader_id, file_data FROM materials WHERE id = ?').get(Number(id)) as any;
     if (!mat) return reply.status(404).send({ error: 'Not found' });
 
     const isRep = await db.prepare(
@@ -166,6 +168,7 @@ export function materialRoutes(app: FastifyInstance) {
     }
 
     await db.prepare('DELETE FROM materials WHERE id = ?').run(Number(id));
+    await deleteFileByUrl(mat.file_data);
     return { success: true };
   });
 
@@ -215,6 +218,7 @@ export function materialRoutes(app: FastifyInstance) {
 
     const material = await db.prepare(`
       SELECT m.id, m.name, m.file_type, m.category, m.file_size, m.created_at,
+             m.file_data IS NOT NULL as has_file,
              u.name as uploader_name, c.name as course_name, c.code as course_code,
              c.icon as course_icon, s.name as space_name, s.id as space_id
       FROM materials m
@@ -228,6 +232,6 @@ export function materialRoutes(app: FastifyInstance) {
       return reply.status(404).send({ error: 'Material not found' });
     }
 
-    return material;
+    return { ...material, has_file: Boolean(material.has_file) };
   });
 }

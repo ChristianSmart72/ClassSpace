@@ -74,6 +74,7 @@ export interface Material {
   course_code?: string;
   pinned?: boolean;
   downloads?: number;
+  has_file?: boolean;
 }
 
 export interface TimetableEntry {
