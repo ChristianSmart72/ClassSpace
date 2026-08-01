@@ -13,6 +13,7 @@ export function UploadMaterialSheet({ courseId: preselected, onClose }: {
   const [category, setCategory] = useState('Notes');
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -30,9 +31,15 @@ export function UploadMaterialSheet({ courseId: preselected, onClose }: {
     if (!courseId) { setError('Please select a course'); return; }
 
     setSubmitting(true);
+    setProgress(0);
     setError('');
     try {
-      await uploadMaterial(courseId, { name, file, category });
+      await uploadMaterial(courseId, {
+        name,
+        file,
+        category,
+        onProgress: setProgress,
+      });
       onClose();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Upload failed');
@@ -98,8 +105,13 @@ export function UploadMaterialSheet({ courseId: preselected, onClose }: {
 
           <button onClick={handleSubmit} disabled={submitting || !file}
             className="w-full bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200 disabled:opacity-50">
-            {submitting ? 'Uploading...' : 'Upload Material'}
+            {submitting ? `Uploading ${progress}%` : 'Upload Material'}
           </button>
+          {submitting && (
+            <div className="w-full h-1.5 bg-app-surface-2 rounded-full overflow-hidden">
+              <div className="h-full bg-app-accent rounded-full transition-all duration-200" style={{ width: `${progress}%` }} />
+            </div>
+          )}
         </div>
       </div>
     </div>

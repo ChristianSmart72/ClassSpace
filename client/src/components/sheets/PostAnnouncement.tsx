@@ -19,9 +19,18 @@ export function PostAnnouncementSheet({ spaceId, onClose, announcement }: { spac
   const [instructions, setInstructions] = useState(announcement?.instructions ?? '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const isEdit = !!announcement;
+
+  const handleFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = Array.from(e.target.files || []);
+    if (picked.length === 0) return;
+    setFiles(prev => [...prev, ...picked]);
+    if (fileRef.current) fileRef.current.value = '';
+  };
+
+  const removeFile = (i: number) => setFiles(files.filter((_, idx) => idx !== i));
 
   const handleSubmit = async () => {
     if (!title.trim() || !body.trim()) {
@@ -55,7 +64,7 @@ export function PostAnnouncementSheet({ spaceId, onClose, announcement }: { spac
         if (deadline) formData.append('deadline', deadline);
         if (venue) formData.append('venue', venue);
         if (instructions) formData.append('instructions', instructions);
-        if (file) formData.append('file', file);
+        for (const f of files) formData.append('file', f);
         await api.post(`/spaces/${spaceId}/announcements`, formData);
         await fetchAnnouncements(spaceId);
       }
@@ -134,10 +143,21 @@ export function PostAnnouncementSheet({ spaceId, onClose, announcement }: { spac
           </div>
 
           <div>
-            <label className="text-app-text-dim text-xs font-jakarta font-semibold uppercase tracking-wider mb-1.5 block">Attachment (optional)</label>
-            <input ref={fileRef} type="file" onChange={e => setFile(e.target.files?.[0] ?? null)}
+            <label className="text-app-text-dim text-xs font-jakarta font-semibold uppercase tracking-wider mb-1.5 block">Attachments (optional, up to 5)</label>
+            <input ref={fileRef} type="file" multiple onChange={handleFiles}
               className="w-full text-app-text text-sm font-inter file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border file:border-app-border file:bg-app-surface file:text-app-text file:text-xs file:font-jakarta file:font-semibold hover:file:bg-app-surface-2 cursor-pointer" />
-            {file && <p className="text-app-text-dim text-xs font-inter mt-1">{file.name} ({(file.size / 1024).toFixed(0)} KB)</p>}
+            {files.length > 0 && (
+              <div className="flex flex-col gap-1.5 mt-2">
+                {files.map((f, i) => (
+                  <div key={`${f.name}-${i}`} className="bg-app-surface border border-app-border rounded-lg px-3 py-2 flex items-center gap-2">
+                    <span className="text-sm flex-shrink-0">📎</span>
+                    <span className="text-app-text text-xs font-inter truncate flex-1">{f.name}</span>
+                    <span className="text-app-text-faint text-[10px] font-inter flex-shrink-0">{(f.size / 1024).toFixed(0)} KB</span>
+                    <button onClick={() => removeFile(i)} className="text-app-red text-sm flex-shrink-0 px-1">×</button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex gap-4">

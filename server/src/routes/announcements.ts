@@ -101,27 +101,36 @@ export function announcementRoutes(app: FastifyInstance) {
     let fileUrl: string | null = null;
     let fileName: string | null = null;
     let fileSize: number | null = null;
+    const attachments: { fileUrl: string; fileName: string; fileSize: number }[] = [];
 
     if (ct.includes('multipart/form-data')) {
-      const data = await request.file();
-      if (!data) return reply.status(400).send({ error: 'No data received' });
-      title = (data.fields.title as any)?.value || '';
-      body = (data.fields.body as any)?.value || '';
-      type = (data.fields.type as any)?.value || 'announcement';
-      urgent = (data.fields.urgent as any)?.value === 'true';
-      pinned = (data.fields.pinned as any)?.value === 'true';
-      courseId = (data.fields.course_id as any)?.value ? Number((data.fields.course_id as any).value) : null;
-      deadline = (data.fields.deadline as any)?.value || null;
-      venue = (data.fields.venue as any)?.value || null;
-      instructions = (data.fields.instructions as any)?.value || null;
-      if (data.filename) {
-        const buffer = await data.toBuffer();
-        if (buffer.length > 0) {
-          const result = await uploadFileBuffer(buffer, data.filename, data.mimetype);
-          fileUrl = result.url;
-          fileName = data.filename;
-          fileSize = buffer.length;
+      const parts = request.files();
+      for await (const part of parts) {
+        if (part.filename) {
+          const buffer = await part.toBuffer();
+          if (buffer.length > 0) {
+            const result = await uploadFileBuffer(buffer, part.filename, part.mimetype);
+            attachments.push({ fileUrl: result.url, fileName: part.filename, fileSize: buffer.length });
+          }
+          continue;
         }
+        const value = String((part as any).value ?? '');
+        switch (part.fieldname) {
+          case 'title': title = value; break;
+          case 'body': body = value; break;
+          case 'type': type = value || 'announcement'; break;
+          case 'urgent': urgent = value === 'true'; break;
+          case 'pinned': pinned = value === 'true'; break;
+          case 'course_id': courseId = value ? Number(value) : null; break;
+          case 'deadline': deadline = value || null; break;
+          case 'venue': venue = value || null; break;
+          case 'instructions': instructions = value || null; break;
+        }
+      }
+      if (attachments.length > 0) {
+        fileUrl = attachments[0].fileUrl;
+        fileName = attachments[0].fileName;
+        fileSize = attachments[0].fileSize;
       }
     } else {
       const json = request.body as any;
@@ -172,6 +181,16 @@ export function announcementRoutes(app: FastifyInstance) {
       WHERE a.id = ?
     `).get(insertResult.lastInsertRowid) as any;
 
+    for (const att of attachments) {
+      await db.prepare(
+        'INSERT INTO announcement_attachments (announcement_id, file_url, file_name, file_size) VALUES (?, ?, ?, ?)'
+      ).run(insertResult.lastInsertRowid, att.fileUrl, att.fileName, att.fileSize);
+    }
+
+    const attachmentRows = await db.prepare(
+      'SELECT id, file_name, file_size FROM announcement_attachments WHERE announcement_id = ? ORDER BY id'
+    ).all(insertResult.lastInsertRowid) as any[];
+
     const authorName = ann.author_name || 'Someone';
     const prefix = urgent ? '🚨' : '📢';
     sendPushToSpaceMembers(id, {
@@ -189,6 +208,12 @@ export function announcementRoutes(app: FastifyInstance) {
         pinned: Boolean(ann.pinned),
         reactions: { upvote: 0, downvote: 0 },
         my_reaction: null,
+        attachments: attachmentRows.map(a => ({
+          id: a.id,
+          file_name: a.file_name,
+          file_size: a.file_size,
+          url: `/api/announcements/${insertResult.lastInsertRowid}/attachment/${a.id}/download`,
+        })),
       }
     };
   });
@@ -208,7 +233,32 @@ export function announcementRoutes(app: FastifyInstance) {
     `).get(id) as any;
 
     if (!ann) return reply.status(404).send({ error: 'Announcement not found' });
-    return ann;
+
+    const attachments = await db.prepare(
+      'SELECT id, file_name, file_size FROM announcement_attachments WHERE announcement_id = ? ORDER BY id'
+    ).all(Number(id)) as any[];
+
+    return {
+      ...ann,
+      attachments: attachments.map(a => ({
+        id: a.id,
+        file_name: a.file_name,
+        file_size: a.file_size,
+        url: `/api/announcements/${id}/attachment/${a.id}/download`,
+      })),
+    };
+  });
+
+  app.get('/api/announcements/:id/attachment/:attId/download', async (request, reply) => {
+    const { id, attId } = request.params as { id: string; attId: string };
+    const db = getDb();
+
+    const att = await db.prepare(
+      'SELECT file_url FROM announcement_attachments WHERE id = ? AND announcement_id = ?'
+    ).get(Number(attId), Number(id)) as any;
+
+    if (!att || !att.file_url) return reply.status(404).send({ error: 'File not found' });
+    return reply.redirect(att.file_url as string);
   });
 
   app.delete('/api/announcements/:id', { preHandler: authMiddleware }, async (request, reply) => {
@@ -227,6 +277,7 @@ export function announcementRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: 'Not authorized' });
     }
 
+    await db.prepare('DELETE FROM announcement_attachments WHERE announcement_id = ?').run(Number(id));
     await db.prepare('DELETE FROM announcements WHERE id = ?').run(Number(id));
     return { success: true };
   });

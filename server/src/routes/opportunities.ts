@@ -20,10 +20,34 @@ export function opportunityRoutes(app: FastifyInstance) {
       FROM opportunities o
       JOIN users u ON o.author_id = u.id
       WHERE o.space_id = ?
-      ORDER BY o.created_at DESC
+      ORDER BY o.pinned DESC, o.created_at DESC
     `).all(id) as any[];
 
-    return { opportunities: items };
+    return { opportunities: items.map(o => ({ ...o, pinned: Boolean(o.pinned) })) };
+  });
+
+  app.patch('/api/opportunities/:id', { preHandler: authMiddleware }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const userId = request.user!.userId;
+    const body = request.body as { pinned?: boolean };
+    const db = getDb();
+
+    const opp = await db.prepare('SELECT * FROM opportunities WHERE id = ?').get(Number(id)) as any;
+    if (!opp) return reply.status(404).send({ error: 'Not found' });
+
+    const isMember = await db.prepare(
+      'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
+    ).get(opp.space_id, userId) as any;
+
+    if (!isMember || isMember.role !== 'rep') {
+      return reply.status(403).send({ error: 'Only class reps can update opportunities' });
+    }
+
+    if (body.pinned !== undefined) {
+      await db.prepare('UPDATE opportunities SET pinned = ? WHERE id = ?').run(body.pinned ? 1 : 0, Number(id));
+    }
+
+    return { success: true };
   });
 
   app.post('/api/spaces/:id/opportunities', { preHandler: authMiddleware }, async (request, reply) => {

@@ -326,8 +326,36 @@ export function AnnouncementDetail() {
           </div>
         )}
 
-        {/* ── Announcement file ── */}
-        {ann.file_data && ann.file_name && (
+        {/* ── Attached files ── */}
+        {(ann.attachments && ann.attachments.length > 0) && (
+          <div className="mb-5 animate-fadeIn">
+            <p className="text-app-text-faint text-[10px] font-jakarta font-bold uppercase tracking-widest mb-3">
+              {ann.attachments.length === 1 ? 'Attached File' : `Attached Files (${ann.attachments.length})`}
+            </p>
+            <div className="flex flex-col gap-2">
+              {ann.attachments.map(att => (
+                <a key={att.id} href={att.url} target="_blank" rel="noopener noreferrer"
+                  className="bg-app-surface-2 rounded-2xl border border-app-border flex items-center gap-3 px-4 py-3 active:scale-[0.99] transition-transform">
+                  <div className="w-11 h-11 rounded-xl bg-app-accent/10 border border-app-accent/20 flex items-center justify-center text-xl flex-shrink-0">📎</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-app-text font-jakarta font-semibold text-sm leading-snug truncate">{att.file_name}</p>
+                    <p className="text-app-text-faint text-xs font-inter mt-0.5">{fileSize(att.file_size)}</p>
+                  </div>
+                  <div className="w-9 h-9 rounded-xl bg-app-accent/10 border border-app-accent/20 flex items-center justify-center text-app-accent flex-shrink-0">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Announcement file (legacy single file) ── */}
+        {(!ann.attachments || ann.attachments.length === 0) && ann.file_data && ann.file_name && (
           <div className="mb-5 animate-fadeIn">
             <p className="text-app-text-faint text-[10px] font-jakarta font-bold uppercase tracking-widest mb-3">Attached File</p>
             <div className="bg-app-surface-2 rounded-2xl border border-app-border flex items-center gap-3 px-4 py-3">

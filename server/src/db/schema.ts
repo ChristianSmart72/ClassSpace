@@ -5,6 +5,7 @@ const TABLES_NAMES = [
   'poll_votes',
   'poll_options',
   'polls',
+  'announcement_attachments',
   'opportunities',
   'timetable',
   'reactions',
@@ -137,6 +138,15 @@ const TABLES = [
     category TEXT NOT NULL DEFAULT 'other',
     link TEXT,
     deadline TEXT,
+    pinned INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
+  `CREATE TABLE IF NOT EXISTS announcement_attachments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    announcement_id INTEGER NOT NULL REFERENCES announcements(id) ON DELETE CASCADE,
+    file_url TEXT NOT NULL,
+    file_name TEXT NOT NULL,
+    file_size INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
   `CREATE TABLE IF NOT EXISTS push_subscriptions (
@@ -182,4 +192,14 @@ export async function createTables(): Promise<void> {
   const db = getDb();
   await db.batch(TABLES);
   await db.batch(INDEXES);
+
+  // Migrations for existing databases (CREATE TABLE IF NOT EXISTS won't alter them)
+  const migrations = [
+    `ALTER TABLE opportunities ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0`,
+  ];
+  for (const sql of migrations) {
+    try {
+      await db.execute(sql);
+    } catch { /* column already exists */ }
+  }
 }

@@ -20,3 +20,8 @@ export async function createOpportunity(spaceId: string, payload: {
 export async function deleteOpportunity(id: number) {
   await api.delete(`/opportunities/${id}`);
 }
+
+export async function patchOpportunity(id: number, updates: { pinned?: boolean }) {
+  const { data } = await api.patch(`/opportunities/${id}`, updates);
+  return data;
+}

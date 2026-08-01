@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, memo } from 'react';
+import { useEffect, useState, useMemo, useRef, memo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSpaceStore } from '../store/spaceStore';
 import { useContentStore } from '../store/contentStore';
@@ -32,6 +32,16 @@ const CARD_FILE_COLORS: Record<string, string> = {
   pdf: 'text-app-red', doc: 'text-app-accent2', ppt: 'text-app-orange',
   xls: 'text-app-green', img: 'text-app-accent2', video: 'text-app-red', other: 'text-app-text-dim',
 };
+
+function getDownloaded(): number[] {
+  try { return JSON.parse(localStorage.getItem('matDownloaded') || '[]'); } catch { return []; }
+}
+function markDownloaded(id: number) {
+  try {
+    const list = getDownloaded();
+    if (!list.includes(id)) { list.push(id); localStorage.setItem('matDownloaded', JSON.stringify(list)); }
+  } catch {}
+}
 
 
 
@@ -278,12 +288,23 @@ const ResourceCard = memo(function ResourceCard({ material: m, canDelete, deleti
   onClick: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuUp, setMenuUp] = useState(false);
+  const [dl, setDl] = useState(() => getDownloaded().includes(m.id));
+  const menuBtnRef = useRef<HTMLButtonElement>(null);
   const icon = FILE_ICONS[m.file_type] || '📁';
   const colorClass = CARD_FILE_COLORS[m.file_type] || 'text-app-text-dim';
   const extLabel = FILE_EXT_LABELS[m.file_type] || m.file_type.toUpperCase();
 
+  const toggleMenu = () => {
+    if (!menuOpen && menuBtnRef.current) {
+      const rect = menuBtnRef.current.getBoundingClientRect();
+      setMenuUp(window.innerHeight - rect.bottom < 260);
+    }
+    setMenuOpen(o => !o);
+  };
+
   return (
-    <div className="bg-app-surface rounded-xl border border-app-border overflow-hidden relative card-hover">
+    <div className="bg-app-surface rounded-xl border border-app-border relative card-hover">
       <div onClick={onClick} className="flex items-start gap-3 active:scale-[0.99] transition-all duration-200 cursor-pointer py-3 pl-3.5 pr-10">
         <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0 mt-0.5" style={{ background: 'var(--app-surface-2)' }}>
           <span className={colorClass}>{icon}</span>
@@ -312,18 +333,25 @@ const ResourceCard = memo(function ResourceCard({ material: m, canDelete, deleti
       </div>
 
       <div className="absolute right-2 top-3 z-10" onClick={e => e.stopPropagation()}>
-        <button onClick={() => setMenuOpen(o => !o)}
+        <button ref={menuBtnRef} onClick={toggleMenu}
           className="p-1.5 text-app-text-faint hover:text-app-text transition-colors rounded-lg hover:bg-app-surface-2 text-sm leading-none tracking-wider font-bold">
           ···
         </button>
         {menuOpen && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-            <div className="absolute right-0 top-full mt-1 z-50 bg-app-bg border border-app-border rounded-xl shadow-xl py-1.5 min-w-[160px] animate-fadeIn">
-              <button onClick={() => { window.open(`/api/materials/${m.id}/download`, '_blank'); setMenuOpen(false); }}
-                className="w-full text-left px-3.5 py-2 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2.5">
-                <span className="text-sm w-4 text-center">⬇</span> Download
-              </button>
+            <div className={`absolute right-0 z-50 bg-app-bg border border-app-border rounded-xl shadow-xl py-1.5 min-w-[168px] max-h-[70vh] overflow-y-auto animate-fadeIn ${menuUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}`}>
+              {dl ? (
+                <button onClick={() => { window.open(`/api/materials/${m.id}/download`, '_blank'); setMenuOpen(false); }}
+                  className="w-full text-left px-3.5 py-2 text-xs font-jakarta font-medium text-app-green hover:bg-app-surface transition-colors flex items-center gap-2.5">
+                  <span className="text-sm w-4 text-center">✓</span> Downloaded
+                </button>
+              ) : (
+                <button onClick={() => { markDownloaded(m.id); setDl(true); window.open(`/api/materials/${m.id}/download`, '_blank'); setMenuOpen(false); }}
+                  className="w-full text-left px-3.5 py-2 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2.5">
+                  <span className="text-sm w-4 text-center">⬇</span> Download
+                </button>
+              )}
               <button onClick={() => { onShare(); setMenuOpen(false); }}
                 className="w-full text-left px-3.5 py-2 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2.5">
                 <span className="text-sm w-4 text-center">🔗</span> Share

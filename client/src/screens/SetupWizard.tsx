@@ -34,6 +34,9 @@ export function SetupWizard() {
     setCourses(updated);
   };
 
+  const validCourseCount = courses.filter((c) => c.name.trim() && c.code.trim()).length;
+  const step1Complete = !!(name.trim() && dept.trim() && uni.trim());
+
   const handleCreate = async () => {
     if (!name || !dept || !level || !uni) {
       setError('Please fill in all fields');
@@ -57,8 +60,8 @@ export function SetupWizard() {
         color_index: colIndices[i % colIndices.length],
       }));
 
-      await createSpace({ name: `${level} ${dept}`, dept, level, uni, slug: slug || undefined, courses: courseData });
-      navigate('/home');
+      const space = await createSpace({ name: `${level} ${dept}`, dept, level, uni, slug: slug || undefined, courses: courseData });
+      navigate(`/space/${space.id}`);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to create space');
     } finally {
@@ -124,10 +127,13 @@ export function SetupWizard() {
             </div>
           </div>
 
-          <button onClick={() => setStep(2)}
-            className="w-full bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl py-3.5 mt-8 active:scale-[0.98] transition-all duration-200">
+          <button onClick={() => setStep(2)} disabled={!step1Complete}
+            className="w-full bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl py-3.5 mt-8 active:scale-[0.98] transition-all duration-200 disabled:opacity-50">
             Continue →
           </button>
+          {!step1Complete && (
+            <p className="text-app-text-faint text-xs font-inter text-center mt-2">Fill in your name, department and university to continue</p>
+          )}
         </div>
       )}
 
@@ -163,12 +169,14 @@ export function SetupWizard() {
               className="flex-1 bg-app-surface border border-app-border text-app-text font-jakarta font-semibold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200">
               ← Back
             </button>
-            <button onClick={handleCreate} disabled={loading}
+            <button onClick={handleCreate} disabled={loading || validCourseCount === 0}
               className="flex-[2] bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200 disabled:opacity-50">
               {loading ? 'Creating...' : 'Create Space →'}
             </button>
           </div>
-          {error && <p className="text-app-red text-sm font-inter text-center mt-2">{error}</p>}
+          {validCourseCount === 0 ? (
+            <p className="text-app-text-faint text-xs font-inter text-center mt-2">Add at least one course to continue</p>
+          ) : error && <p className="text-app-red text-sm font-inter text-center mt-2">{error}</p>}
         </div>
       )}
     </div>

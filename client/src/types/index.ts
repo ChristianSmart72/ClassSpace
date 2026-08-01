@@ -55,6 +55,7 @@ export interface Announcement {
   file_data?: string;
   file_name?: string;
   file_size?: number;
+  attachments?: { id: number; file_name: string; file_size: number; url: string }[];
 }
 
 export interface Material {
@@ -234,6 +235,7 @@ export interface Opportunity {
   category: string;
   link: string | null;
   deadline: string | null;
+  pinned?: boolean;
   created_at: string;
 }
 

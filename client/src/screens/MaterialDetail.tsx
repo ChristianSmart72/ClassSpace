@@ -17,6 +17,16 @@ function toggleMaterialBookmark(id: number): boolean {
   bms.push(id); localStorage.setItem('matBookmarks', JSON.stringify(bms)); return true;
 }
 
+function getDownloadedMaterials(): number[] {
+  try { return JSON.parse(localStorage.getItem('matDownloaded') || '[]'); } catch { return []; }
+}
+function markDownloaded(id: number) {
+  try {
+    const list = getDownloadedMaterials();
+    if (!list.includes(id)) { list.push(id); localStorage.setItem('matDownloaded', JSON.stringify(list)); }
+  } catch {}
+}
+
 export function MaterialDetail() {
   const { id: spaceId, mid } = useParams<{ id: string; mid: string }>();
   const navigate = useNavigate();
@@ -28,6 +38,8 @@ export function MaterialDetail() {
   const [deleting, setDeleting] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [justDownloaded, setJustDownloaded] = useState(false);
+  const [downloaded, setDownloaded] = useState(() => getDownloadedMaterials().includes(Number(mid)));
   const [bookmarked, setBookmarked] = useState(() => getMaterialBookmarks().includes(Number(mid)));
 
   const isRep = memberRole === 'rep';
@@ -60,15 +72,33 @@ export function MaterialDetail() {
         link.download = `${mat.name}.${mat.file_type}`;
         link.click();
       } else {
-        window.open(`/api/materials/${mat.id}/download`, '_blank');
+        const link = document.createElement('a');
+        link.href = `/api/materials/${mat.id}/download`;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.click();
       }
       setProgress(100);
-      setTimeout(() => setDownloading(false), 500);
+      markDownloaded(mat.id);
+      setDownloaded(true);
+      setJustDownloaded(true);
+      setTimeout(() => { setDownloading(false); setJustDownloaded(false); }, 1500);
     } catch {
       setDownloading(false);
     } finally {
       clearInterval(interval);
-      setTimeout(() => setDownloading(false), 500);
+    }
+  };
+
+  const handleOpenFile = () => {
+    if (!material) return;
+    if (material.file_data) {
+      const link = document.createElement('a');
+      link.href = `data:application/octet-stream;base64,${material.file_data}`;
+      link.download = `${material.name}.${material.file_type}`;
+      link.click();
+    } else {
+      window.open(`/api/materials/${material.id}/download`, '_blank');
     }
   };
 
@@ -153,17 +183,31 @@ export function MaterialDetail() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <button onClick={handleDownload} disabled={downloading}
-            className="w-full bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50">
-            {downloading ? (
-              <span className="flex items-center gap-2">
-                <span className="w-4 h-4 border-2 border-app-bg border-t-transparent rounded-full animate-spin" />
-                Downloading {Math.round(progress)}%
-              </span>
-            ) : (
-              <><span>⬇</span> Download</>
-            )}
-          </button>
+          {justDownloaded && (
+            <div className="bg-app-green/10 border border-app-green/30 rounded-xl px-4 py-2.5 flex items-center gap-2 animate-fadeIn">
+              <span className="text-app-green text-sm">✓</span>
+              <span className="text-app-green text-xs font-jakarta font-semibold">Downloaded successfully</span>
+            </div>
+          )}
+
+          {downloaded && !justDownloaded ? (
+            <button onClick={handleOpenFile}
+              className="w-full bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2">
+              <span>📂</span> Open File
+            </button>
+          ) : (
+            <button onClick={handleDownload} disabled={downloading}
+              className="w-full bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50">
+              {downloading ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-app-bg border-t-transparent rounded-full animate-spin" />
+                  Downloading {Math.round(progress)}%
+                </span>
+              ) : (
+                <><span>⬇</span> Download</>
+              )}
+            </button>
+          )}
 
           <button onClick={handleShare}
             className="w-full bg-app-surface border border-app-border text-app-text font-jakarta font-semibold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2">

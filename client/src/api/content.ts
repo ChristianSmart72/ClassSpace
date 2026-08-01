@@ -8,11 +8,16 @@ export async function getAnnouncements(spaceId: string, filter?: string) {
 }
 
 export async function createAnnouncement(spaceId: string, ann: Record<string, any>) {
-  if (ann.file) {
+  if (ann.file || ann.files) {
     const formData = new FormData();
     for (const [k, v] of Object.entries(ann)) {
-      if (k === 'file') formData.append('file', v as File);
-      else if (v !== undefined && v !== null) formData.append(k, String(v));
+      if (k === 'file') {
+        formData.append('file', v as File);
+      } else if (k === 'files') {
+        for (const f of (v as File[])) formData.append('file', f);
+      } else if (v !== undefined && v !== null) {
+        formData.append(k, String(v));
+      }
     }
     const { data } = await api.post(`/spaces/${spaceId}/announcements`, formData);
     return data.announcement as Announcement;
@@ -31,13 +36,17 @@ export async function getMaterials(courseId: number) {
 }
 
 export async function uploadMaterial(courseId: number, payload: {
-  name: string; file: File; category: string;
+  name: string; file: File; category: string; onProgress?: (percent: number) => void;
 }) {
   const formData = new FormData();
   formData.append('name', payload.name);
   formData.append('category', payload.category);
   formData.append('file', payload.file);
-  const { data } = await api.post(`/courses/${courseId}/materials`, formData);
+  const { data } = await api.post(`/courses/${courseId}/materials`, formData, {
+    onUploadProgress: e => {
+      if (payload.onProgress && e.total) payload.onProgress(Math.round((e.loaded / e.total) * 100));
+    },
+  });
   return data.material as Material;
 }
 
