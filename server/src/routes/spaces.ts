@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { getDb, transaction, isSpaceMember } from '../db/connection.js';
+import { getDb, isSpaceMember } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { customAlphabet } from 'nanoid';
 
@@ -45,24 +45,31 @@ export function spaceRoutes(app: FastifyInstance) {
     }
 
     const inviteCode = generateCode();
+    const courseList = Array.isArray(courses) ? courses : [];
 
-    await transaction(async () => {
-      await db.prepare(
-        'INSERT INTO spaces (id, name, dept, level, uni, rep_id, invite_code) VALUES (?, ?, ?, ?, ?, ?, ?)'
-      ).run(spaceId, name, dept, level, uni, userId, inviteCode);
+    const stmts: ({ sql: string; args: any[] })[] = [
+      {
+        sql: 'INSERT INTO spaces (id, name, dept, level, uni, rep_id, invite_code) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        args: [spaceId, name, dept, level, uni, userId, inviteCode],
+      },
+      {
+        sql: 'INSERT INTO space_members (space_id, user_id, role) VALUES (?, ?, ?)',
+        args: [spaceId, userId, 'rep'],
+      },
+      {
+        sql: 'UPDATE users SET role = ? WHERE id = ?',
+        args: ['rep', userId],
+      },
+    ];
 
-      await db.prepare(
-        'INSERT INTO space_members (space_id, user_id, role) VALUES (?, ?, ?)'
-      ).run(spaceId, userId, 'rep');
+    for (const course of courseList) {
+      stmts.push({
+        sql: 'INSERT INTO courses (space_id, name, code, icon, color_index) VALUES (?, ?, ?, ?, ?)',
+        args: [spaceId, course.name, course.code, course.icon || '📚', course.color_index ?? 0],
+      });
+    }
 
-      await db.prepare('UPDATE users SET role = ? WHERE id = ?').run('rep', userId);
-
-      for (const course of courses) {
-        await db.prepare(
-          'INSERT INTO courses (space_id, name, code, icon, color_index) VALUES (?, ?, ?, ?, ?)'
-        ).run(spaceId, course.name, course.code, course.icon || '📚', course.color_index ?? 0);
-      }
-    });
+    await db.batch(stmts);
 
     const space = await db.prepare('SELECT * FROM spaces WHERE id = ?').get(spaceId) as any;
     const spaceCourses = await db.prepare('SELECT * FROM courses WHERE space_id = ?').all(spaceId) as any[];
