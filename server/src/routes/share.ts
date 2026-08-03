@@ -1,26 +1,27 @@
 import { FastifyInstance } from 'fastify';
 import { getDb } from '../db/connection.js';
+import { SpaceRow, CourseRow, AnnouncementRow, MaterialRow } from '../db/rows.js';
 
 export function shareRoutes(app: FastifyInstance) {
   app.get('/api/share/space/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const space = (await db.prepare('SELECT * FROM spaces WHERE id = ?').get(id) ||
-      await db.prepare('SELECT * FROM spaces WHERE invite_code = ?').get(id)) as any;
+    const space = (await db.prepare<SpaceRow>('SELECT * FROM spaces WHERE id = ?').get(id) ||
+      await db.prepare<SpaceRow>('SELECT * FROM spaces WHERE invite_code = ?').get(id));
     if (!space) return reply.status(404).send({ error: 'Space not found' });
 
-    const rep = await db.prepare('SELECT name FROM users WHERE id = ?').get(space.rep_id) as any;
-    const memberCount = await db.prepare(
+    const rep = await db.prepare<{ name: string }>('SELECT name FROM users WHERE id = ?').get(space.rep_id);
+    const memberCount = await db.prepare<{ count: number }>(
       "SELECT COUNT(*) as count FROM space_members WHERE space_id = ?"
-    ).get(id) as any;
-    const materialCount = await db.prepare(
+    ).get(id);
+    const materialCount = await db.prepare<{ count: number }>(
       "SELECT COUNT(*) as count FROM materials WHERE space_id = ?"
-    ).get(id) as any;
+    ).get(id);
     const courses = await db.prepare(`
       SELECT c.*, (SELECT COUNT(*) FROM materials m WHERE m.course_id = c.id) as file_count
       FROM courses c WHERE c.space_id = ? ORDER BY c.id
-    `).all(id) as any[];
+    `).all(id) as unknown as CourseRow[];
     const recentAnnouncements = await db.prepare(`
       SELECT a.id, a.title, a.body, a.type, a.created_at, a.urgent,
              c.name as course_name, c.code as course_code
@@ -28,7 +29,7 @@ export function shareRoutes(app: FastifyInstance) {
       LEFT JOIN courses c ON a.course_id = c.id
       WHERE a.space_id = ?
       ORDER BY a.created_at DESC LIMIT 3
-    `).all(id) as any[];
+    `).all(id) as unknown as (AnnouncementRow & { course_name?: string; course_code?: string })[];
 
     return {
       type: 'space',
@@ -57,7 +58,12 @@ export function shareRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const ann = await db.prepare(`
+    const ann = await db.prepare<{
+      id: number; title: string; body: string; type: string; created_at: string;
+      urgent: number; pinned: number; author_name: string;
+      course_name: string | null; course_code: string | null; course_icon: string | null;
+      space_name: string; space_id: number;
+    }>(`
       SELECT a.*, u.name as author_name, c.name as course_name, c.code as course_code, c.icon as course_icon,
              s.name as space_name, s.id as space_id
       FROM announcements a
@@ -65,7 +71,7 @@ export function shareRoutes(app: FastifyInstance) {
       LEFT JOIN courses c ON a.course_id = c.id
       JOIN spaces s ON a.space_id = s.id
       WHERE a.id = ?
-    `).get(id) as any;
+    `).get(id);
 
     if (!ann) return reply.status(404).send({ error: 'Announcement not found' });
 
@@ -88,7 +94,11 @@ export function shareRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const mat = await db.prepare(`
+    const mat = await db.prepare<{
+      id: number; name: string; file_type: string; category: string; file_size: number;
+      uploader_name: string; course_name: string | null; course_code: string | null; course_icon: string | null;
+      space_name: string; space_id: number;
+    }>(`
       SELECT m.*, u.name as uploader_name, c.name as course_name, c.code as course_code, c.icon as course_icon,
              s.name as space_name, s.id as space_id
       FROM materials m
@@ -96,7 +106,7 @@ export function shareRoutes(app: FastifyInstance) {
       JOIN courses c ON m.course_id = c.id
       JOIN spaces s ON m.space_id = s.id
       WHERE m.id = ?
-    `).get(id) as any;
+    `).get(id);
 
     if (!mat) return reply.status(404).send({ error: 'Material not found' });
 
@@ -117,17 +127,17 @@ export function shareRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const course = await db.prepare(`
+    const course = await db.prepare<CourseRow & { space_name: string; space_id: number }>(`
       SELECT c.*, s.name as space_name, s.id as space_id
       FROM courses c JOIN spaces s ON c.space_id = s.id
       WHERE c.id = ?
-    `).get(id) as any;
+    `).get(id);
 
     if (!course) return reply.status(404).send({ error: 'Course not found' });
 
     const files = await db.prepare(`
       SELECT id, name, file_type, category, file_size FROM materials WHERE course_id = ?
-    `).all(id) as any[];
+    `).all(id) as unknown as { id: number; name: string; file_type: string; category: string; file_size: number }[];
 
     return {
       type: 'course',
@@ -136,7 +146,7 @@ export function shareRoutes(app: FastifyInstance) {
       code: course.code,
       icon: course.icon,
       color_index: course.color_index,
-      files: files.slice(0, 5),
+      files: files.slice(0, 5) as { id: number; name: string; file_type: string; category: string; file_size: number }[],
       totalFiles: files.length,
       space: { id: course.space_id, name: course.space_name },
     };

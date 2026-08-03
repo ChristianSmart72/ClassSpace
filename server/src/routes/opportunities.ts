@@ -1,6 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import { getDb, isSpaceMember } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
+import { isNonEmptyString, isValidUrl, fail } from '../lib/validate.js';
+import { OpportunityRow, MembershipRow } from '../db/rows.js';
 
 const ALLOWED_CATEGORIES = ['seminar', 'scholarship', 'internship', 'job', 'event', 'competition', 'other'];
 
@@ -15,13 +17,13 @@ export function opportunityRoutes(app: FastifyInstance) {
 
     const db = getDb();
 
-    const items = await db.prepare(`
+    const items = await db.prepare<OpportunityRow>(`
       SELECT o.*, u.name as author_name
       FROM opportunities o
       JOIN users u ON o.author_id = u.id
       WHERE o.space_id = ?
       ORDER BY o.pinned DESC, o.created_at DESC
-    `).all(id) as any[];
+    `).all(id);
 
     return { opportunities: items.map(o => ({ ...o, pinned: Boolean(o.pinned) })) };
   });
@@ -32,12 +34,12 @@ export function opportunityRoutes(app: FastifyInstance) {
     const body = request.body as { pinned?: boolean };
     const db = getDb();
 
-    const opp = await db.prepare('SELECT * FROM opportunities WHERE id = ?').get(Number(id)) as any;
+    const opp = await db.prepare<OpportunityRow>('SELECT * FROM opportunities WHERE id = ?').get(Number(id));
     if (!opp) return reply.status(404).send({ error: 'Not found' });
 
-    const isMember = await db.prepare(
+    const isMember = await db.prepare<MembershipRow>(
       'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
-    ).get(opp.space_id, userId) as any;
+    ).get(opp.space_id, userId);
 
     if (!isMember || isMember.role !== 'rep') {
       return reply.status(403).send({ error: 'Only class reps can update opportunities' });
@@ -62,16 +64,19 @@ export function opportunityRoutes(app: FastifyInstance) {
     const userId = request.user!.userId;
     const db = getDb();
 
-    const isMember = await db.prepare(
+    const isMember = await db.prepare<MembershipRow>(
       'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
-    ).get(id, userId) as any;
+    ).get(id, userId);
 
     if (!isMember || isMember.role !== 'rep') {
       return reply.status(403).send({ error: 'Only class reps can post opportunities' });
     }
 
-    if (!body.title?.trim() || !body.description?.trim()) {
-      return reply.status(400).send({ error: 'Title and description are required' });
+    if (!isNonEmptyString(body.title, 200) || !isNonEmptyString(body.description, 5000)) {
+      return fail(reply, 'Title (max 200 chars) and description (max 5,000 chars) are required');
+    }
+    if (body.link && !isValidUrl(body.link)) {
+      return fail(reply, 'Link must be a valid http(s) URL');
     }
 
     const category = ALLOWED_CATEGORIES.includes(body.category) ? body.category : 'other';
@@ -85,7 +90,7 @@ export function opportunityRoutes(app: FastifyInstance) {
       FROM opportunities o
       JOIN users u ON o.author_id = u.id
       WHERE o.id = ?
-    `).get(result.lastInsertRowid) as any;
+    `).get(result.lastInsertRowid) as OpportunityRow | null;
 
     return { opportunity };
   });
@@ -95,12 +100,12 @@ export function opportunityRoutes(app: FastifyInstance) {
     const userId = request.user!.userId;
     const db = getDb();
 
-    const opp = await db.prepare('SELECT * FROM opportunities WHERE id = ?').get(Number(id)) as any;
+    const opp = await db.prepare<OpportunityRow>('SELECT * FROM opportunities WHERE id = ?').get(Number(id));
     if (!opp) return reply.status(404).send({ error: 'Not found' });
 
-    const isMember = await db.prepare(
+    const isMember = await db.prepare<MembershipRow>(
       'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
-    ).get(opp.space_id, userId) as any;
+    ).get(opp.space_id, userId);
 
     if (!isMember || isMember.role !== 'rep') {
       return reply.status(403).send({ error: 'Only class reps can delete opportunities' });

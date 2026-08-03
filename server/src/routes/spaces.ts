@@ -2,6 +2,8 @@ import { FastifyInstance } from 'fastify';
 import { getDb, isSpaceMember } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { customAlphabet } from 'nanoid';
+import { isNonEmptyString, fail } from '../lib/validate.js';
+import { SpaceRow, CourseRow, MembershipRow } from '../db/rows.js';
 
 const generateId = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 8);
 const generateCode = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 8);
@@ -28,8 +30,8 @@ export function spaceRoutes(app: FastifyInstance) {
     const { name, dept, level, uni, slug, courses } = request.body as CreateSpaceBody;
     const userId = request.user!.userId;
 
-    if (!name || !dept || !level || !uni) {
-      return reply.status(400).send({ error: 'All space fields are required' });
+    if (!isNonEmptyString(name, 120) || !isNonEmptyString(dept, 120) || !isNonEmptyString(level, 40) || !isNonEmptyString(uni, 120)) {
+      return fail(reply, 'Space name, department, level, and university are required (max 120 chars each)');
     }
 
     const db = getDb();
@@ -39,7 +41,7 @@ export function spaceRoutes(app: FastifyInstance) {
       spaceId = generateId();
     }
 
-    const existing = await db.prepare('SELECT id FROM spaces WHERE id = ?').get(spaceId) as any;
+    const existing = await db.prepare<{ id: string }>('SELECT id FROM spaces WHERE id = ?').get(spaceId);
     if (existing) {
       return reply.status(409).send({ error: `Slug "${spaceId}" is already taken. Choose another.` });
     }
@@ -71,8 +73,8 @@ export function spaceRoutes(app: FastifyInstance) {
 
     await db.batch(stmts);
 
-    const space = await db.prepare('SELECT * FROM spaces WHERE id = ?').get(spaceId) as any;
-    const spaceCourses = await db.prepare('SELECT * FROM courses WHERE space_id = ?').all(spaceId) as any[];
+    const space = await db.prepare<SpaceRow>('SELECT * FROM spaces WHERE id = ?').get(spaceId);
+    const spaceCourses = await db.prepare<CourseRow>('SELECT * FROM courses WHERE space_id = ?').all(spaceId);
 
     const token = request.headers.authorization?.substring(7);
     return { space: { ...space, courses: spaceCourses }, token };
@@ -83,25 +85,25 @@ export function spaceRoutes(app: FastifyInstance) {
     const userId = request.user!.userId;
     const db = getDb();
 
-    const space = await db.prepare('SELECT * FROM spaces WHERE id = ?').get(id) as any;
+    const space = await db.prepare<SpaceRow>('SELECT * FROM spaces WHERE id = ?').get(id);
     if (!space) {
       return reply.status(404).send({ error: 'Space not found' });
     }
 
-    const membership = await db.prepare(
+    const membership = await db.prepare<MembershipRow>(
       'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
-    ).get(id, userId) as any;
+    ).get(id, userId);
 
     if (!membership) {
       return reply.status(403).send({ error: 'Not a member of this space' });
     }
 
-    const courses = await db.prepare('SELECT * FROM courses WHERE space_id = ?').all(id) as any[];
-    const members = await db.prepare(
-      `SELECT u.id, u.name, u.email, u.role, u.avatar, sm.role as member_role
+    const courses = await db.prepare<CourseRow>('SELECT * FROM courses WHERE space_id = ?').all(id);
+    const members = await db.prepare<{ id: number; name: string; email: string; role: string; avatar: string | null; member_role: string }>(`
+       SELECT u.id, u.name, u.email, u.role, u.avatar, sm.role as member_role
        FROM space_members sm JOIN users u ON sm.user_id = u.id
-       WHERE sm.space_id = ?`
-    ).all(id) as any[];
+       WHERE sm.space_id = ?
+    `).all(id);
 
     return {
       space: { ...space, courses },
@@ -127,7 +129,7 @@ export function spaceRoutes(app: FastifyInstance) {
     }
 
     const db = getDb();
-    const space = await db.prepare('SELECT * FROM spaces WHERE invite_code = ?').get(inviteCode) as any;
+    const space = await db.prepare<SpaceRow>('SELECT * FROM spaces WHERE invite_code = ?').get(inviteCode);
     if (!space) {
       return reply.status(404).send({ error: 'Space not found with that invite code' });
     }
@@ -143,8 +145,8 @@ export function spaceRoutes(app: FastifyInstance) {
       }
     }
 
-    const courses = await db.prepare('SELECT * FROM courses WHERE space_id = ?').all(space.id) as any[];
-    const rep = await db.prepare('SELECT name FROM users WHERE id = ?').get(space.rep_id) as any;
+    const courses = await db.prepare<CourseRow>('SELECT * FROM courses WHERE space_id = ?').all(space.id);
+    const rep = await db.prepare<{ name: string }>('SELECT name FROM users WHERE id = ?').get(space.rep_id);
 
     return { space: { ...space, rep: rep?.name, courses } };
   });
@@ -159,11 +161,11 @@ export function spaceRoutes(app: FastifyInstance) {
 
     const db = getDb();
 
-    const members = await db.prepare(
+    const members = await db.prepare<{ id: number; name: string; email: string; role: string; avatar: string | null; member_role: string; joined_at: string }>(
       `SELECT u.id, u.name, u.email, u.role, u.avatar, sm.role as member_role, sm.joined_at
        FROM space_members sm JOIN users u ON sm.user_id = u.id
        WHERE sm.space_id = ?`
-    ).all(id) as any[];
+    ).all(id);
 
     return { members };
   });
@@ -178,7 +180,7 @@ export function spaceRoutes(app: FastifyInstance) {
       JOIN spaces s ON sm.space_id = s.id
       WHERE sm.user_id = ?
       ORDER BY s.created_at DESC
-    `).all(userId) as any[];
+    `).all(userId) as unknown as { id: string; name: string; uni: string; dept: string; level: string; invite_code: string; member_role: string }[];
 
     return { spaces: rows };
   });

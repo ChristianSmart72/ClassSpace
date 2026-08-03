@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { getDb, isSpaceMember } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
+import { TimetableRow, MembershipRow } from '../db/rows.js';
 
 export function timetableRoutes(app: FastifyInstance) {
   app.get('/api/spaces/:id/timetable', { preHandler: authMiddleware }, async (request, reply) => {
@@ -13,7 +14,7 @@ export function timetableRoutes(app: FastifyInstance) {
 
     const db = getDb();
 
-    const entries = await db.prepare(`
+    const entries = await db.prepare<TimetableRow>(`
       SELECT t.*, c.name as course_name, c.code as course_code, c.icon as course_icon, c.color_index
       FROM timetable t
       JOIN courses c ON t.course_id = c.id
@@ -29,7 +30,7 @@ export function timetableRoutes(app: FastifyInstance) {
           WHEN 'Sunday' THEN 7
         END,
         t.start_time
-    `).all(id) as any[];
+    `).all(id);
 
     return { timetable: entries };
   });
@@ -42,9 +43,9 @@ export function timetableRoutes(app: FastifyInstance) {
     };
     const db = getDb();
 
-    const isMember = await db.prepare(
+    const isMember = await db.prepare<MembershipRow>(
       'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
-    ).get(id, request.user!.userId) as any;
+    ).get(id, request.user!.userId);
 
     if (!isMember || isMember.role !== 'rep') {
       return reply.status(403).send({ error: 'Only class reps can edit the timetable' });
@@ -66,12 +67,12 @@ export function timetableRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const entry = await db.prepare('SELECT * FROM timetable WHERE id = ?').get(Number(id)) as any;
+    const entry = await db.prepare<TimetableRow>('SELECT * FROM timetable WHERE id = ?').get(Number(id));
     if (!entry) return reply.status(404).send({ error: 'Not found' });
 
-    const isMember = await db.prepare(
+    const isMember = await db.prepare<MembershipRow>(
       'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
-    ).get(entry.space_id, request.user!.userId) as any;
+    ).get(entry.space_id, request.user!.userId);
 
     if (!isMember || isMember.role !== 'rep') {
       return reply.status(403).send({ error: 'Only class reps can edit the timetable' });

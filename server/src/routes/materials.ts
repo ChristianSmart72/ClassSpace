@@ -2,6 +2,8 @@ import { FastifyInstance } from 'fastify';
 import { getDb, isSpaceMember } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { uploadFile, uploadFileBuffer, deleteFileByUrl } from '../lib/upload.js';
+import { isNonEmptyString, fail } from '../lib/validate.js';
+import { CourseRow, MaterialRow, MembershipRow } from '../db/rows.js';
 
 const DEMO_FILE_URL = 'https://utfs.io/f/0YOWD4Ku08Y31gp6G6UR8FXkzYnomKRt4LGjCbgJflrZdB9E';
 
@@ -11,10 +13,10 @@ export function materialRoutes(app: FastifyInstance) {
     const userId = request.user!.userId;
     const db = getDb();
 
-    const course = await db.prepare('SELECT space_id FROM courses WHERE id = ?').get(Number(id)) as any;
+    const course = await db.prepare<CourseRow>('SELECT space_id FROM courses WHERE id = ?').get(Number(id));
     if (!course) return reply.status(404).send({ error: 'Course not found' });
 
-    if (!await isSpaceMember(course.space_id as string, userId)) {
+    if (!await isSpaceMember(course.space_id, userId)) {
       return reply.status(403).send({ error: 'Not a member of this space' });
     }
 
@@ -36,7 +38,7 @@ export function materialRoutes(app: FastifyInstance) {
       JOIN courses c ON m.course_id = c.id
       WHERE m.course_id = ?
       ORDER BY m.pinned DESC, ${order}
-    `).all(Number(id)) as any[];
+    `).all(Number(id)) as unknown as MaterialRow[];
 
     return {
       materials: materials.map(m => ({ ...m, pinned: Boolean(m.pinned), has_file: Boolean(m.has_file), downloads: m.downloads || 0 })),
@@ -49,12 +51,12 @@ export function materialRoutes(app: FastifyInstance) {
     const db = getDb();
     const ct = request.headers['content-type'] || '';
 
-    const course = await db.prepare('SELECT space_id FROM courses WHERE id = ?').get(Number(id)) as any;
+    const course = await db.prepare<CourseRow>('SELECT space_id FROM courses WHERE id = ?').get(Number(id));
     if (!course) return reply.status(404).send({ error: 'Course not found' });
 
-    const membership = await db.prepare(
+    const membership = await db.prepare<MembershipRow>(
       'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
-    ).get(course.space_id, userId) as any;
+    ).get(course.space_id, userId);
     if (!membership || membership.role !== 'rep') {
       return reply.status(403).send({ error: 'Only class reps can upload materials' });
     }
@@ -69,8 +71,10 @@ export function materialRoutes(app: FastifyInstance) {
       const data = await request.file();
       if (!data) return reply.status(400).send({ error: 'No file data received' });
 
-      name = (data.fields.name as any)?.value || data.filename.replace(/\.[^/.]+$/, '');
-      category = (data.fields.category as any)?.value || 'Other';
+      const nameField = (data.fields as Record<string, { value?: string }>).name;
+      const categoryField = (data.fields as Record<string, { value?: string }>).category;
+      name = nameField?.value || data.filename.replace(/\.[^/.]+$/, '');
+      category = categoryField?.value || 'Other';
       fileType = data.filename.split('.').pop()?.toLowerCase() || 'other';
 
       const buffer = await data.toBuffer();
@@ -84,7 +88,7 @@ export function materialRoutes(app: FastifyInstance) {
       const data = request.body as {
         name: string; file_data?: string; file_url?: string; file_name?: string; file_size?: number; file_type?: string; category?: string;
       };
-      if (!data.name) return reply.status(400).send({ error: 'Material name is required' });
+      if (!isNonEmptyString(data.name, 200)) return fail(reply, 'Material name is required (max 200 chars)');
       name = data.name;
       fileType = data.file_type || 'other';
       category = data.category || 'Other';
@@ -110,7 +114,7 @@ export function materialRoutes(app: FastifyInstance) {
       SELECT m.*, u.name as uploader_name
       FROM materials m JOIN users u ON m.uploader_id = u.id
       WHERE m.id = ?
-    `).get(insertResult.lastInsertRowid) as any;
+    `).get(insertResult.lastInsertRowid) as MaterialRow | null;
 
     return { material: { ...material, pinned: false, downloads: 0 } };
   });
@@ -119,9 +123,9 @@ export function materialRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const material = await db.prepare(
+    const material = await db.prepare<MaterialRow>(
       'SELECT name, file_data, file_type, file_size FROM materials WHERE id = ?'
-    ).get(Number(id)) as any;
+    ).get(Number(id));
 
     if (!material) {
       return reply.status(404).send({ error: 'Material not found' });
@@ -138,10 +142,10 @@ export function materialRoutes(app: FastifyInstance) {
   app.patch('/api/materials/:id', { preHandler: authMiddleware }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const userId = request.user!.userId;
-    const body = request.body as any;
+    const body = request.body as Record<string, unknown>;
     const db = getDb();
 
-    const mat = await db.prepare('SELECT id, space_id, uploader_id FROM materials WHERE id = ?').get(Number(id)) as any;
+    const mat = await db.prepare<MaterialRow>('SELECT id, space_id, uploader_id FROM materials WHERE id = ?').get(Number(id));
     if (!mat) return reply.status(404).send({ error: 'Not found' });
 
     const isRep = await db.prepare(
@@ -161,7 +165,7 @@ export function materialRoutes(app: FastifyInstance) {
     const userId = request.user!.userId;
     const db = getDb();
 
-    const mat = await db.prepare('SELECT id, space_id, uploader_id, file_data FROM materials WHERE id = ?').get(Number(id)) as any;
+    const mat = await db.prepare<MaterialRow>('SELECT id, space_id, uploader_id, file_data FROM materials WHERE id = ?').get(Number(id));
     if (!mat) return reply.status(404).send({ error: 'Not found' });
 
     const isRep = await db.prepare(
@@ -204,7 +208,14 @@ export function materialRoutes(app: FastifyInstance) {
       WHERE c.space_id = ?
       GROUP BY c.id
       ORDER BY c.name ASC
-    `).all(id) as any[];
+    `).all(Number(id)) as unknown as {
+      course_id: number;
+      count: number;
+      contributors: number;
+      total_downloads: number;
+      latest_name: string | null;
+      latest_created_at: string | null;
+    }[];
 
     return {
       courses: rows.map(r => ({
@@ -231,7 +242,7 @@ export function materialRoutes(app: FastifyInstance) {
       JOIN courses c ON m.course_id = c.id
       JOIN spaces s ON m.space_id = s.id
       WHERE m.id = ?
-    `).get(Number(id)) as any;
+    `).get(Number(id)) as MaterialRow | null;
 
     if (!material) {
       return reply.status(404).send({ error: 'Material not found' });

@@ -13,5 +13,8 @@
   },
   "dependencies": {
     "nanoid": "^6.0.0"
+  },
+  "engines": {
+    "node": ">=22 <25"
   }
 }

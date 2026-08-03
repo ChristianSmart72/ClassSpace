@@ -22,7 +22,7 @@ import { pushRoutes } from './routes/push.js';
 import { resetRoutes } from './routes/reset.js';
 import { resetPageRoute } from './routes/reset-page.js';
 import { createTables } from './db/schema.js';
-import { getDb, UPLOADS_DIR } from './db/connection.js';
+import { getDb, closeDb, UPLOADS_DIR } from './db/connection.js';
 import { validateEnv } from './lib/config.js';
 import { registerUploadRouter } from './lib/uploadrouter.js';
 
@@ -88,7 +88,16 @@ async function main() {
   resetPageRoute(app);
   registerUploadRouter(app);
 
-  app.get('/api/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
+  app.get('/api/health', async (request, reply) => {
+    try {
+      const db = getDb();
+      await db.execute('SELECT 1');
+      return { status: 'ok', db: 'ok', timestamp: new Date().toISOString() };
+    } catch (err: any) {
+      request.log.error({ err: err.message }, 'Health check DB probe failed');
+      return reply.status(503).send({ status: 'error', db: 'down', message: err.message });
+    }
+  });
 
   app.get('/api/health/upload', async (request, reply) => {
     const { uploadFileBuffer } = await import('./lib/upload.js');
@@ -118,6 +127,19 @@ async function main() {
   await app.listen({ port: PORT, host: HOST });
   console.log(`ClassSpace API running on http://${HOST}:${PORT}`);
 }
+
+async function shutdown(signal: string) {
+  console.log(`${signal} received — shutting down gracefully...`);
+  try {
+    await closeDb();
+  } catch (err) {
+    console.error('Error closing DB:', err);
+  }
+  process.exit(0);
+}
+
+process.on('SIGTERM', () => void shutdown('SIGTERM'));
+process.on('SIGINT', () => void shutdown('SIGINT'));
 
 main().catch(err => {
   console.error('Failed to start:', err);

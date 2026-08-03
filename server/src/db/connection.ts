@@ -9,9 +9,9 @@ export const UPLOADS_DIR = path.join(__dirname, '../../uploads');
 type InArgs = InValue[];
 
 interface DbWrapper {
-  prepare(sql: string): {
-    get(...args: InArgs): Promise<Record<string, unknown> | null>;
-    all(...args: InArgs): Promise<Record<string, unknown>[]>;
+  prepare<T extends object = Record<string, unknown>>(sql: string): {
+    get(...args: InArgs): Promise<T | null>;
+    all(...args: InArgs): Promise<T[]>;
     run(...args: InArgs): Promise<{ lastInsertRowid: number; changes: number }>;
   };
   execute(sql: string | { sql: string; args?: InArgs }): Promise<any>;
@@ -19,25 +19,27 @@ interface DbWrapper {
 }
 
 let wrapper: DbWrapper | null = null;
+let rawClient: ReturnType<typeof createClient> | null = null;
 
 function createDbWrapper(): DbWrapper {
   const url = process.env.TURSO_DB_URL!;
   const authToken = process.env.TURSO_DB_TOKEN!;
 
   const client = createClient({ url, authToken });
+  rawClient = client;
 
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
   return {
-    prepare(sql: string) {
+    prepare<T extends object = Record<string, unknown>>(sql: string) {
       return {
-        get: async (...args: InArgs) => {
+        get: async (...args: InArgs): Promise<T | null> => {
           const r = await client.execute({ sql, args });
-          return (r.rows[0] ?? null) as Record<string, unknown> | null;
+          return (r.rows[0] ?? null) as unknown as T | null;
         },
-        all: async (...args: InArgs) => {
+        all: async (...args: InArgs): Promise<T[]> => {
           const r = await client.execute({ sql, args });
-          return r.rows as Record<string, unknown>[];
+          return r.rows as unknown as T[];
         },
         run: async (...args: InArgs) => {
           const r = await client.execute({ sql, args });
@@ -61,6 +63,18 @@ function createDbWrapper(): DbWrapper {
 export function getDb(): DbWrapper {
   if (!wrapper) wrapper = createDbWrapper();
   return wrapper;
+}
+
+export async function closeDb(): Promise<void> {
+  if (rawClient) {
+    try {
+      rawClient.close();
+    } catch {
+      // client may already be closed
+    }
+    rawClient = null;
+  }
+  wrapper = null;
 }
 
 export async function transaction<T>(fn: () => Promise<T>): Promise<T> {

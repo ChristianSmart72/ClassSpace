@@ -3,6 +3,7 @@ services:
     name: classspace
     runtime: node
     plan: free
+    nodeVersion: 22.14.0
     buildCommand: cd client && npm ci && npm run build && cd ../server && npm ci && npm run build
     startCommand: NODE_OPTIONS="--max-old-space-size=384" node server/dist/index.js
     healthCheckPath: /api/health

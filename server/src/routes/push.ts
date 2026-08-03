@@ -17,9 +17,9 @@ export function pushRoutes(app: FastifyInstance) {
     }
 
     const db = getDb();
-    const existing = await db.prepare(
+    const existing = await db.prepare<{ id: number }>(
       'SELECT id FROM push_subscriptions WHERE endpoint = ?'
-    ).get(body.endpoint) as any;
+    ).get(body.endpoint);
 
     if (existing) {
       await db.prepare(
@@ -52,7 +52,7 @@ export function pushRoutes(app: FastifyInstance) {
   app.post('/api/push/test', { preHandler: authMiddleware }, async (request, reply) => {
     const userId = request.user!.userId;
     const db = getDb();
-    const user = await db.prepare('SELECT name FROM users WHERE id = ?').get(userId) as any;
+    const user = await db.prepare<{ name: string }>('SELECT name FROM users WHERE id = ?').get(userId);
 
     try {
       await sendPushToUser(userId, '', {

@@ -7,6 +7,7 @@ import { FloatingThemeToggle } from './components/ui/FloatingThemeToggle';
 import { MainLayout } from './components/layout/MainLayout';
 import { LogoSplash } from './components/ui/Logo';
 import { UpdatePrompt } from './components/ui/UpdatePrompt';
+import { Toaster } from './components/ui/Toaster';
 import { useConnectivityStore } from './store/connectivityStore'; // ensure connectivity listeners register
 
 const Landing = lazy(() => import('./screens/Landing').then(m => ({ default: m.Landing })));
@@ -148,6 +149,7 @@ export default function App() {
       <BrowserRouter>
         <AppRoutes />
         <UpdatePrompt />
+        <Toaster />
       </BrowserRouter>
     </ErrorBoundary>
   );

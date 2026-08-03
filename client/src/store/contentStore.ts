@@ -4,6 +4,7 @@ import * as contentApi from '../api/content';
 import * as pollsApi from '../api/polls';
 import * as opportunitiesApi from '../api/opportunities';
 import { isOfflineError } from '../api/client';
+import { toast } from './toastStore';
 
 function safeGet(key: string): string | null {
   try { return localStorage.getItem(key) } catch { return null }
@@ -11,14 +12,20 @@ function safeGet(key: string): string | null {
 function safeSet(key: string, val: string) {
   try { localStorage.setItem(key, val) } catch {}
 }
-function cacheAnnouncements(announcements: Announcement[]) {
-  safeSet('cachedAnnouncements', JSON.stringify(announcements));
+function cacheJson<T>(key: string, value: T) {
+  safeSet(key, JSON.stringify(value));
 }
-function restoreAnnouncements(): Announcement[] {
+function restoreJson<T>(key: string): T[] {
   try {
-    const raw = safeGet('cachedAnnouncements');
+    const raw = safeGet(key);
     return raw ? JSON.parse(raw) : [];
   } catch { return [] }
+}
+function cacheAnnouncements(announcements: Announcement[]) {
+  cacheJson('cachedAnnouncements', announcements);
+}
+function restoreAnnouncements(): Announcement[] {
+  return restoreJson<Announcement>('cachedAnnouncements');
 }
 
 interface ContentState {
@@ -69,6 +76,7 @@ export const useContentStore = create<ContentState>((set) => ({
         const cached = restoreAnnouncements();
         if (cached.length > 0) {
           set({ announcements: cached, loading: false });
+          toast("You're offline — showing cached content", 'info');
           return;
         }
       }
@@ -77,14 +85,26 @@ export const useContentStore = create<ContentState>((set) => ({
   },
 
   createAnnouncement: async (spaceId, ann) => {
-    const announcement = await contentApi.createAnnouncement(spaceId, ann);
-    set((state) => ({ announcements: [announcement, ...state.announcements] }));
-    return announcement;
+    try {
+      const announcement = await contentApi.createAnnouncement(spaceId, ann);
+      set((state) => ({ announcements: [announcement, ...state.announcements] }));
+      toast(announcement.type === 'meeting' ? 'Event created' : 'Announcement posted');
+      return announcement;
+    } catch (err: any) {
+      toast(err?.response?.data?.error || err?.message || 'Could not post announcement', 'error');
+      throw err;
+    }
   },
 
   deleteAnnouncement: async (id) => {
-    await contentApi.deleteAnnouncement(id);
-    set((state) => ({ announcements: state.announcements.filter((a) => a.id !== id) }));
+    try {
+      await contentApi.deleteAnnouncement(id);
+      set((state) => ({ announcements: state.announcements.filter((a) => a.id !== id) }));
+      toast('Announcement deleted');
+    } catch (err: any) {
+      toast(err?.response?.data?.error || 'Could not delete announcement', 'error');
+      throw err;
+    }
   },
 
   updateAnnouncement: async (id, updates) => {
@@ -98,21 +118,42 @@ export const useContentStore = create<ContentState>((set) => ({
     set({ matLoading: true });
     try {
       const materials = await contentApi.getMaterials(courseId);
+      cacheJson('cachedMaterials:' + courseId, materials);
       set({ materials, matLoading: false });
-    } catch {
+    } catch (err: any) {
+      if (isOfflineError(err)) {
+        const cached = restoreJson<Material>('cachedMaterials:' + courseId);
+        if (cached.length > 0) {
+          set({ materials: cached, matLoading: false });
+          toast("You're offline — showing cached content", 'info');
+          return;
+        }
+      }
       set({ matLoading: false });
     }
   },
 
   uploadMaterial: async (courseId, payload) => {
-    const material = await contentApi.uploadMaterial(courseId, payload);
-    set((state) => ({ materials: [material, ...state.materials] }));
-    return material;
+    try {
+      const material = await contentApi.uploadMaterial(courseId, payload);
+      set((state) => ({ materials: [material, ...state.materials] }));
+      toast('Material uploaded');
+      return material;
+    } catch (err: any) {
+      toast(err?.response?.data?.error || err?.message || 'Upload failed', 'error');
+      throw err;
+    }
   },
 
   deleteMaterial: async (id) => {
-    await contentApi.deleteMaterial(id);
-    set((state) => ({ materials: state.materials.filter((m) => m.id !== id) }));
+    try {
+      await contentApi.deleteMaterial(id);
+      set((state) => ({ materials: state.materials.filter((m) => m.id !== id) }));
+      toast('Material deleted');
+    } catch (err: any) {
+      toast(err?.response?.data?.error || 'Could not delete material', 'error');
+      throw err;
+    }
   },
 
   updateMaterial: async (id, updates) => {
@@ -128,16 +169,31 @@ export const useContentStore = create<ContentState>((set) => ({
     set({ pollsLoading: true });
     try {
       const polls = await pollsApi.getPolls(spaceId);
+      cacheJson('cachedPolls:' + spaceId, polls);
       set({ polls, pollsLoading: false });
-    } catch {
+    } catch (err: any) {
+      if (isOfflineError(err)) {
+        const cached = restoreJson<Poll>('cachedPolls:' + spaceId);
+        if (cached.length > 0) {
+          set({ polls: cached, pollsLoading: false });
+          toast("You're offline — showing cached content", 'info');
+          return;
+        }
+      }
       set({ pollsLoading: false });
     }
   },
 
   createPoll: async (spaceId, payload) => {
-    const poll = await pollsApi.createPoll(spaceId, payload);
-    set((state) => ({ polls: [poll, ...state.polls] }));
-    return poll;
+    try {
+      const poll = await pollsApi.createPoll(spaceId, payload);
+      set((state) => ({ polls: [poll, ...state.polls] }));
+      toast('Poll created');
+      return poll;
+    } catch (err: any) {
+      toast(err?.response?.data?.error || err?.message || 'Could not create poll', 'error');
+      throw err;
+    }
   },
 
   votePoll: async (pollId, optionId) => {
@@ -152,28 +208,55 @@ export const useContentStore = create<ContentState>((set) => ({
   },
 
   deletePoll: async (pollId) => {
-    await pollsApi.deletePoll(pollId);
-    set((state) => ({ polls: state.polls.filter((p) => p.id !== pollId) }));
+    try {
+      await pollsApi.deletePoll(pollId);
+      set((state) => ({ polls: state.polls.filter((p) => p.id !== pollId) }));
+      toast('Poll deleted');
+    } catch (err: any) {
+      toast(err?.response?.data?.error || 'Could not delete poll', 'error');
+      throw err;
+    }
   },
 
   fetchOpportunities: async (spaceId) => {
     set({ opportunitiesLoading: true });
     try {
       const opportunities = await opportunitiesApi.getOpportunities(spaceId);
+      cacheJson('cachedOpportunities:' + spaceId, opportunities);
       set({ opportunities, opportunitiesLoading: false });
-    } catch {
+    } catch (err: any) {
+      if (isOfflineError(err)) {
+        const cached = restoreJson<Opportunity>('cachedOpportunities:' + spaceId);
+        if (cached.length > 0) {
+          set({ opportunities: cached, opportunitiesLoading: false });
+          toast("You're offline — showing cached content", 'info');
+          return;
+        }
+      }
       set({ opportunitiesLoading: false });
     }
   },
 
   createOpportunity: async (spaceId, payload) => {
-    const opportunity = await opportunitiesApi.createOpportunity(spaceId, payload);
-    set((state) => ({ opportunities: [opportunity, ...state.opportunities] }));
-    return opportunity;
+    try {
+      const opportunity = await opportunitiesApi.createOpportunity(spaceId, payload);
+      set((state) => ({ opportunities: [opportunity, ...state.opportunities] }));
+      toast('Opportunity posted');
+      return opportunity;
+    } catch (err: any) {
+      toast(err?.response?.data?.error || err?.message || 'Could not post opportunity', 'error');
+      throw err;
+    }
   },
 
   deleteOpportunity: async (id) => {
-    await opportunitiesApi.deleteOpportunity(id);
-    set((state) => ({ opportunities: state.opportunities.filter((o) => o.id !== id) }));
+    try {
+      await opportunitiesApi.deleteOpportunity(id);
+      set((state) => ({ opportunities: state.opportunities.filter((o) => o.id !== id) }));
+      toast('Opportunity deleted');
+    } catch (err: any) {
+      toast(err?.response?.data?.error || 'Could not delete opportunity', 'error');
+      throw err;
+    }
   },
 }));

@@ -31,10 +31,16 @@ export function reactionRoutes(app: FastifyInstance) {
       userReacted = false;
     } else {
       const opposite = emoji === 'upvote' ? 'downvote' : 'upvote';
-      await db.prepare('DELETE FROM reactions WHERE announcement_id = ? AND user_id = ? AND emoji = ?')
-        .run(annId, userId, opposite);
-      await db.prepare('INSERT INTO reactions (announcement_id, user_id, emoji) VALUES (?, ?, ?)')
-        .run(annId, userId, emoji);
+      await db.batch([
+        {
+          sql: 'DELETE FROM reactions WHERE announcement_id = ? AND user_id = ? AND emoji = ?',
+          args: [annId, userId, opposite],
+        },
+        {
+          sql: 'INSERT INTO reactions (announcement_id, user_id, emoji) VALUES (?, ?, ?)',
+          args: [annId, userId, emoji],
+        },
+      ]);
       userReacted = true;
     }
 

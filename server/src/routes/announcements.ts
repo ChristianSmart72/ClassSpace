@@ -3,6 +3,8 @@ import { getDb, isSpaceMember } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { sendPushToSpaceMembers } from '../lib/push.js';
 import { uploadFile, uploadFileBuffer, deleteFileByUrl } from '../lib/upload.js';
+import { isNonEmptyString, fail } from '../lib/validate.js';
+import { AnnouncementRow, ReactionRow, MyReactionRow, AttachmentRow, MembershipRow, SpaceRow } from '../db/rows.js';
 
 export function announcementRoutes(app: FastifyInstance) {
   app.get('/api/spaces/:id/announcements', { preHandler: authMiddleware }, async (request, reply) => {
@@ -38,18 +40,19 @@ export function announcementRoutes(app: FastifyInstance) {
 
     sql += ' ORDER BY a.pinned DESC, a.urgent DESC, a.created_at DESC';
 
-    const rows = await db.prepare(sql).all(...params) as any[];
+    const rows = await db.prepare<AnnouncementRow>(sql).all(...params);
 
     const ids = rows.map(r => r.id);
     if (ids.length === 0) return { announcements: [] };
 
     const placeholders = ids.map(() => '?').join(',');
-    const reactions = await db.prepare(`
+    const reactions = await db.prepare<ReactionRow>(`
       SELECT announcement_id, emoji, COUNT(*) as count
       FROM reactions
       WHERE announcement_id IN (${placeholders})
       GROUP BY announcement_id, emoji
-    `).all(...ids) as any[];
+    `).all(...ids);
+
 
     const reactionMap = new Map<number, { upvote: number; downvote: number }>();
     for (const r of reactions) {
@@ -62,15 +65,15 @@ export function announcementRoutes(app: FastifyInstance) {
     }
 
     let myReactionMap = new Map<number, string>();
-    const myVotes = await db.prepare(`
+    const myVotes = await db.prepare<MyReactionRow>(`
       SELECT announcement_id, emoji FROM reactions
       WHERE announcement_id IN (${placeholders}) AND user_id = ?
-    `).all(...ids, userId) as any[];
+    `).all(...ids, userId);
     for (const v of myVotes) {
       myReactionMap.set(v.announcement_id, v.emoji);
     }
 
-    const announcements = rows.map((r: any) => {
+    const announcements = rows.map((r) => {
       const react = reactionMap.get(r.id) ?? { upvote: 0, downvote: 0 };
       return {
         ...r,
@@ -166,27 +169,31 @@ export function announcementRoutes(app: FastifyInstance) {
       }
     }
 
-    if (!title || !body) {
-      return reply.status(400).send({ error: 'Title and body are required' });
+    if (!isNonEmptyString(title, 200) || !isNonEmptyString(body, 10000)) {
+      return fail(reply, 'Title (max 200 chars) and body (max 10,000 chars) are required');
     }
 
     const membership = await db.prepare(
       'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
-    ).get(id, userId) as any;
+    ).get(id, userId);
     if (!membership || membership.role !== 'rep') {
       return reply.status(403).send({ error: 'Only class reps can create announcements' });
     }
 
-    const insertResult = await db.prepare(
-      `INSERT INTO announcements (space_id, course_id, title, body, type, author_id, urgent, pinned, deadline, venue, instructions, submission_method, format, file_data, file_name, file_size)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    ).run(
-      id, courseId, title, body, type,
-      userId, urgent ? 1 : 0, pinned ? 1 : 0,
-      deadline, venue, instructions,
-      null, null,
-      fileUrl, fileName, fileSize
-    );
+    const stmts: ({ sql: string; args: any[] })[] = [
+      {
+        sql: `INSERT INTO announcements (space_id, course_id, title, body, type, author_id, urgent, pinned, deadline, venue, instructions, submission_method, format, file_data, file_name, file_size)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [id, courseId, title, body, type, userId, urgent ? 1 : 0, pinned ? 1 : 0, deadline, venue, instructions, null, null, fileUrl, fileName, fileSize],
+      },
+      ...attachments.map(att => ({
+        sql: 'INSERT INTO announcement_attachments (announcement_id, file_url, file_name, file_size) VALUES (last_insert_rowid(), ?, ?, ?)',
+        args: [att.fileUrl, att.fileName, att.fileSize],
+      })),
+    ];
+
+    const results = await db.batch(stmts);
+    const annId = results[0].lastInsertRowid;
 
     const ann = await db.prepare(`
       SELECT a.*, u.name as author_name, c.name as course_name, c.code as course_code
@@ -194,40 +201,34 @@ export function announcementRoutes(app: FastifyInstance) {
       JOIN users u ON a.author_id = u.id
       LEFT JOIN courses c ON a.course_id = c.id
       WHERE a.id = ?
-    `).get(insertResult.lastInsertRowid) as any;
+    `).get(annId) as AnnouncementRow | null;
 
-    for (const att of attachments) {
-      await db.prepare(
-        'INSERT INTO announcement_attachments (announcement_id, file_url, file_name, file_size) VALUES (?, ?, ?, ?)'
-      ).run(insertResult.lastInsertRowid, att.fileUrl, att.fileName, att.fileSize);
-    }
-
-    const attachmentRows = await db.prepare(
+    const attachmentRows = await db.prepare<AttachmentRow>(
       'SELECT id, file_name, file_size FROM announcement_attachments WHERE announcement_id = ? ORDER BY id'
-    ).all(insertResult.lastInsertRowid) as any[];
+    ).all(annId);
 
-    const authorName = ann.author_name || 'Someone';
+    const authorName = ann?.author_name || 'Someone';
     const prefix = urgent ? '🚨' : '📢';
     sendPushToSpaceMembers(id, {
       title: `${prefix} ${title}`,
-      body: `${authorName} — ${ann.course_code || 'General'}`,
-      tag: `announcement-${insertResult.lastInsertRowid}`,
-      data: { url: `/space/${id}/announcement/${insertResult.lastInsertRowid}`, type: 'announcement' },
+      body: `${authorName} — ${ann?.course_code || 'General'}`,
+      tag: `announcement-${annId}`,
+      data: { url: `/space/${id}/announcement/${annId}`, type: 'announcement' },
       requireInteraction: !!urgent,
     }).catch(() => {});
 
     return {
       announcement: {
         ...ann,
-        urgent: Boolean(ann.urgent),
-        pinned: Boolean(ann.pinned),
+        urgent: Boolean(ann?.urgent),
+        pinned: Boolean(ann?.pinned),
         reactions: { upvote: 0, downvote: 0 },
         my_reaction: null,
         attachments: attachmentRows.map(a => ({
           id: a.id,
           file_name: a.file_name,
           file_size: a.file_size,
-          url: `/api/announcements/${insertResult.lastInsertRowid}/attachment/${a.id}/download`,
+          url: `/api/announcements/${annId}/attachment/${a.id}/download`,
         })),
       }
     };
@@ -245,13 +246,13 @@ export function announcementRoutes(app: FastifyInstance) {
       LEFT JOIN courses c ON a.course_id = c.id
       JOIN spaces s ON a.space_id = s.id
       WHERE a.id = ?
-    `).get(id) as any;
+    `).get(id) as AnnouncementRow | null;
 
     if (!ann) return reply.status(404).send({ error: 'Announcement not found' });
 
-    const attachments = await db.prepare(
+    const attachments = await db.prepare<AttachmentRow>(
       'SELECT id, file_name, file_size FROM announcement_attachments WHERE announcement_id = ? ORDER BY id'
-    ).all(Number(id)) as any[];
+    ).all(Number(id));
 
     return {
       ...ann,
@@ -268,12 +269,12 @@ export function announcementRoutes(app: FastifyInstance) {
     const { id, attId } = request.params as { id: string; attId: string };
     const db = getDb();
 
-    const att = await db.prepare(
+    const att = await db.prepare<AttachmentRow>(
       'SELECT file_url FROM announcement_attachments WHERE id = ? AND announcement_id = ?'
-    ).get(Number(attId), Number(id)) as any;
+    ).get(Number(attId), Number(id));
 
     if (!att || !att.file_url) return reply.status(404).send({ error: 'File not found' });
-    return reply.redirect(att.file_url as string);
+    return reply.redirect(att.file_url);
   });
 
   app.delete('/api/announcements/:id', { preHandler: authMiddleware }, async (request, reply) => {
@@ -281,7 +282,7 @@ export function announcementRoutes(app: FastifyInstance) {
     const userId = request.user!.userId;
     const db = getDb();
 
-    const ann = await db.prepare('SELECT id, space_id, author_id, file_data FROM announcements WHERE id = ?').get(Number(id)) as any;
+    const ann = await db.prepare<AnnouncementRow>('SELECT id, space_id, author_id, file_data FROM announcements WHERE id = ?').get(Number(id));
     if (!ann) return reply.status(404).send({ error: 'Not found' });
 
     const isRep = await db.prepare(
@@ -292,15 +293,15 @@ export function announcementRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: 'Not authorized' });
     }
 
-    const attachments = await db.prepare(
+    const attachments = await db.prepare<AttachmentRow>(
       'SELECT file_url FROM announcement_attachments WHERE announcement_id = ?'
-    ).all(Number(id)) as any[];
+    ).all(Number(id));
     await db.prepare('DELETE FROM announcement_attachments WHERE announcement_id = ?').run(Number(id));
     await db.prepare('DELETE FROM announcements WHERE id = ?').run(Number(id));
 
     await Promise.allSettled([
       deleteFileByUrl(ann.file_data),
-      ...attachments.map((a: any) => deleteFileByUrl(a.file_url)),
+      ...attachments.map((a) => deleteFileByUrl(a.file_url)),
     ]);
 
     return { success: true };
@@ -309,10 +310,10 @@ export function announcementRoutes(app: FastifyInstance) {
   app.patch('/api/announcements/:id', { preHandler: authMiddleware }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const userId = request.user!.userId;
-    const body = request.body as any;
+    const body = request.body as Record<string, unknown>;
     const db = getDb();
 
-    const ann = await db.prepare('SELECT id, space_id FROM announcements WHERE id = ?').get(Number(id)) as any;
+    const ann = await db.prepare<AnnouncementRow>('SELECT id, space_id FROM announcements WHERE id = ?').get(Number(id));
     if (!ann) return reply.status(404).send({ error: 'Not found' });
 
     const isRep = await db.prepare(
@@ -329,8 +330,8 @@ export function announcementRoutes(app: FastifyInstance) {
     if (body.body !== undefined) { fields.push('body = ?'); vals.push(body.body); }
     if (body.type !== undefined) { fields.push('type = ?'); vals.push(body.type); }
     if (body.course_id !== undefined) { fields.push('course_id = ?'); vals.push(body.course_id); }
-    if (body.file_data !== undefined) {
-      const uploadName = body.file_name || 'file.bin';
+    if (body.file_data !== undefined && typeof body.file_data === 'string') {
+      const uploadName = typeof body.file_name === 'string' ? body.file_name : 'file.bin';
       const { url } = await uploadFile(body.file_data, uploadName);
       fields.push('file_data = ?');
       vals.push(url);
@@ -350,10 +351,10 @@ export function announcementRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const ann = await db.prepare('SELECT file_data, file_name FROM announcements WHERE id = ?').get(Number(id)) as any;
+    const ann = await db.prepare<AnnouncementRow>('SELECT file_data, file_name FROM announcements WHERE id = ?').get(Number(id));
     if (!ann || !ann.file_data) return reply.status(404).send({ error: 'File not found' });
 
-    return reply.redirect(ann.file_data as string);
+    return reply.redirect(ann.file_data);
   });
 
   app.get('/api/announcements/shared/:id', async (request, reply) => {
@@ -368,7 +369,7 @@ export function announcementRoutes(app: FastifyInstance) {
       LEFT JOIN courses c ON a.course_id = c.id
       JOIN spaces s ON a.space_id = s.id
       WHERE a.id = ?
-    `).get(id) as any;
+    `).get(id) as AnnouncementRow | null;
 
     if (!announcement) return reply.status(404).send({ error: 'Announcement not found' });
     return announcement;

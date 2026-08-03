@@ -1,6 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import { getDb, isSpaceMember } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
+import { isNonEmptyString, isPositiveInt, fail } from '../lib/validate.js';
+import { PollRow, PollOptionRow, PollVoteRow, MembershipRow } from '../db/rows.js';
 
 export function pollRoutes(app: FastifyInstance) {
   app.get('/api/spaces/:id/polls', { preHandler: authMiddleware }, async (request, reply) => {
@@ -13,20 +15,20 @@ export function pollRoutes(app: FastifyInstance) {
 
     const db = getDb();
 
-    const polls = await db.prepare(`
+    const polls = await db.prepare<PollRow>(`
       SELECT p.*, u.name as author_name
       FROM polls p
       JOIN users u ON p.author_id = u.id
       WHERE p.space_id = ?
       ORDER BY p.created_at DESC
-    `).all(id) as any[];
+    `).all(id);
 
     if (polls.length === 0) return { polls: [] };
 
     const pollIds = polls.map(p => p.id);
     const placeholders = pollIds.map(() => '?').join(',');
 
-    const allOptions = await db.prepare(`
+    const allOptions = await db.prepare<PollOptionRow>(`
       SELECT po.id, po.poll_id, po.text, po.display_order,
         COUNT(pv.id) as votes
       FROM poll_options po
@@ -34,7 +36,7 @@ export function pollRoutes(app: FastifyInstance) {
       WHERE po.poll_id IN (${placeholders})
       GROUP BY po.id
       ORDER BY po.display_order
-    `).all(...pollIds) as any[];
+    `).all(...pollIds);
 
     const optionsByPoll = new Map<number, any[]>();
     for (const opt of allOptions) {
@@ -45,10 +47,10 @@ export function pollRoutes(app: FastifyInstance) {
     }
 
     let voteByPoll = new Map<number, number>();
-    const myVotes = await db.prepare(`
+    const myVotes = await db.prepare<PollVoteRow>(`
       SELECT poll_id, option_id FROM poll_votes
       WHERE poll_id IN (${placeholders}) AND user_id = ?
-    `).all(...pollIds, userId) as any[];
+    `).all(...pollIds, userId);
     for (const v of myVotes) {
       voteByPoll.set(v.poll_id, v.option_id);
     }
@@ -73,41 +75,51 @@ export function pollRoutes(app: FastifyInstance) {
     const userId = request.user!.userId;
     const db = getDb();
 
-    const isMember = await db.prepare(
+    const isMember = await db.prepare<MembershipRow>(
       'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
-    ).get(id, userId) as any;
+    ).get(id, userId);
 
     if (!isMember || isMember.role !== 'rep') {
       return reply.status(403).send({ error: 'Only class reps can create polls' });
     }
 
-    if (!body.question?.trim()) {
-      return reply.status(400).send({ error: 'Question is required' });
+    if (!isNonEmptyString(body.question, 300)) {
+      return fail(reply, 'Question is required (max 300 chars)');
     }
-    const opts = (body.options || []).filter((o) => o?.trim());
+    const opts = (body.options || []).filter((o) => typeof o === 'string' && o.trim());
     if (opts.length < 2) {
-      return reply.status(400).send({ error: 'At least 2 options are required' });
+      return fail(reply, 'At least 2 options are required');
+    }
+    if (opts.length > 10) {
+      return fail(reply, 'Maximum 10 options per poll');
+    }
+    for (const o of opts) {
+      if (o.length > 200) return fail(reply, 'Option text too long (max 200 chars)');
     }
 
-    const result = await db.prepare(
-      'INSERT INTO polls (space_id, author_id, question, closes_at) VALUES (?, ?, ?, ?)'
-    ).run(id, userId, body.question.trim(), body.closes_at || null);
+    const stmts: ({ sql: string; args: any[] })[] = [
+      {
+        sql: 'INSERT INTO polls (space_id, author_id, question, closes_at) VALUES (?, ?, ?, ?)',
+        args: [id, userId, body.question.trim(), body.closes_at || null],
+      },
+      ...opts.map((text, i) => ({
+        sql: 'INSERT INTO poll_options (poll_id, text, display_order) VALUES (last_insert_rowid(), ?, ?)',
+        args: [text.trim(), i],
+      })),
+    ];
 
-    const pollId = result.lastInsertRowid;
-
-    for (const [i, text] of opts.entries()) {
-      await db.prepare('INSERT INTO poll_options (poll_id, text, display_order) VALUES (?, ?, ?)').run(pollId, text.trim(), i);
-    }
+    const results = await db.batch(stmts);
+    const pollId = results[0].lastInsertRowid;
 
     const poll = await db.prepare(`
       SELECT p.*, u.name as author_name FROM polls p
       JOIN users u ON p.author_id = u.id WHERE p.id = ?
-    `).get(pollId) as any;
+    `).get(pollId) as PollRow | null;
 
-    const options = await db.prepare(`
+    const options = await db.prepare<PollOptionRow>(`
       SELECT po.id, po.text, po.display_order, 0 as votes
       FROM poll_options po WHERE po.poll_id = ? ORDER BY po.display_order
-    `).all(pollId) as any[];
+    `).all(pollId);
 
     return { poll: { ...poll, options, total_votes: 0, my_vote: null } };
   });
@@ -118,29 +130,33 @@ export function pollRoutes(app: FastifyInstance) {
     const userId = request.user!.userId;
     const db = getDb();
 
-    const poll = await db.prepare('SELECT * FROM polls WHERE id = ?').get(Number(id)) as any;
+    if (!isPositiveInt(option_id)) {
+      return fail(reply, 'A valid option id is required');
+    }
+
+    const poll = await db.prepare<PollRow>('SELECT * FROM polls WHERE id = ?').get(Number(id));
     if (!poll) return reply.status(404).send({ error: 'Poll not found' });
 
     if (poll.closes_at && new Date(poll.closes_at as string) < new Date()) {
       return reply.status(400).send({ error: 'This poll is closed' });
     }
 
-    const option = await db.prepare('SELECT * FROM poll_options WHERE id = ? AND poll_id = ?').get(option_id, Number(id)) as any;
+    const option = await db.prepare<PollOptionRow>('SELECT * FROM poll_options WHERE id = ? AND poll_id = ?').get(option_id, Number(id));
     if (!option) return reply.status(400).send({ error: 'Invalid option' });
 
-    const existing = await db.prepare('SELECT id FROM poll_votes WHERE poll_id = ? AND user_id = ?').get(Number(id), userId) as any;
+    const existing = await db.prepare<PollVoteRow>('SELECT id FROM poll_votes WHERE poll_id = ? AND user_id = ?').get(Number(id), userId);
     if (existing) {
       await db.prepare('UPDATE poll_votes SET option_id = ? WHERE poll_id = ? AND user_id = ?').run(option_id, Number(id), userId);
     } else {
       await db.prepare('INSERT INTO poll_votes (poll_id, option_id, user_id) VALUES (?, ?, ?)').run(Number(id), option_id, userId);
     }
 
-    const options = await db.prepare(`
+    const options = await db.prepare<PollOptionRow>(`
       SELECT po.id, po.text, po.display_order, COUNT(pv.id) as votes
       FROM poll_options po
       LEFT JOIN poll_votes pv ON pv.option_id = po.id
       WHERE po.poll_id = ? GROUP BY po.id ORDER BY po.display_order
-    `).all(Number(id)) as any[];
+    `).all(Number(id));
 
     const totalVotes = options.reduce((s: number, o: any) => s + o.votes, 0);
     return { options, total_votes: totalVotes, voted_option_id: option_id };
@@ -151,12 +167,12 @@ export function pollRoutes(app: FastifyInstance) {
     const userId = request.user!.userId;
     const db = getDb();
 
-    const poll = await db.prepare('SELECT * FROM polls WHERE id = ?').get(Number(id)) as any;
+    const poll = await db.prepare<PollRow>('SELECT * FROM polls WHERE id = ?').get(Number(id));
     if (!poll) return reply.status(404).send({ error: 'Not found' });
 
-    const isMember = await db.prepare(
+    const isMember = await db.prepare<MembershipRow>(
       'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
-    ).get(poll.space_id, userId) as any;
+    ).get(poll.space_id, userId);
 
     if (!isMember || isMember.role !== 'rep') {
       return reply.status(403).send({ error: 'Only class reps can delete polls' });

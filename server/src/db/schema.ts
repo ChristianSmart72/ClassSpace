@@ -188,18 +188,46 @@ const INDEXES = [
   `CREATE INDEX IF NOT EXISTS idx_mat_course_pinned_created ON materials(course_id, pinned, created_at)`,
 ];
 
+// Migrations for existing databases (CREATE TABLE IF NOT EXISTS won't alter them).
+// Each entry runs once, in order, tracked in the _migrations table.
+// Add new entries at the END — never edit or reorder existing ones.
+const MIGRATIONS: { name: string; sql: string }[] = [
+  {
+    name: 'add_opportunities_pinned',
+    sql: `ALTER TABLE opportunities ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0`,
+  },
+];
+
 export async function createTables(): Promise<void> {
   const db = getDb();
   await db.batch(TABLES);
   await db.batch(INDEXES);
 
-  // Migrations for existing databases (CREATE TABLE IF NOT EXISTS won't alter them)
-  const migrations = [
-    `ALTER TABLE opportunities ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0`,
-  ];
-  for (const sql of migrations) {
-    try {
-      await db.execute(sql);
-    } catch { /* column already exists */ }
+  await db.execute(
+    `CREATE TABLE IF NOT EXISTS _migrations (
+      name TEXT PRIMARY KEY,
+      applied_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )`
+  );
+
+  const applied = await db.prepare<{ name: string }>('SELECT name FROM _migrations').all();
+  const appliedSet = new Set(applied.map((r) => r.name));
+
+  for (const migration of MIGRATIONS) {
+    if (appliedSet.has(migration.name)) continue;
+    if (await alreadyApplied(db, migration.sql)) {
+      await db.prepare('INSERT INTO _migrations (name) VALUES (?)').run(migration.name);
+      continue;
+    }
+    await db.batch([{ sql: migration.sql, args: [] }, { sql: 'INSERT INTO _migrations (name) VALUES (?)', args: [migration.name] }]);
   }
+}
+
+// Guard against ALTERs already applied by the pre-migration inline code.
+async function alreadyApplied(db: Awaited<ReturnType<typeof getDb>>, sql: string): Promise<boolean> {
+  const match = /ALTER TABLE (\w+)\s+ADD COLUMN (\w+)/i.exec(sql);
+  if (!match) return false;
+  const [, table, column] = match;
+  const cols = await db.prepare<{ name: string }>(`PRAGMA table_info(${table})`).all();
+  return cols.some((c) => c.name === column);
 }

@@ -52,7 +52,7 @@ export async function seedDatabase(): Promise<void> {
   const db = getDb();
   await createTables();
 
-  const existing = await db.prepare("SELECT id FROM spaces WHERE id = 'pre220'").get() as any;
+  const existing = await db.prepare<{ id: string }>("SELECT id FROM spaces WHERE id = 'pre220'").get();
   if (existing) {
     console.log('Default space (pre220) already exists, skipping seed.');
     return;
@@ -69,7 +69,7 @@ export async function seedDatabase(): Promise<void> {
     extraHashes.push(await hashPassword(u.password));
   }
 
-  const oldSpace = await db.prepare("SELECT id FROM spaces WHERE invite_code = 'PRE-220' AND id != 'pre220'").get() as any;
+  const oldSpace = await db.prepare<{ id: string }>("SELECT id FROM spaces WHERE invite_code = 'PRE-220' AND id != 'pre220'").get();
   if (oldSpace) {
     console.log('Removing old space data to avoid conflicts...');
     for (const table of ['announcements', 'materials', 'reactions', 'timetable', 'poll_votes', 'poll_options', 'polls', 'opportunities', 'courses', 'space_members']) {
@@ -80,7 +80,7 @@ export async function seedDatabase(): Promise<void> {
 
   let repId: number;
 
-  const existingRep = await db.prepare('SELECT id FROM users WHERE email = ?').get(data.user.email) as any;
+  const existingRep = await db.prepare<{ id: number }>('SELECT id FROM users WHERE email = ?').get(data.user.email);
   if (existingRep) {
     repId = existingRep.id;
   } else {
@@ -93,7 +93,7 @@ export async function seedDatabase(): Promise<void> {
 
   for (let i = 0; i < (data.extra_users || []).length; i++) {
     const u = data.extra_users![i];
-    const existingUser = await db.prepare('SELECT id FROM users WHERE email = ?').get(u.email) as any;
+    const existingUser = await db.prepare<{ id: number }>('SELECT id FROM users WHERE email = ?').get(u.email);
     let memberId: number;
     if (existingUser) {
       memberId = existingUser.id;
