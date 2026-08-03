@@ -349,7 +349,8 @@ export function Home() {
   const todayClasses = getClassesToday(timetable);
   const dueItems = getDueItems(announcements);
   const recentAnnouncements = announcements.slice(0, 3);
-  const displayOpp = getActiveOpps(opps.length > 0 ? opps : DEMO_OPPS)[0] ?? null;
+  const showDemoOpps = currentSpace?.id === 'pre220';
+  const displayOpp = getActiveOpps(opps.length > 0 ? opps : (showDemoOpps ? DEMO_OPPS : []))[0] ?? null;
   const newAnnounceCount = announcements.filter(
     a => new Date(a.created_at).getTime() > Date.now() - 86400000 * 2
   ).length;

@@ -96,29 +96,6 @@ export interface MaterialRow {
   space_name?: string;
 }
 
-export interface PollRow {
-  id: number;
-  space_id: string;
-  author_id: number;
-  question: string;
-  closes_at?: string | null;
-  created_at: string;
-  author_name?: string;
-}
-
-export interface PollOptionRow {
-  id: number;
-  poll_id: number;
-  text: string;
-  display_order: number;
-  votes?: number;
-}
-
-export interface PollVoteRow {
-  poll_id: number;
-  option_id: number;
-}
-
 export interface OpportunityRow {
   id: number;
   space_id: string;

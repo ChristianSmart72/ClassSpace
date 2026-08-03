@@ -1,7 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSpaceStore } from '../store/spaceStore';
-import { getTimetable } from '../api/timetable';
+import { getTimetable, deleteTimetableEntry } from '../api/timetable';
 import { Skeleton, EmptyState } from '../components/ui/Shared';
+import { Fab } from '../components/layout';
+import { AddClassSheet } from '../components/sheets/AddClass';
+import { toast } from '../store/toastStore';
 import { DAYS, COURSE_COLORS, COURSE_BG_COLORS, type TimetableEntry } from '../types';
 import api from '../api/client';
 
@@ -75,7 +78,7 @@ function CountdownToClass({ entry }: { entry: TimetableEntry }) {
   return <span className="text-amber-400 text-[10px] font-jakarta font-bold">{label}</span>;
 }
 
-function ClassCard({ entry, isToday, showStatus = true, onCancel }: { entry: TimetableEntry; isToday: boolean; showStatus?: boolean; onCancel?: (entry: TimetableEntry) => void }) {
+function ClassCard({ entry, isToday, showStatus = true, onCancel, onDelete }: { entry: TimetableEntry; isToday: boolean; showStatus?: boolean; onCancel?: (entry: TimetableEntry) => void; onDelete?: (entry: TimetableEntry) => void }) {
   const status = isToday ? getClassStatus(entry) : 'upcoming';
   const ci = entry.color_index % 5;
   const color = COURSE_COLORS[ci];
@@ -143,6 +146,14 @@ function ClassCard({ entry, isToday, showStatus = true, onCancel }: { entry: Tim
               ✕ Cancel class
             </button>
           )}
+          {onDelete && (
+            <button
+              onClick={e => { e.stopPropagation(); onDelete(entry); }}
+              className="flex items-center gap-1 text-[10px] font-jakarta font-bold text-app-text-faint hover:text-app-red bg-app-surface-2/60 hover:bg-app-red/10 px-2 py-1 rounded-lg transition-colors"
+            >
+              🗑 Remove
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -196,6 +207,7 @@ export function Timetable() {
   const [weekOffset, setWeekOffset] = useState(0);
   const [activeTab, setActiveTab] = useState<TimetableTab>('schedule');
   const [cancelToast, setCancelToast] = useState<string | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
 
   const todayIndex = getTodayIndex();
 
@@ -232,6 +244,17 @@ export function Timetable() {
   }, [currentSpace, isRep]);
 
   useEffect(() => { load(); }, [load]);
+
+  const handleDeleteEntry = useCallback(async (entry: TimetableEntry) => {
+    if (!confirm(`Remove ${entry.course_name} (${entry.day} ${entry.start_time.slice(0,5)}) from the timetable?`)) return;
+    try {
+      await deleteTimetableEntry(entry.id);
+      setEntries(prev => prev.filter(e => e.id !== entry.id));
+      toast(`${entry.course_code} removed from timetable`);
+    } catch {
+      toast('Could not remove class — check your connection', 'error');
+    }
+  }, []);
 
   // Compute dates for the currently-shown week
   const monday = getMonday(new Date());
@@ -384,13 +407,19 @@ export function Timetable() {
                       icon={selectedDay >= 5 ? '😴' : '📅'}
                       title={selectedDay >= 5 ? 'Weekend' : 'Free day'}
                       subtitle={selectedDay >= 5 ? 'Enjoy the weekend!' : `No ${DAYS[selectedDay]} classes scheduled`}
+                      action={isRep ? (
+                        <button onClick={() => setShowAdd(true)}
+                          className="mt-2 bg-app-accent text-app-bg font-jakarta font-bold text-xs rounded-xl px-4 py-2.5 active:scale-95 transition-all">
+                          + Add a class
+                        </button>
+                      ) : undefined}
                     />
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3 animate-fadeIn">
                     {dayEntries.map(entry => (
                       <div key={entry.id}>
-                        <ClassCard entry={entry} isToday={isToday} onCancel={isRep ? handleCancelClass : undefined} />
+                        <ClassCard entry={entry} isToday={isToday} onCancel={isRep ? handleCancelClass : undefined} onDelete={isRep ? handleDeleteEntry : undefined} />
                       </div>
                     ))}
                     <div className="bg-app-surface rounded-xl p-3 border border-app-border flex items-center justify-between mt-1">
@@ -594,6 +623,9 @@ export function Timetable() {
             </div>
           </div>
         )}
+
+      {isRep && <Fab onClick={() => setShowAdd(true)} icon="+" />}
+      {showAdd && <AddClassSheet spaceId={currentSpace.id} onClose={() => setShowAdd(false)} onAdded={load} />}
     </div>
   );
 }

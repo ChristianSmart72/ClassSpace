@@ -34,11 +34,6 @@ interface SeedData {
     format?: string;
   }[];
   materials: { course_index: number; name: string; file_type: string; category: string; file_size: number }[];
-  polls?: {
-    question: string;
-    options: string[];
-    closes_at: string | null;
-  }[];
   opportunities?: {
     title: string;
     description: string;
@@ -132,14 +127,6 @@ export async function seedDatabase(): Promise<void> {
   for (const mat of data.materials) {
     const courseId = courseIds[mat.course_index];
     await db.prepare('INSERT INTO materials (space_id, course_id, name, file_type, category, file_size, uploader_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run(data.space.id, courseId, mat.name, mat.file_type, mat.category, mat.file_size, repId);
-  }
-
-  for (const poll of (data.polls || [])) {
-    const res = await db.prepare('INSERT INTO polls (space_id, author_id, question, closes_at) VALUES (?, ?, ?, ?)').run(data.space.id, repId, poll.question, poll.closes_at || null);
-    const pollId = res.lastInsertRowid;
-    for (const [i, text] of poll.options.entries()) {
-      await db.prepare('INSERT INTO poll_options (poll_id, text, display_order) VALUES (?, ?, ?)').run(pollId, text, i);
-    }
   }
 
   for (const opp of (data.opportunities || [])) {

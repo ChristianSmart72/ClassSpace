@@ -7,7 +7,7 @@ export async function getTimetable(spaceId: string) {
 }
 
 export async function createTimetableEntry(spaceId: string, entry: {
-  course_id: number; day: string; start_time: string; end_time: string; venue?: string;
+  course_id: number; day: string; start_time: string; end_time: string; venue?: string; lecturer?: string;
 }) {
   const { data } = await api.post(`/spaces/${spaceId}/timetable`, entry);
   return data;

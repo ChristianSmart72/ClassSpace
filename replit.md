@@ -1,6 +1,6 @@
 # ClassSpace
 
-A mobile-first academic organiser for Nigerian university students. Replaces the chaos of a class WhatsApp group with a structured space per department and level — announcements, course files, timetables, polls, and opportunities.
+A mobile-first academic organiser for Nigerian university students. Replaces the chaos of a class WhatsApp group with a structured space per department and level — announcements, course files, timetables, and opportunities.
 
 ## Stack
 

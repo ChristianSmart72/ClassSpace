@@ -60,4 +60,4 @@ Last updated: 2026-08-03 — items below are annotated with their **current stat
 1. **Uploads** — direct-to-CDN path is server-light and fast; keep it. If a CDN file is deleted upstream, downloads 404 — the demo fallback URL handles seeded materials.
 2. **Multi-step writes** — use Turso `client.batch()` (NOT `BEGIN/COMMIT` via `execute`, which fails on the Turso HTTP transport).
 3. **Env** — all required vars enumerated in `server/src/lib/config.ts`; set on Render (secrets `sync: false`).
-4. **Client offline** — announcements are locally cached; consider caching materials/polls for full offline.
+4. **Client offline** — announcements are locally cached; consider caching materials for full offline.

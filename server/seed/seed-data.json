@@ -163,23 +163,6 @@
     { "course_index": 4, "name": "Sample Technical Report (A-Grade)", "file_type": "doc", "category": "Templates", "file_size": 327680 },
     { "course_index": 4, "name": "GNS 311 Course Outline & Assessment Guide", "file_type": "pdf", "category": "Notes", "file_size": 210000 }
   ],
-  "polls": [
-    {
-      "question": "When should we hold the Thermodynamics II CA revision session?",
-      "options": ["Wednesday evening (6–8pm)", "Thursday after lectures (4–6pm)", "Saturday morning (10am–12pm)", "Sunday afternoon (2–4pm)"],
-      "closes_at": "2026-06-28T23:59:00"
-    },
-    {
-      "question": "Which topic should the MTH 311 peer tutorial cover first?",
-      "options": ["Double Integrals", "Green's Theorem", "Series Solutions", "Laplace Transforms"],
-      "closes_at": null
-    },
-    {
-      "question": "Are you ready for the PRE 321 CA test on Friday?",
-      "options": ["Yes, fully prepared 💪", "Somewhat ready", "Need more time to study", "Not at all 😅"],
-      "closes_at": "2026-06-27T23:59:00"
-    }
-  ],
   "opportunities": [
     { "title": "MTN Foundation Scholarship 2026", "description": "Full scholarship for Nigerian university students studying STEM courses. Covers tuition, accommodation, and a monthly stipend. Open to 200–400L students with a minimum CGPA of 3.5.", "category": "scholarship", "link": "https://www.mtn.com/foundation", "deadline": null },
     { "title": "Shell SIWES Industrial Internship", "description": "Six-month paid SIWES placement at Shell Nigeria for engineering students. Work alongside professionals on real oil & gas projects. Includes mentorship and certificate on completion.", "category": "internship", "link": "https://www.shell.com.ng/careers", "deadline": null },

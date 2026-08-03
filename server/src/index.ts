@@ -16,7 +16,6 @@ import { shareRoutes } from './routes/share.js';
 import { demoRoutes } from './routes/demo.js';
 import { reactionRoutes } from './routes/reactions.js';
 import { timetableRoutes } from './routes/timetable.js';
-import { pollRoutes } from './routes/polls.js';
 import { opportunityRoutes } from './routes/opportunities.js';
 import { pushRoutes } from './routes/push.js';
 import { resetRoutes } from './routes/reset.js';
@@ -79,7 +78,6 @@ async function main() {
   demoRoutes(app);
   reactionRoutes(app);
   timetableRoutes(app);
-  pollRoutes(app);
   opportunityRoutes(app);
   pushRoutes(app);
   resetRoutes(app);

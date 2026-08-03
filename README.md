@@ -30,8 +30,7 @@ Join code: **PRE-220**
 - **Attachments** — up to 5 files per announcement, uploaded straight to the CDN with a live progress bar.
 - **Course Materials** — files organised by course and category (Notes, Slides, Assignments, Past Questions, Lab Resources, Templates). Search, sort (newest / oldest / most downloaded / A–Z), pin, and one-tap download with a per-file progress view.
 - **Fast file uploads** — the browser uploads directly to Uploadthing's CDN (no server relay), so even large course PDFs go fast and never stall the API. Byte-level progress is shown while uploading.
-- **Schedule** — weekly timetable per space with day selector, course-colour-coded entries, venue and lecturer.
-- **Polls** — quick class votes with live results.
+- **Schedule** — weekly timetable per space with day selector, course-colour-coded entries, venue and lecturer. Class reps can add/remove classes and post cancellations.
 - **Opportunities** — scholarships, internships, competitions, and jobs posted to your space.
 - **Sharing** — every announcement, material, course, and space has a shareable link that opens a clean preview — with an in-app share sheet.
 - **Push notifications** — new/urgent announcements notify space members instantly (Web Push + VAPID), with per-user toggles.

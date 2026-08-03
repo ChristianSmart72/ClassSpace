@@ -205,27 +205,6 @@ export type ReactionKey = typeof REACTION_KEYS[number];
 // Legacy — kept for any imports that reference it
 export const REACTION_EMOJIS = ['upvote', 'downvote'] as const;
 
-export interface PollOption {
-  id: number;
-  poll_id?: number;
-  text: string;
-  display_order: number;
-  votes: number;
-}
-
-export interface Poll {
-  id: number;
-  space_id: string;
-  author_id: number;
-  author_name: string;
-  question: string;
-  closes_at: string | null;
-  created_at: string;
-  options: PollOption[];
-  total_votes: number;
-  my_vote?: number | null;
-}
-
 export interface Opportunity {
   id: number;
   space_id: string;

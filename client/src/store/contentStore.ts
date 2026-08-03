@@ -1,7 +1,6 @@
 import { create } from 'zustand';
-import type { Announcement, Material, Poll, Opportunity } from '../types';
+import type { Announcement, Material, Opportunity } from '../types';
 import * as contentApi from '../api/content';
-import * as pollsApi from '../api/polls';
 import * as opportunitiesApi from '../api/opportunities';
 import { isOfflineError } from '../api/client';
 import { toast } from './toastStore';
@@ -31,11 +30,9 @@ function restoreAnnouncements(): Announcement[] {
 interface ContentState {
   announcements: Announcement[];
   materials: Material[];
-  polls: Poll[];
   opportunities: Opportunity[];
   loading: boolean;
   matLoading: boolean;
-  pollsLoading: boolean;
   opportunitiesLoading: boolean;
   fetchAnnouncements: (spaceId: string, filter?: string) => Promise<void>;
   createAnnouncement: (spaceId: string, ann: Partial<Announcement>) => Promise<Announcement>;
@@ -46,10 +43,6 @@ interface ContentState {
   deleteMaterial: (id: number) => Promise<void>;
   updateMaterial: (id: number, updates: Partial<Material>) => Promise<void>;
   clearMaterials: () => void;
-  fetchPolls: (spaceId: string) => Promise<void>;
-  createPoll: (spaceId: string, payload: { question: string; options: string[]; closes_at?: string }) => Promise<Poll>;
-  votePoll: (pollId: number, optionId: number) => Promise<void>;
-  deletePoll: (pollId: number) => Promise<void>;
   fetchOpportunities: (spaceId: string) => Promise<void>;
   createOpportunity: (spaceId: string, payload: Parameters<typeof opportunitiesApi.createOpportunity>[1]) => Promise<Opportunity>;
   deleteOpportunity: (id: number) => Promise<void>;
@@ -58,11 +51,9 @@ interface ContentState {
 export const useContentStore = create<ContentState>((set) => ({
   announcements: restoreAnnouncements(),
   materials: [],
-  polls: [],
   opportunities: [],
   loading: false,
   matLoading: false,
-  pollsLoading: false,
   opportunitiesLoading: false,
 
   fetchAnnouncements: async (spaceId, filter) => {
@@ -164,59 +155,6 @@ export const useContentStore = create<ContentState>((set) => ({
   },
 
   clearMaterials: () => set({ materials: [] }),
-
-  fetchPolls: async (spaceId) => {
-    set({ pollsLoading: true });
-    try {
-      const polls = await pollsApi.getPolls(spaceId);
-      cacheJson('cachedPolls:' + spaceId, polls);
-      set({ polls, pollsLoading: false });
-    } catch (err: any) {
-      if (isOfflineError(err)) {
-        const cached = restoreJson<Poll>('cachedPolls:' + spaceId);
-        if (cached.length > 0) {
-          set({ polls: cached, pollsLoading: false });
-          toast("You're offline — showing cached content", 'info');
-          return;
-        }
-      }
-      set({ pollsLoading: false });
-    }
-  },
-
-  createPoll: async (spaceId, payload) => {
-    try {
-      const poll = await pollsApi.createPoll(spaceId, payload);
-      set((state) => ({ polls: [poll, ...state.polls] }));
-      toast('Poll created');
-      return poll;
-    } catch (err: any) {
-      toast(err?.response?.data?.error || err?.message || 'Could not create poll', 'error');
-      throw err;
-    }
-  },
-
-  votePoll: async (pollId, optionId) => {
-    const result = await pollsApi.votePoll(pollId, optionId);
-    set((state) => ({
-      polls: state.polls.map((p) =>
-        p.id === pollId
-          ? { ...p, options: result.options, total_votes: result.total_votes, my_vote: result.voted_option_id }
-          : p
-      ),
-    }));
-  },
-
-  deletePoll: async (pollId) => {
-    try {
-      await pollsApi.deletePoll(pollId);
-      set((state) => ({ polls: state.polls.filter((p) => p.id !== pollId) }));
-      toast('Poll deleted');
-    } catch (err: any) {
-      toast(err?.response?.data?.error || 'Could not delete poll', 'error');
-      throw err;
-    }
-  },
 
   fetchOpportunities: async (spaceId) => {
     set({ opportunitiesLoading: true });

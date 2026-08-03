@@ -1,8 +1,11 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Skeleton, EmptyState } from '../components/ui/Shared';
-import { getOpportunities, patchOpportunity } from '../api/opportunities';
+import { Fab } from '../components/layout';
+import { PostOpportunitySheet } from '../components/sheets/PostOpportunity';
+import { patchOpportunity } from '../api/opportunities';
 import { useSpaceStore } from '../store/spaceStore';
+import { useContentStore } from '../store/contentStore';
 import { OPPORTUNITY_CATEGORIES } from '../types';
 import { formatRelativeTime, canGoBack } from '../lib/time';
 import type { Opportunity } from '../types';
@@ -47,8 +50,9 @@ export function Opportunities() {
   const navigate = useNavigate();
   const memberRole = useSpaceStore(s => s.memberRole);
   const isRep = memberRole === 'rep';
-  const [opps, setOpps] = useState<Opportunity[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { opportunities, opportunitiesLoading, fetchOpportunities, deleteOpportunity } = useContentStore();
+  const [pinOverride, setPinOverride] = useState<Record<number, boolean>>({});
+  const [showPost, setShowPost] = useState(false);
   const [filter, setFilter] = useState<string | null>(null);
   const [showBookmarked, setShowBookmarked] = useState(false);
   const [bookmarks, setBookmarks] = useState<number[]>(getBookmarks);
@@ -56,19 +60,12 @@ export function Opportunities() {
   useEffect(() => {
     if (!spaceId) return;
     const cancelled = { current: false };
-    setLoading(true);
-    getOpportunities(spaceId).then(data => {
-      if (!cancelled.current) setOpps(data || []);
-    }).catch(() => {
-      if (!cancelled.current) setOpps([]);
-    }).finally(() => {
-      if (!cancelled.current) setLoading(false);
-    });
+    fetchOpportunities(spaceId).finally(() => { cancelled.current = true; });
     return () => { cancelled.current = true; };
-  }, [spaceId]);
+  }, [spaceId, fetchOpportunities]);
 
   const displayList = useMemo(() => {
-    let filtered = opps;
+    let filtered = opportunities.map(o => ({ ...o, pinned: pinOverride[o.id] ?? o.pinned }));
     if (showBookmarked) filtered = filtered.filter(o => bookmarks.includes(o.id));
     if (filter) filtered = filtered.filter(o => o.category === filter);
     const sorted = [...filtered].sort((a, b) =>
@@ -76,15 +73,26 @@ export function Opportunities() {
       (new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     );
     return sorted;
-  }, [opps, filter, showBookmarked, bookmarks]);
+  }, [opportunities, pinOverride, filter, showBookmarked, bookmarks]);
 
   const handleBookmark = (id: number) => setBookmarks(toggleBookmark(id));
 
   const handlePin = async (opp: Opportunity) => {
+    const next = !(pinOverride[opp.id] ?? opp.pinned);
+    setPinOverride(prev => ({ ...prev, [opp.id]: next }));
     try {
-      await patchOpportunity(opp.id, { pinned: !opp.pinned });
-      setOpps(prev => prev.map(o => o.id === opp.id ? { ...o, pinned: !o.pinned } : o));
-    } catch { /* ignore */ }
+      await patchOpportunity(opp.id, { pinned: next });
+    } catch {
+      setPinOverride(prev => ({ ...prev, [opp.id]: opp.pinned ?? false }));
+    }
+  };
+
+  const handleDelete = async (opp: Opportunity) => {
+    if (!confirm(`Delete "${opp.title}"? This cannot be undone.`)) return;
+    try {
+      await deleteOpportunity(opp.id);
+      setBookmarks(prev => prev.filter(b => b !== opp.id));
+    } catch { /* toast shown by store */ }
   };
 
   const sectionMeta = filter ? categoryMeta(filter) : null;
@@ -136,7 +144,7 @@ export function Opportunities() {
       </div>
 
       <div className="px-4 mt-4">
-        {loading ? (
+        {opportunitiesLoading ? (
           <div className="flex flex-col gap-4">
             {[1, 2, 3].map(i => (
               <div key={i} className="bg-app-surface rounded-xl p-4 border border-app-border">
@@ -150,7 +158,7 @@ export function Opportunities() {
           <EmptyState
             icon={showBookmarked ? '🔖' : '💼'}
             title={showBookmarked ? 'No bookmarked opportunities' : 'No opportunities yet'}
-            subtitle={showBookmarked ? 'Tap the bookmark icon on opportunities to save them' : 'Check back later for scholarships, internships, and more'}
+            subtitle={showBookmarked ? 'Tap the bookmark icon on opportunities to save them' : isRep ? 'Tap + to post the first opportunity' : 'Check back later for scholarships, internships, and more'}
           />
         ) : (
           <div className="flex flex-col gap-6">
@@ -188,13 +196,22 @@ export function Opportunities() {
                         )}
                         <div className="ml-auto flex items-center gap-1 flex-shrink-0">
                           {isRep && (
-                            <button
-                              onClick={() => handlePin(opp)}
-                              className={`p-1.5 rounded-lg transition-colors text-sm leading-none ${opp.pinned ? 'text-app-accent' : 'text-app-text-faint hover:text-app-text'}`}
-                              title={opp.pinned ? 'Unpin' : 'Pin'}
-                            >
-                              📌
-                            </button>
+                            <>
+                              <button
+                                onClick={() => handleDelete(opp)}
+                                className="p-1.5 rounded-lg transition-colors text-sm leading-none text-app-text-faint hover:text-app-red"
+                                title="Delete"
+                              >
+                                🗑
+                              </button>
+                              <button
+                                onClick={() => handlePin(opp)}
+                                className={`p-1.5 rounded-lg transition-colors text-sm leading-none ${opp.pinned ? 'text-app-accent' : 'text-app-text-faint hover:text-app-text'}`}
+                                title={opp.pinned ? 'Unpin' : 'Pin'}
+                              >
+                                📌
+                              </button>
+                            </>
                           )}
                           <button
                             onClick={() => handleBookmark(opp.id)}
@@ -240,6 +257,9 @@ export function Opportunities() {
           </div>
         )}
       </div>
+
+      {isRep && <Fab onClick={() => setShowPost(true)} icon="+" />}
+      {showPost && spaceId && <PostOpportunitySheet spaceId={spaceId} onClose={() => setShowPost(false)} />}
     </div>
   );
 }
