@@ -39,9 +39,7 @@ async function main() {
   await app.register(helmet, { contentSecurityPolicy: false });
   await app.register(rateLimit, { max: 100, timeWindow: '1 minute' });
   await app.register(cors, {
-    origin: IS_PROD
-      ? [/\.onrender\.com$/, 'https://classspace.app']
-      : true,
+    origin: true,
     credentials: true,
   });
   await app.register(multipart, { limits: { fileSize: 1024 * 1024 * 1024 } });
