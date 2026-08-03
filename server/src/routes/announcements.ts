@@ -180,16 +180,25 @@ export function announcementRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: 'Only class reps can create announcements' });
     }
 
+    // last_insert_rowid() is clobbered by any subsequent INSERT in the same
+    // batch (e.g. the first attachment row), so capture the announcement id
+    // once into a temp table and read it for every attachment row.
+    const attachmentSelects = attachments.map(() => 'SELECT id, ?, ?, ? FROM _new_ann_id').join(' UNION ALL ');
     const stmts: ({ sql: string; args: any[] })[] = [
       {
         sql: `INSERT INTO announcements (space_id, course_id, title, body, type, author_id, urgent, pinned, deadline, venue, instructions, submission_method, format, file_data, file_name, file_size)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         args: [id, courseId, title, body, type, userId, urgent ? 1 : 0, pinned ? 1 : 0, deadline, venue, instructions, null, null, fileUrl, fileName, fileSize],
       },
-      ...attachments.map(att => ({
-        sql: 'INSERT INTO announcement_attachments (announcement_id, file_url, file_name, file_size) VALUES (last_insert_rowid(), ?, ?, ?)',
-        args: [att.fileUrl, att.fileName, att.fileSize],
-      })),
+      {
+        sql: 'CREATE TEMP TABLE _new_ann_id AS SELECT last_insert_rowid() AS id',
+        args: [],
+      },
+      ...(attachments.length > 0 ? [{
+        sql: `INSERT INTO announcement_attachments (announcement_id, file_url, file_name, file_size) ${attachmentSelects}`,
+        args: attachments.flatMap(att => [att.fileUrl, att.fileName, att.fileSize]),
+      }] : []),
+      { sql: 'DROP TABLE _new_ann_id', args: [] },
     ];
 
     const results = await db.batch(stmts);

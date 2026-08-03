@@ -97,15 +97,24 @@ export function pollRoutes(app: FastifyInstance) {
       if (o.length > 200) return fail(reply, 'Option text too long (max 200 chars)');
     }
 
+    // last_insert_rowid() is clobbered by any subsequent INSERT in the same
+    // batch (e.g. the first option row), so capture the poll id once into a
+    // temp table and read it for every option row.
+    const optionSelects = opts.map(() => 'SELECT id, ?, ? FROM _new_poll_id').join(' UNION ALL ');
     const stmts: ({ sql: string; args: any[] })[] = [
       {
         sql: 'INSERT INTO polls (space_id, author_id, question, closes_at) VALUES (?, ?, ?, ?)',
         args: [id, userId, body.question.trim(), body.closes_at || null],
       },
-      ...opts.map((text, i) => ({
-        sql: 'INSERT INTO poll_options (poll_id, text, display_order) VALUES (last_insert_rowid(), ?, ?)',
-        args: [text.trim(), i],
-      })),
+      {
+        sql: 'CREATE TEMP TABLE _new_poll_id AS SELECT last_insert_rowid() AS id',
+        args: [],
+      },
+      {
+        sql: `INSERT INTO poll_options (poll_id, text, display_order) ${optionSelects}`,
+        args: opts.flatMap((text, i) => [text.trim(), i]),
+      },
+      { sql: 'DROP TABLE _new_poll_id', args: [] },
     ];
 
     const results = await db.batch(stmts);
