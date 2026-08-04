@@ -32,7 +32,7 @@ export function timetableRoutes(app: FastifyInstance) {
         t.start_time
     `).all(id);
 
-    return { timetable: entries };
+    return { timetable: entries.map(e => ({ ...e, cancelled: Boolean(e.cancelled) })) };
   });
 
   app.post('/api/spaces/:id/timetable', { preHandler: authMiddleware }, async (request, reply) => {
@@ -61,6 +61,29 @@ export function timetableRoutes(app: FastifyInstance) {
     `).get(result.lastInsertRowid);
 
     return { entry };
+  });
+
+  app.patch('/api/timetable/:id', { preHandler: authMiddleware }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const body = request.body as { cancelled?: boolean };
+    const db = getDb();
+
+    const entry = await db.prepare<TimetableRow>('SELECT * FROM timetable WHERE id = ?').get(Number(id));
+    if (!entry) return reply.status(404).send({ error: 'Not found' });
+
+    const isMember = await db.prepare<MembershipRow>(
+      'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
+    ).get(entry.space_id, request.user!.userId);
+
+    if (!isMember || isMember.role !== 'rep') {
+      return reply.status(403).send({ error: 'Only class reps can edit the timetable' });
+    }
+
+    if (body.cancelled !== undefined) {
+      await db.prepare('UPDATE timetable SET cancelled = ? WHERE id = ?').run(body.cancelled ? 1 : 0, Number(id));
+    }
+
+    return { success: true };
   });
 
   app.delete('/api/timetable/:id', { preHandler: authMiddleware }, async (request, reply) => {

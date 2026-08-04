@@ -16,3 +16,7 @@ export async function createTimetableEntry(spaceId: string, entry: {
 export async function deleteTimetableEntry(id: number) {
   await api.delete(`/timetable/${id}`);
 }
+
+export async function setEntryCancelled(id: number, cancelled: boolean) {
+  await api.patch(`/timetable/${id}`, { cancelled });
+}

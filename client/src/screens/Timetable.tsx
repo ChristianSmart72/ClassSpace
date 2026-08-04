@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSpaceStore } from '../store/spaceStore';
-import { getTimetable, deleteTimetableEntry } from '../api/timetable';
+import { getTimetable, deleteTimetableEntry, setEntryCancelled } from '../api/timetable';
 import { Skeleton, EmptyState } from '../components/ui/Shared';
 import { Fab } from '../components/layout';
 import { AddClassSheet } from '../components/sheets/AddClass';
@@ -78,8 +78,9 @@ function CountdownToClass({ entry }: { entry: TimetableEntry }) {
   return <span className="text-amber-400 text-[10px] font-jakarta font-bold">{label}</span>;
 }
 
-function ClassCard({ entry, isToday, showStatus = true, onCancel, onDelete }: { entry: TimetableEntry; isToday: boolean; showStatus?: boolean; onCancel?: (entry: TimetableEntry) => void; onDelete?: (entry: TimetableEntry) => void }) {
-  const status = isToday ? getClassStatus(entry) : 'upcoming';
+function ClassCard({ entry, isToday, showStatus = true, onCancel, onRestore, onDelete }: { entry: TimetableEntry; isToday: boolean; showStatus?: boolean; onCancel?: (entry: TimetableEntry) => void; onRestore?: (entry: TimetableEntry) => void; onDelete?: (entry: TimetableEntry) => void }) {
+  const cancelled = !!entry.cancelled;
+  const status = cancelled ? 'past' : isToday ? getClassStatus(entry) : 'upcoming';
   const ci = entry.color_index % 5;
   const color = COURSE_COLORS[ci];
   const bg = COURSE_BG_COLORS[ci];
@@ -87,7 +88,7 @@ function ClassCard({ entry, isToday, showStatus = true, onCancel, onDelete }: { 
   return (
     <div
       className={`relative rounded-2xl border overflow-hidden transition-all duration-300 ${
-        status === 'now' ? 'border-opacity-60 shadow-lg' : status === 'past' ? 'opacity-45 border-app-border' : 'border-app-border'
+        status === 'now' ? 'border-opacity-60 shadow-lg' : 'opacity-45 border-app-border'
       }`}
       style={{
         background: status === 'now' ? bg : 'var(--color-app-surface)',
@@ -99,7 +100,12 @@ function ClassCard({ entry, isToday, showStatus = true, onCancel, onDelete }: { 
       <div className="pl-5 pr-4 py-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            {showStatus && status === 'now' && (
+            {cancelled && (
+              <div className="flex items-center gap-1.5 mb-2">
+                <span className="text-[10px] font-jakarta font-bold uppercase tracking-wider text-app-red">❌ Cancelled</span>
+              </div>
+            )}
+            {showStatus && !cancelled && status === 'now' && (
               <div className="flex items-center gap-1.5 mb-2">
                 <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: color }} />
                 <span className="text-[10px] font-jakarta font-bold uppercase tracking-wider" style={{ color }}>Now in session</span>
@@ -138,12 +144,20 @@ function ClassCard({ entry, isToday, showStatus = true, onCancel, onDelete }: { 
               <span>👨‍🏫</span><span>{entry.lecturer}</span>
             </div>
           )}
-          {onCancel && (
+          {onCancel && !cancelled && (
             <button
               onClick={e => { e.stopPropagation(); onCancel(entry); }}
               className="ml-auto flex items-center gap-1 text-[10px] font-jakarta font-bold text-app-red/80 hover:text-app-red bg-app-red/8 hover:bg-app-red/15 px-2 py-1 rounded-lg transition-colors"
             >
               ✕ Cancel class
+            </button>
+          )}
+          {onRestore && cancelled && (
+            <button
+              onClick={e => { e.stopPropagation(); onRestore(entry); }}
+              className="ml-auto flex items-center gap-1 text-[10px] font-jakarta font-bold text-app-accent bg-app-accent/10 hover:bg-app-accent/20 px-2 py-1 rounded-lg transition-colors"
+            >
+              ↩ Re-schedule
             </button>
           )}
           {onDelete && (
@@ -190,7 +204,9 @@ export function Timetable() {
   const handleCancelClass = useCallback(async (entry: TimetableEntry) => {
     if (!currentSpace || !isRep) return;
     if (!confirm(`Cancel ${entry.course_name} (${entry.day} ${entry.start_time.slice(0,5)})? This will notify the class.`)) return;
+    setEntries(prev => prev.map(e => e.id === entry.id ? { ...e, cancelled: true } : e));
     try {
+      await setEntryCancelled(entry.id, true);
       await api.post(`/spaces/${currentSpace.id}/announcements`, {
         course_id: entry.course_id,
         title: `❌ Class cancelled — ${entry.course_code} (${entry.day} ${entry.start_time.slice(0,5)})`,
@@ -202,10 +218,26 @@ export function Timetable() {
       setCancelToast(`${entry.course_code} class cancelled — classmates have been notified`);
       setTimeout(() => setCancelToast(null), 4000);
     } catch {
-      setCancelToast('Could not post cancellation — check your connection');
+      setEntries(prev => prev.map(e => e.id === entry.id ? { ...e, cancelled: false } : e));
+      setCancelToast('Could not cancel class — check your connection');
       setTimeout(() => setCancelToast(null), 3000);
     }
   }, [currentSpace, isRep]);
+
+  const handleRestoreClass = useCallback(async (entry: TimetableEntry) => {
+    if (!isRep) return;
+    if (!confirm(`Re-schedule ${entry.course_name} (${entry.day} ${entry.start_time.slice(0,5)})?`)) return;
+    setEntries(prev => prev.map(e => e.id === entry.id ? { ...e, cancelled: false } : e));
+    try {
+      await setEntryCancelled(entry.id, false);
+      setCancelToast(`${entry.course_code} class restored to the timetable`);
+      setTimeout(() => setCancelToast(null), 3000);
+    } catch {
+      setEntries(prev => prev.map(e => e.id === entry.id ? { ...e, cancelled: true } : e));
+      setCancelToast('Could not restore class — check your connection');
+      setTimeout(() => setCancelToast(null), 3000);
+    }
+  }, [isRep]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -367,7 +399,7 @@ export function Timetable() {
                   <div className="flex flex-col gap-3 animate-fadeIn">
                     {dayEntries.map(entry => (
                       <div key={entry.id}>
-                        <ClassCard entry={entry} isToday={isToday} onCancel={isRep ? handleCancelClass : undefined} onDelete={isRep ? handleDeleteEntry : undefined} />
+                        <ClassCard entry={entry} isToday={isToday} onCancel={isRep ? handleCancelClass : undefined} onRestore={isRep ? handleRestoreClass : undefined} onDelete={isRep ? handleDeleteEntry : undefined} />
                       </div>
                     ))}
                     <div className="bg-app-surface rounded-xl p-3 border border-app-border flex items-center justify-between mt-1">
@@ -442,7 +474,8 @@ export function Timetable() {
                             </div>
                           ) : (
                             dEntries.map((entry) => {
-                              const status = isActualToday ? getClassStatus(entry) : 'upcoming';
+                              const cancelled = !!entry.cancelled;
+                              const status = cancelled ? 'past' : isActualToday ? getClassStatus(entry) : 'upcoming';
                               const ci = entry.color_index % 5;
                               const color = COURSE_COLORS[ci];
                               const bg = COURSE_BG_COLORS[ci];
@@ -464,6 +497,11 @@ export function Timetable() {
                                       <div className="flex items-center gap-1 mb-1">
                                         <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: color }} />
                                         <span className="text-[9px] font-jakarta font-bold uppercase" style={{ color }}>Live</span>
+                                      </div>
+                                    )}
+                                    {cancelled && (
+                                      <div className="flex items-center gap-1 mb-1">
+                                        <span className="text-[9px] font-jakarta font-bold uppercase text-app-red">❌ Cancelled</span>
                                       </div>
                                     )}
                                     <p className="text-app-text font-jakarta font-bold text-xs leading-snug line-clamp-2">{entry.course_name}</p>

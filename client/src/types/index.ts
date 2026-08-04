@@ -50,6 +50,7 @@ export interface Announcement {
   course_name?: string;
   course_code?: string;
   course_icon?: string;
+  space_name?: string;
   reactions?: Record<string, number>;
   my_reaction?: string | null;
   file_data?: string;
@@ -90,6 +91,7 @@ export interface TimetableEntry {
   course_code: string;
   course_icon: string;
   color_index: number;
+  cancelled?: boolean;
 }
 
 export interface SharedSpaceAnnouncement {

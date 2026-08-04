@@ -5,12 +5,14 @@ import { getAnnouncement, getMaterials } from '../api/content';
 import type { Announcement, Material } from '../types';
 import { Skeleton } from '../components/ui/Shared';
 import { ShareSheet } from '../components/sheets/ShareSheet';
+import { canGoBack } from '../lib/time';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
+  if (m < 1) return 'Just now';
   if (m < 60) return `${m}m ago`;
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h ago`;
@@ -162,7 +164,7 @@ export function AnnouncementDetail() {
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
         <span className="text-5xl mb-4">📭</span>
         <h2 className="text-app-text font-jakarta font-bold text-lg mb-2">Announcement not found</h2>
-        <button onClick={() => navigate(-1)} className="bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl px-6 py-3 mt-4" style={{ color: 'var(--app-on-accent)' }}>
+        <button onClick={() => canGoBack() ? navigate(-1) : navigate('/home')} className="bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl px-6 py-3 mt-4" style={{ color: 'var(--app-on-accent)' }}>
           Go back
         </button>
       </div>
@@ -179,7 +181,7 @@ export function AnnouncementDetail() {
       <div className="sticky top-0 z-30 bg-app-bg/95 backdrop-blur-md border-b border-app-border">
         <div className="flex items-center gap-3 px-4 h-14 max-w-[430px] lg:max-w-3xl mx-auto">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => canGoBack() ? navigate(-1) : navigate(`/home`)}
             className="w-9 h-9 rounded-xl bg-app-surface border border-app-border flex items-center justify-center text-app-text-dim hover:text-app-text transition-colors flex-shrink-0"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -244,7 +246,11 @@ export function AnnouncementDetail() {
         </div>
 
         {/* ── Timestamp ── */}
-        <p className="text-app-text-faint text-xs font-inter mb-5">{relativeTime(ann.created_at)}</p>
+        <p className="text-app-text-faint text-xs font-inter mb-5">
+          {ann.space_name && <span className="font-jakarta font-semibold text-app-text-dim">{ann.space_name}</span>}
+          {ann.space_name && <span className="mx-1.5 opacity-50">·</span>}
+          {relativeTime(ann.created_at)}
+        </p>
 
         {/* ── Key Details ── */}
         {hasKeyDetails && (
@@ -274,10 +280,12 @@ export function AnnouncementDetail() {
           </div>
         )}
 
-        {/* ── Instructions / body ── */}
+        {/* ── Body ── */}
         {ann.body && (
           <div className="mb-5 animate-fadeIn">
-            <p className="text-app-text-faint text-[10px] font-jakarta font-bold uppercase tracking-widest mb-3">Instructions</p>
+            <p className="text-app-text-faint text-[10px] font-jakarta font-bold uppercase tracking-widest mb-3">
+              {ann.type === 'assignment' || ann.type === 'test' ? 'Instructions' : 'Details'}
+            </p>
             <div className="bg-app-surface rounded-2xl border border-app-border px-4 py-4">
               <p className="text-app-text-dim font-inter text-sm leading-relaxed whitespace-pre-wrap">{ann.body}</p>
               {ann.instructions && ann.instructions !== ann.body && (

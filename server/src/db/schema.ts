@@ -196,6 +196,10 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     name: 'add_opportunities_pinned',
     sql: `ALTER TABLE opportunities ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0`,
   },
+  {
+    name: 'add_timetable_cancelled',
+    sql: `ALTER TABLE timetable ADD COLUMN cancelled INTEGER NOT NULL DEFAULT 0`,
+  },
 ];
 
 export async function createTables(): Promise<void> {

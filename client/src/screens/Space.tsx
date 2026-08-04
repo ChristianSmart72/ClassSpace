@@ -466,7 +466,7 @@ export function Space() {
                       <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl" style={{ background: COURSE_COLORS[ci] }} />
                       <div className="pl-3">
                         <div className="flex items-start justify-between gap-2 mb-1">
-                          <p className="text-app-text font-jakarta font-bold text-sm leading-snug flex-1">{entry.course_name}</p>
+                          <p className={`text-app-text font-jakarta font-bold text-sm leading-snug flex-1 ${entry.cancelled ? 'opacity-40 line-through' : ''}`}>{entry.course_name}</p>
                           <div className="flex items-center gap-1.5">
                             {isRep && (
                               <button onClick={() => handleDeleteClass(entry.id)}
@@ -475,6 +475,11 @@ export function Space() {
                             <span className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: COURSE_BG_COLORS[ci], color: COURSE_COLORS[ci] }}>
                               {entry.course_code}
                             </span>
+                            {entry.cancelled && (
+                              <span className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-full bg-app-red/15 text-app-red flex-shrink-0">
+                                ❌ Cancelled
+                              </span>
+                            )}
                           </div>
                         </div>
                         <p className="text-app-text-dim text-xs font-inter">{entry.start_time.slice(0,5)} – {entry.end_time.slice(0,5)}</p>

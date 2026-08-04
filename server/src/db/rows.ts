@@ -119,6 +119,7 @@ export interface TimetableRow {
   end_time: string;
   venue?: string | null;
   lecturer?: string | null;
+  cancelled?: number;
   course_name?: string;
   course_code?: string;
   course_icon?: string;

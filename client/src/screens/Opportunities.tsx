@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Skeleton, EmptyState } from '../components/ui/Shared';
 import { Fab } from '../components/layout';
 import { PostOpportunitySheet } from '../components/sheets/PostOpportunity';
+import { OpportunityDetailSheet } from '../components/sheets/OpportunityDetailSheet';
 import { patchOpportunity } from '../api/opportunities';
 import { useSpaceStore } from '../store/spaceStore';
 import { useContentStore } from '../store/contentStore';
@@ -53,6 +54,7 @@ export function Opportunities() {
   const { opportunities, opportunitiesLoading, fetchOpportunities, deleteOpportunity } = useContentStore();
   const [pinOverride, setPinOverride] = useState<Record<number, boolean>>({});
   const [showPost, setShowPost] = useState(false);
+  const [selectedOpp, setSelectedOpp] = useState<Opportunity | null>(null);
   const [filter, setFilter] = useState<string | null>(null);
   const [showBookmarked, setShowBookmarked] = useState(false);
   const [bookmarks, setBookmarks] = useState<number[]>(getBookmarks);
@@ -176,7 +178,8 @@ export function Opportunities() {
                 const deadline = getDeadlineLabel(opp.deadline);
                 const isBookmarked = bookmarks.includes(opp.id);
                 return (
-                  <div key={opp.id} className="bg-app-surface rounded-xl border border-app-border overflow-hidden card-hover animate-fadeInUp" style={{ animationDelay: '0.04s' }}>
+                  <div key={opp.id} onClick={() => setSelectedOpp(opp)}
+                    className="bg-app-surface rounded-xl border border-app-border overflow-hidden card-hover animate-fadeInUp active:scale-[0.99] transition-transform cursor-pointer" style={{ animationDelay: '0.04s' }}>
                     <div className="p-4">
                       {/* Top row: badges + actions */}
                       <div className="flex items-center gap-1.5 mb-2.5">
@@ -234,21 +237,24 @@ export function Opportunities() {
                         <span>{formatRelativeTime(opp.created_at)}</span>
                       </div>
 
-                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-app-border">
-                        <span className="text-[10px] font-jakarta font-semibold px-1.5 py-0.5 rounded-full"
-                          style={{ background: `${meta.color}18`, color: meta.color }}>
-                          {opp.author_name}
-                        </span>
-                        {opp.link ? (
-                          <a href={opp.link} target="_blank" rel="noopener noreferrer"
-                            className="text-[11px] font-jakarta font-bold px-3 py-1.5 rounded-lg transition-all active:scale-95"
+                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-app-border">
+                          <span className="text-[10px] font-jakarta font-semibold px-1.5 py-0.5 rounded-full"
                             style={{ background: `${meta.color}18`, color: meta.color }}>
-                            Apply →
-                          </a>
-                        ) : (
-                          <span className="text-[11px] font-jakarta font-medium text-app-text-faint">View details</span>
-                        )}
-                      </div>
+                            {opp.author_name}
+                          </span>
+                          {opp.link ? (
+                            <a href={opp.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                              className="text-[11px] font-jakarta font-bold px-3 py-1.5 rounded-lg transition-all active:scale-95"
+                              style={{ background: `${meta.color}18`, color: meta.color }}>
+                              Apply →
+                            </a>
+                          ) : (
+                            <span className="text-[11px] font-jakarta font-bold px-3 py-1.5 rounded-lg transition-all active:scale-95"
+                              style={{ background: `${meta.color}18`, color: meta.color }}>
+                              View details →
+                            </span>
+                          )}
+                        </div>
                     </div>
                   </div>
                 );
@@ -260,6 +266,7 @@ export function Opportunities() {
 
       {isRep && <Fab onClick={() => setShowPost(true)} icon="+" />}
       {showPost && spaceId && <PostOpportunitySheet spaceId={spaceId} onClose={() => setShowPost(false)} />}
+      {selectedOpp && <OpportunityDetailSheet opp={selectedOpp} onClose={() => setSelectedOpp(null)} />}
     </div>
   );
 }
