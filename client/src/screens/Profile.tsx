@@ -10,7 +10,7 @@ import { useThemeStore } from '../store/themeStore';
 export function Profile() {
   const { isInstallable, install, dismiss } = useInstallPrompt();
   const { user, logout } = useAuthStore();
-  const { currentSpace, courses: rawCourses, memberRole, leaveSpace } = useSpaceStore();
+  const { currentSpace, courses: rawCourses, memberRole, leaveSpace, removeMembership } = useSpaceStore();
   const courses = rawCourses ?? [];
   const {
     permission, setPermission: setPerm,
@@ -19,6 +19,8 @@ export function Profile() {
   const [showShare, setShowShare] = useState(false);
   const [copied, setCopied] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const [leaveError, setLeaveError] = useState('');
 
   const handleLogout = () => {
     setSigningOut(true);
@@ -26,6 +28,20 @@ export function Profile() {
     leaveSpace();
     // Hard redirect clears all React state — no router race conditions
     window.location.href = '/';
+  };
+
+  const handleLeaveSpace = async () => {
+    if (!currentSpace) return;
+    if (!confirm(`Leave "${currentSpace.name}"? You can rejoin anytime with the invite code.`)) return;
+    setLeaving(true);
+    setLeaveError('');
+    try {
+      await removeMembership(currentSpace.id);
+      window.location.href = '/home';
+    } catch (err: any) {
+      setLeaveError(err?.response?.data?.error || err?.message || 'Could not leave space');
+      setLeaving(false);
+    }
   };
 
   const copyInviteCode = () => {
@@ -136,6 +152,25 @@ export function Profile() {
                 >
                   🔗 Share Space Link
                 </button>
+              )}
+              {currentSpace && !isRep && (
+                <>
+                  {leaveError && (
+                    <p className="text-app-red text-xs font-inter px-1">{leaveError}</p>
+                  )}
+                  <button
+                    onClick={handleLeaveSpace}
+                    disabled={leaving}
+                    className="w-full bg-app-surface border border-app-red/30 text-app-red font-jakarta font-semibold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200 disabled:opacity-60"
+                  >
+                    {leaving ? 'Leaving…' : 'Leave Space'}
+                  </button>
+                </>
+              )}
+              {currentSpace && isRep && (
+                <p className="text-app-text-faint text-[11px] font-inter text-center px-1">
+                  You're the rep of this space — reps can't leave
+                </p>
               )}
               <button
                 onClick={handleLogout}

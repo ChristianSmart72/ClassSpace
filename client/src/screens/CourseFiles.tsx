@@ -324,7 +324,7 @@ const ResourceCard = memo(function ResourceCard({ material: m, canDelete, deleti
           </div>
           <div className="flex items-center gap-2 text-app-text-faint text-[10px] font-inter mt-1">
             {!m.has_file && (
-              <span className="bg-app-surface-2 rounded px-1.5 py-0.5 text-app-text-faint font-semibold">DEMO</span>
+              <span className="bg-app-surface-2 rounded px-1.5 py-0.5 text-app-text-faint font-semibold">LINK</span>
             )}
             {m.uploader_name && (
               <span className="truncate">Uploaded by <span className="text-app-text-dim font-medium">{m.uploader_name}</span></span>

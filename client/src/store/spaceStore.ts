@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Space, Course } from '../types';
-import { createSpace as apiCreateSpace, getSpace as apiGetSpace, joinSpace as apiJoinSpace, getUserSpaces as apiGetUserSpaces } from '../api/spaces';
+import { createSpace as apiCreateSpace, getSpace as apiGetSpace, joinSpace as apiJoinSpace, getUserSpaces as apiGetUserSpaces, leaveSpaceApi as apiLeaveSpace } from '../api/spaces';
 import { isOfflineError } from '../api/client';
 
 function safeGet(key: string): string | null {
@@ -67,6 +67,7 @@ interface SpaceState {
   joinSpace: (code: string) => Promise<Space>;
   setSpace: (space: Space, courses: Course[]) => void;
   leaveSpace: () => void;
+  removeMembership: (spaceId: string) => Promise<void>;
   clearError: () => void;
   restoreCache: () => void;
   clearCache: () => void;
@@ -146,6 +147,19 @@ export const useSpaceStore = create<SpaceState>((set) => ({
     safeRemove('spaceId');
     clearSpaceCache();
     set({ currentSpace: null, courses: [], members: [], isMember: false, memberRole: null, error: null });
+  },
+
+  removeMembership: async (spaceId) => {
+    await apiLeaveSpace(spaceId);
+    set((state) => {
+      const userSpaces = state.userSpaces.filter(s => s.id !== spaceId);
+      if (state.currentSpace?.id === spaceId) {
+        safeRemove('spaceId');
+        clearSpaceCache();
+        return { userSpaces, currentSpace: null, courses: [], members: [], isMember: false, memberRole: null, error: null };
+      }
+      return { userSpaces };
+    });
   },
 
   clearError: () => set({ error: null }),

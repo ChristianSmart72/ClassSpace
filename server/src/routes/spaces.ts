@@ -170,6 +170,28 @@ export function spaceRoutes(app: FastifyInstance) {
     return { members };
   });
 
+  app.delete('/api/spaces/:id/membership', { preHandler: authMiddleware }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const userId = request.user!.userId;
+    const db = getDb();
+
+    const membership = await db.prepare<MembershipRow>(
+      'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
+    ).get(id, userId);
+
+    if (!membership) {
+      return reply.status(404).send({ error: 'You are not a member of this space' });
+    }
+
+    if (membership.role === 'rep') {
+      return reply.status(400).send({ error: 'The class rep cannot leave the space' });
+    }
+
+    await db.prepare('DELETE FROM space_members WHERE space_id = ? AND user_id = ?').run(id, userId);
+
+    return { success: true, message: 'Left the space' };
+  });
+
   app.get('/api/user/spaces', { preHandler: authMiddleware }, async (request, reply) => {
     const userId = request.user!.userId;
     const db = getDb();

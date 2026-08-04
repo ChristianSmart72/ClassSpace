@@ -46,14 +46,14 @@ function nowMinutes(): number {
 function getClassesToday(entries: TimetableEntry[]): TimetableEntry[] {
   const today = getTodayName();
   if (!today) return [];
-  return entries.filter(e => e.day === today);
+  return entries.filter(e => e.day === today && !e.cancelled);
 }
 
 function getInProgressClass(entries: TimetableEntry[]): TimetableEntry | null {
   const today = getTodayName();
   if (!today) return null;
   const now = nowMinutes();
-  return entries.find(e => e.day === today && timeToMinutes(e.start_time) <= now && timeToMinutes(e.end_time) > now) ?? null;
+  return entries.find(e => e.day === today && !e.cancelled && timeToMinutes(e.start_time) <= now && timeToMinutes(e.end_time) > now) ?? null;
 }
 
 function getNextUpcomingClass(entries: TimetableEntry[]): TimetableEntry | null {
@@ -61,7 +61,7 @@ function getNextUpcomingClass(entries: TimetableEntry[]): TimetableEntry | null 
   if (!today) return null;
   const now = nowMinutes();
   const upcoming = entries
-    .filter(e => e.day === today && timeToMinutes(e.start_time) > now)
+    .filter(e => e.day === today && !e.cancelled && timeToMinutes(e.start_time) > now)
     .sort((a, b) => timeToMinutes(a.start_time) - timeToMinutes(b.start_time));
   return upcoming[0] ?? null;
 }
@@ -69,7 +69,7 @@ function getNextUpcomingClass(entries: TimetableEntry[]): TimetableEntry | null 
 function getTomorrowFirstClass(entries: TimetableEntry[]): TimetableEntry | null {
   const tomorrow = getTomorrowName();
   if (!tomorrow) return null;
-  const tomorrowEntries = entries.filter(e => e.day === tomorrow);
+  const tomorrowEntries = entries.filter(e => e.day === tomorrow && !e.cancelled);
   if (tomorrowEntries.length === 0) return null;
   tomorrowEntries.sort((a, b) => timeToMinutes(a.start_time) - timeToMinutes(b.start_time));
   return tomorrowEntries[0];
@@ -681,10 +681,10 @@ function FeaturedOppCard({ opp, spaceId, navigate }: { opp: Opportunity; spaceId
             </a>
           ) : (
             <button
-              onClick={() => navigate(`/space/${spaceId}`)}
+              onClick={() => navigate(`/space/${spaceId}/opportunities`)}
               className="text-[11px] font-jakarta font-bold px-2.5 py-1 rounded-lg bg-app-surface-2 text-app-text-dim"
             >
-              View →
+              View details →
             </button>
           )}
         </div>

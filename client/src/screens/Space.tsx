@@ -8,12 +8,14 @@ import { Fab } from '../components/layout';
 import { Skeleton, EmptyState } from '../components/ui/Shared';
 import { PostAnnouncementSheet } from '../components/sheets/PostAnnouncement';
 import { UploadMaterialSheet } from '../components/sheets/UploadMaterial';
-import { getTimetable, createTimetableEntry, deleteTimetableEntry } from '../api/timetable';
+import { getTimetable, createTimetableEntry, deleteTimetableEntry, setEntryCancelled } from '../api/timetable';
 import { getMaterialsSummary } from '../api/content';
 import type { Announcement, TimetableEntry } from '../types';
 import { COURSE_COLORS, COURSE_BG_COLORS, DAYS } from '../types';
 import { formatRelativeTime } from '../lib/time';
 import { ShareSheet } from '../components/sheets/ShareSheet';
+import api from '../api/client';
+import { toast } from '../store/toastStore';
 
 const CONTENT_FILTERS = [
   { key: 'all', label: 'All' },
@@ -215,6 +217,38 @@ export function Space() {
     try { await deleteTimetableEntry(entryId); setTimetable(prev => prev.filter(e => e.id !== entryId)); } catch {}
   };
 
+  const handleCancelClass = async (entry: TimetableEntry) => {
+    if (!confirm(`Cancel ${entry.course_name} (${entry.day} ${entry.start_time.slice(0,5)})? This will notify the class.`)) return;
+    setTimetable(prev => prev.map(e => e.id === entry.id ? { ...e, cancelled: true } : e));
+    try {
+      await setEntryCancelled(entry.id, true);
+      await api.post(`/spaces/${spaceId}/announcements`, {
+        course_id: entry.course_id,
+        title: `❌ Class cancelled — ${entry.course_code} (${entry.day} ${entry.start_time.slice(0,5)})`,
+        body: `The ${entry.course_name} class scheduled for ${entry.day} from ${entry.start_time.slice(0,5)}–${entry.end_time.slice(0,5)}${entry.venue ? ` in ${entry.venue}` : ''} has been cancelled. Check with your lecturer for further updates.`,
+        type: 'update',
+        urgent: true,
+        pinned: false,
+      });
+      toast(`${entry.course_code} class cancelled — classmates have been notified`);
+    } catch {
+      setTimetable(prev => prev.map(e => e.id === entry.id ? { ...e, cancelled: false } : e));
+      toast('Could not cancel class — check your connection', 'error');
+    }
+  };
+
+  const handleRestoreClass = async (entry: TimetableEntry) => {
+    if (!confirm(`Re-schedule ${entry.course_name} (${entry.day} ${entry.start_time.slice(0,5)})?`)) return;
+    setTimetable(prev => prev.map(e => e.id === entry.id ? { ...e, cancelled: false } : e));
+    try {
+      await setEntryCancelled(entry.id, false);
+      toast(`${entry.course_code} class restored to the timetable`);
+    } catch {
+      setTimetable(prev => prev.map(e => e.id === entry.id ? { ...e, cancelled: true } : e));
+      toast('Could not restore class — check your connection', 'error');
+    }
+  };
+
   if (spaceLoading) {
     return (
       <div className="px-4 pt-4">
@@ -268,7 +302,6 @@ export function Space() {
           { key: 'timetable' as Tab, label: 'Timetable', icon: '📅' },
         ].map(t => (
           <button key={t.key} onClick={() => {
-            if (t.key === 'timetable') { navigate('/timetable'); return; }
             setTab(t.key); setSearchParams({ tab: t.key });
           }}
             className={`flex-1 py-2.5 text-sm font-jakarta font-semibold transition-all duration-200 relative ${
@@ -393,6 +426,13 @@ export function Space() {
       {/* ─── Timetable Tab ─── */}
       {tab === 'timetable' && (
         <div className="px-4 animate-fadeIn">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-app-text-dim text-[11px] font-jakarta font-semibold uppercase tracking-wider">Weekly schedule</p>
+            <button onClick={() => navigate('/timetable')}
+              className="text-app-accent text-[11px] font-jakarta font-semibold hover:opacity-80 transition-opacity">
+              Full timetable →
+            </button>
+          </div>
           {isRep && showScheduleForm && (
             <div className="bg-app-surface rounded-xl border border-app-border p-4 mb-4 animate-fadeIn">
               <p className="text-app-text font-jakarta font-semibold text-sm mb-3">Add Class</p>
@@ -468,6 +508,23 @@ export function Space() {
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <p className={`text-app-text font-jakarta font-bold text-sm leading-snug flex-1 ${entry.cancelled ? 'opacity-40 line-through' : ''}`}>{entry.course_name}</p>
                           <div className="flex items-center gap-1.5">
+                            {entry.cancelled && (
+                              <span className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-full bg-app-red/15 text-app-red flex-shrink-0">
+                                ❌ Cancelled
+                              </span>
+                            )}
+                            {isRep && !entry.cancelled && (
+                              <button onClick={() => handleCancelClass(entry)}
+                                className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-lg bg-app-red/10 text-app-red border border-app-red/25 hover:bg-app-red/20 transition-colors flex-shrink-0">
+                                Cancel
+                              </button>
+                            )}
+                            {isRep && entry.cancelled && (
+                              <button onClick={() => handleRestoreClass(entry)}
+                                className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-lg bg-app-green/15 text-app-green border border-app-green/25 hover:bg-app-green/25 transition-colors flex-shrink-0">
+                                ↩ Re-schedule
+                              </button>
+                            )}
                             {isRep && (
                               <button onClick={() => handleDeleteClass(entry.id)}
                                 className="text-app-text-faint hover:text-app-red transition-colors text-xs px-1">✕</button>
@@ -475,11 +532,6 @@ export function Space() {
                             <span className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: COURSE_BG_COLORS[ci], color: COURSE_COLORS[ci] }}>
                               {entry.course_code}
                             </span>
-                            {entry.cancelled && (
-                              <span className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-full bg-app-red/15 text-app-red flex-shrink-0">
-                                ❌ Cancelled
-                              </span>
-                            )}
                           </div>
                         </div>
                         <p className="text-app-text-dim text-xs font-inter">{entry.start_time.slice(0,5)} – {entry.end_time.slice(0,5)}</p>

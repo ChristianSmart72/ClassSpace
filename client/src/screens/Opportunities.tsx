@@ -221,7 +221,7 @@ export function Opportunities() {
                             className={`p-1.5 rounded-lg transition-colors text-sm leading-none ${isBookmarked ? 'text-app-accent' : 'text-app-text-faint hover:text-app-text'}`}
                             title={isBookmarked ? 'Remove bookmark' : 'Bookmark'}
                           >
-                            {isBookmarked ? '🔖' : '🔖'}
+                            {isBookmarked ? '🔖' : <span className="grayscale opacity-40">🔖</span>}
                           </button>
                         </div>
                       </div>

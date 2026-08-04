@@ -510,6 +510,31 @@ export function Timetable() {
                                     {entry.venue && (
                                       <p className="text-app-text-faint text-[10px] font-inter mt-0.5">📍 {entry.venue}</p>
                                     )}
+                                    {isRep && (
+                                      <div className="flex gap-1.5 mt-2">
+                                        {cancelled ? (
+                                          <button
+                                            onClick={() => handleRestoreClass(entry)}
+                                            className="flex-1 text-[10px] font-jakarta font-bold py-1.5 rounded-lg bg-app-green/15 text-app-green border border-app-green/25 hover:bg-app-green/25 transition-colors"
+                                          >
+                                            ↩ Re-schedule
+                                          </button>
+                                        ) : (
+                                          <button
+                                            onClick={() => handleCancelClass(entry)}
+                                            className="flex-1 text-[10px] font-jakarta font-bold py-1.5 rounded-lg bg-app-red/10 text-app-red border border-app-red/25 hover:bg-app-red/20 transition-colors"
+                                          >
+                                            ✕ Cancel class
+                                          </button>
+                                        )}
+                                        <button
+                                          onClick={() => handleDeleteEntry(entry)}
+                                          className="text-[10px] font-jakarta font-semibold py-1.5 px-2 rounded-lg bg-app-surface-2 text-app-text-faint hover:text-app-red transition-colors"
+                                        >
+                                          Remove
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               );

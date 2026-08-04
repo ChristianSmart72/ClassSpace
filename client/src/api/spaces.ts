@@ -34,3 +34,8 @@ export async function getUserSpaces() {
   const { data } = await api.get('/user/spaces');
   return data.spaces as { id: string; name: string; uni: string; dept: string; level: string; invite_code: string; member_role: string }[];
 }
+
+export async function leaveSpaceApi(spaceId: string) {
+  const { data } = await api.delete(`/spaces/${spaceId}/membership`);
+  return data;
+}

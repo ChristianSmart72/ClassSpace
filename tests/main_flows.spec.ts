@@ -28,7 +28,7 @@ test('Main flows of ClassSpace', async ({ page }) => {
   await expect(page.locator('h1:has-text("Create your account")')).toBeVisible();
 
   await page.fill('input[placeholder="Your name"]', testName);
-  await page.fill('input[placeholder="you@uniben.edu"]', testEmail);
+  await page.fill('input[placeholder="you@student.edu"]', testEmail);
   await page.fill('input[placeholder="Min 6 characters"]', testPassword);
   await page.click('button[type="submit"]');
 

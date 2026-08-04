@@ -150,7 +150,7 @@ export function MaterialDetail() {
             className={`p-2 rounded-xl transition-colors ${bookmarked ? 'text-app-accent bg-app-accent/10' : 'text-app-text-faint hover:text-app-text hover:bg-app-surface'}`}
             title={bookmarked ? 'Remove bookmark' : 'Bookmark'}
           >
-            {bookmarked ? '🔖' : '🔖'}
+            {bookmarked ? '🔖' : <span className="grayscale opacity-40">🔖</span>}
             <span className="sr-only">{bookmarked ? 'Bookmarked' : 'Bookmark'}</span>
           </button>
         </div>
