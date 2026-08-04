@@ -54,33 +54,6 @@ function downloadFile(material: Material) {
   URL.revokeObjectURL(url);
 }
 
-// Demo attachments shown when course has no real uploads yet
-function demoAttachments(ann: Announcement): Material[] {
-  const base: Material[] = [
-    {
-      id: -1, space_id: ann.space_id, course_id: ann.course_id ?? 0,
-      name: `${ann.course_code || 'Course'} Lecture Slides — Week 6`,
-      file_data: undefined, file_size: 2.4 * 1024 * 1024,
-      file_type: 'application/vnd.ms-powerpoint',
-      category: 'slides', uploader_id: ann.author_id,
-      uploader_name: ann.author_name,
-      created_at: ann.created_at,
-    },
-  ];
-  if (ann.type === 'assignment') {
-    base.push({
-      id: -2, space_id: ann.space_id, course_id: ann.course_id ?? 0,
-      name: 'Lab Report Template',
-      file_data: undefined, file_size: 145 * 1024,
-      file_type: 'application/msword',
-      category: 'notes', uploader_id: ann.author_id,
-      uploader_name: ann.author_name,
-      created_at: ann.created_at,
-    });
-  }
-  return base;
-}
-
 // ─── Type badge colours ────────────────────────────────────────────────────
 const TYPE_META: Record<string, { label: string; color: string; bg: string }> = {
   assignment: { label: 'Assignment', color: '#ffffff', bg: '#4f46e5' },
@@ -91,7 +64,7 @@ const TYPE_META: Record<string, { label: string; color: string; bg: string }> = 
 };
 
 // ─── Attachment card ────────────────────────────────────────────────────────
-function AttachmentCard({ mat, isDemo }: { mat: Material; isDemo: boolean }) {
+function AttachmentCard({ mat }: { mat: Material }) {
   const icon = fileIcon(mat.file_type, mat.category);
   const size = fileSize(mat.file_size);
   const catLabel = mat.category.charAt(0).toUpperCase() + mat.category.slice(1);
@@ -105,26 +78,16 @@ function AttachmentCard({ mat, isDemo }: { mat: Material; isDemo: boolean }) {
         <p className="text-app-text font-jakarta font-semibold text-sm leading-snug truncate">{mat.name}</p>
         <p className="text-app-text-faint text-xs font-inter mt-0.5">{catLabel} · {size}</p>
       </div>
-      {isDemo ? (
-        <div className="w-9 h-9 rounded-xl bg-app-surface border border-app-border flex items-center justify-center text-app-text-faint flex-shrink-0">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="7 10 12 15 17 10" />
-            <line x1="12" y1="15" x2="12" y2="3" />
-          </svg>
-        </div>
-      ) : (
-        <button
-          onClick={() => downloadFile(mat)}
-          className="w-9 h-9 rounded-xl bg-app-accent/10 border border-app-accent/20 flex items-center justify-center text-app-accent flex-shrink-0 hover:bg-app-accent/20 transition-colors active:scale-95"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="7 10 12 15 17 10" />
-            <line x1="12" y1="15" x2="12" y2="3" />
-          </svg>
-        </button>
-      )}
+      <button
+        onClick={() => downloadFile(mat)}
+        className="w-9 h-9 rounded-xl bg-app-accent/10 border border-app-accent/20 flex items-center justify-center text-app-accent flex-shrink-0 hover:bg-app-accent/20 transition-colors active:scale-95"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+      </button>
     </div>
   );
 }
@@ -208,9 +171,7 @@ export function AnnouncementDetail() {
 
   const meta = TYPE_META[ann.type] ?? TYPE_META.announcement;
   const hasKeyDetails = !!(ann.deadline || ann.submission_method || ann.format || ann.venue);
-  const showMaterials = ann.course_id != null;
-  const displayMaterials = materials.length > 0 ? materials : (showMaterials ? demoAttachments(ann) : []);
-  const usingDemoMats = materials.length === 0 && showMaterials;
+  const displayMaterials = materials;
 
   return (
     <div className="pb-24">
@@ -381,13 +342,10 @@ export function AnnouncementDetail() {
           <div className="mb-5 animate-fadeIn">
             <div className="flex items-center justify-between mb-3">
               <p className="text-app-text-faint text-[10px] font-jakarta font-bold uppercase tracking-widest">Course Materials</p>
-              {usingDemoMats && (
-                <span className="text-[10px] text-app-text-faint font-inter bg-app-surface-2 px-2 py-0.5 rounded-full border border-app-border">Sample</span>
-              )}
             </div>
             <div className="flex flex-col gap-2">
               {displayMaterials.map((mat) => (
-                <AttachmentCard key={mat.id} mat={mat} isDemo={usingDemoMats} />
+                <AttachmentCard key={mat.id} mat={mat} />
               ))}
             </div>
           </div>

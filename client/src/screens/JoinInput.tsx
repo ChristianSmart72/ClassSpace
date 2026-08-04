@@ -2,13 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { canGoBack } from '../lib/time';
 
-const DEMO_LINKS = [
-  { label: 'Space Preview', link: 'classspace.app/s/pre220' },
-  { label: 'Announcement Preview', link: 'classspace.app/s/pre220/ann/1' },
-  { label: 'Material Preview', link: 'classspace.app/s/pre220/mat/1' },
-  { label: 'Course Folder Preview', link: 'classspace.app/s/pre220/course/1' },
-];
-
 export function JoinInput() {
   const [link, setLink] = useState('');
   const navigate = useNavigate();
@@ -18,10 +11,6 @@ export function JoinInput() {
     if (!parsed) return;
     const { type, id } = parsed;
     navigate(`/join/${type}/${id}`);
-  };
-
-  const demoLink = (l: string) => {
-    setLink(l);
   };
 
   return (
@@ -64,22 +53,6 @@ export function JoinInput() {
           </div>
         </div>
       )}
-
-      <div className="mt-8">
-        <p className="text-app-text-dim text-xs font-jakarta font-semibold uppercase tracking-wider mb-3">Try a demo link</p>
-        <div className="flex flex-col gap-2">
-          {DEMO_LINKS.map((d) => (
-            <button
-              key={d.label}
-              onClick={() => demoLink(d.link)}
-              className="text-left bg-app-surface rounded-xl px-4 py-3 border border-app-border active:scale-[0.98] transition-all duration-200"
-            >
-              <p className="text-app-text font-inter text-sm">{d.label}</p>
-              <p className="text-app-text-dim text-xs font-inter mt-0.5">{d.link}</p>
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

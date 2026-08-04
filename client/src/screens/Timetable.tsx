@@ -160,42 +160,7 @@ function ClassCard({ entry, isToday, showStatus = true, onCancel, onDelete }: { 
   );
 }
 
-// ── UNIBEN 2025/2026 Academic Calendar ──────────────────────────────────────
-const ACADEMIC_CALENDAR = [
-  {
-    phase: '1st Semester 2025/2026',
-    color: '#6366f1',
-    events: [
-      { date: 'Oct 6, 2025', label: 'First semester begins', done: true },
-      { date: 'Nov 3–7, 2025', label: 'Matriculation ceremonies', done: true },
-      { date: 'Nov 17, 2025', label: 'Continuous assessment deadline', done: true },
-      { date: 'Jan 12, 2026', label: 'First semester exams begin', done: true },
-      { date: 'Feb 6, 2026', label: 'First semester exams end', done: true },
-    ],
-  },
-  {
-    phase: '2nd Semester 2025/2026',
-    color: '#eab308',
-    events: [
-      { date: 'Mar 2, 2026', label: 'Second semester begins', done: true },
-      { date: 'Mar 9–13, 2026', label: 'Late registration / add-drop', done: true },
-      { date: 'May 25 – Jun 5, 2026', label: 'Mid-semester break', done: true },
-      { date: 'Jun 8, 2026', label: 'Second semester exams begin', done: true, current: true },
-      { date: 'Jul 17, 2026', label: 'Second semester exams end', done: false },
-      { date: 'Jul 27, 2026', label: 'Results released', done: false },
-      { date: 'Aug 3, 2026', label: 'Long vacation begins', done: false },
-    ],
-  },
-  {
-    phase: '2026/2027 Session',
-    color: '#34d399',
-    events: [
-      { date: 'Oct 5, 2026', label: 'New session begins', done: false },
-    ],
-  },
-];
-
-type TimetableTab = 'schedule' | 'calendar';
+// ── Timetable screen ────────────────────────────────────────────────────────
 
 export function Timetable() {
   const currentSpace = useSpaceStore(s => s.currentSpace);
@@ -205,7 +170,6 @@ export function Timetable() {
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState(getTodayIndex());
   const [weekOffset, setWeekOffset] = useState(0);
-  const [activeTab, setActiveTab] = useState<TimetableTab>('schedule');
   const [cancelToast, setCancelToast] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
 
@@ -322,25 +286,9 @@ export function Timetable() {
             <p className="text-app-accent/70 text-[10px] font-inter">classes {isToday ? 'today' : DAY_SHORT[selectedDay]}</p>
           </div>
         </div>
-
-        {/* Tab selector */}
-        <div className="flex gap-1 bg-app-bg/60 rounded-xl p-1 border border-app-border">
-          {(['schedule', 'calendar'] as TimetableTab[]).map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-1.5 text-xs font-jakarta font-semibold rounded-lg transition-all duration-200 capitalize flex items-center justify-center gap-1.5 ${
-                activeTab === tab ? 'bg-app-surface text-app-text shadow-sm' : 'text-app-text-faint hover:text-app-text-dim'
-              }`}
-            >
-              {tab === 'schedule' ? '📅' : '🗓️'} {tab === 'schedule' ? 'Class Schedule' : 'Academic Calendar'}
-            </button>
-          ))}
-        </div>
       </div>
 
-        {activeTab === 'schedule' && (
-          <div className="animate-fadeIn">
+        <div className="animate-fadeIn">
             {/* ── Mobile layout ── */}
             <div className="lg:hidden">
               {/* Week navigation */}
@@ -543,86 +491,6 @@ export function Timetable() {
               )}
             </div>
           </div>
-        )}
-
-        {activeTab === 'calendar' && (
-          <div className="px-4 py-4 lg:px-8 lg:py-6 animate-fadeIn">
-            <div className="flex items-center gap-2 mb-5">
-              <div className="flex-1">
-                <h2 className="text-app-text font-jakarta font-bold text-base">UNIBEN Academic Calendar</h2>
-                <p className="text-app-text-faint text-xs font-inter mt-0.5">2025/2026 Academic Session — University of Benin</p>
-              </div>
-              <div className="flex items-center gap-1.5 bg-app-accent/10 border border-app-accent/30 rounded-lg px-2.5 py-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-app-accent animate-pulse" />
-                <span className="text-app-accent text-[10px] font-jakarta font-bold">2nd Semester</span>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-5">
-              {ACADEMIC_CALENDAR.map((phase, pi) => (
-                <div key={pi} className="animate-fadeIn">
-                  {/* Phase header */}
-                  <div className="flex items-center gap-2.5 mb-3">
-                    <div className="h-px flex-1" style={{ background: `${phase.color}30` }} />
-                    <span
-                      className="text-[10px] font-jakarta font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full"
-                      style={{ color: phase.color, background: `${phase.color}14`, border: `1px solid ${phase.color}30` }}
-                    >
-                      {phase.phase}
-                    </span>
-                    <div className="h-px flex-1" style={{ background: `${phase.color}30` }} />
-                  </div>
-
-                  {/* Events */}
-                  <div className="flex flex-col gap-2 ml-1">
-                    {phase.events.map((ev, ei) => (
-                      <div
-                        key={ei}
-                        className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${
-                          ev.current
-                            ? 'border-app-accent/40 bg-app-accent/5'
-                            : ev.done
-                            ? 'border-app-border bg-app-surface opacity-60'
-                            : 'border-app-border bg-app-surface'
-                        }`}
-                      >
-                        <div className="flex-shrink-0 mt-0.5">
-                          {ev.current ? (
-                            <span className="w-5 h-5 rounded-full bg-app-accent/20 border-2 border-app-accent flex items-center justify-center">
-                              <span className="w-2 h-2 rounded-full bg-app-accent animate-pulse" />
-                            </span>
-                          ) : ev.done ? (
-                            <span className="w-5 h-5 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center text-green-400 text-[10px]">✓</span>
-                          ) : (
-                            <span className="w-5 h-5 rounded-full border-2 border-app-border flex items-center justify-center">
-                              <span className="w-1.5 h-1.5 rounded-full bg-app-border" />
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-xs font-inter font-medium ${ev.current ? 'text-app-accent' : ev.done ? 'text-app-text line-through' : 'text-app-text'}`}>
-                            {ev.label}
-                          </p>
-                          <p className={`text-[10px] font-inter mt-0.5 ${ev.current ? 'text-app-accent/70' : 'text-app-text-faint'}`}>
-                            {ev.date}
-                          </p>
-                        </div>
-                        {ev.current && (
-                          <span className="text-[9px] font-jakarta font-bold text-app-accent bg-app-accent/10 px-1.5 py-0.5 rounded flex-shrink-0">NOW</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-5 p-3 rounded-xl border border-app-border bg-app-surface text-center">
-              <p className="text-app-text-faint text-[10px] font-inter">Dates based on UNIBEN 2025/2026 academic calendar</p>
-              <p className="text-app-text-faint text-[9px] font-inter mt-0.5 opacity-60">Always confirm with your department</p>
-            </div>
-          </div>
-        )}
 
       {isRep && <Fab onClick={() => setShowAdd(true)} icon="+" />}
       {showAdd && <AddClassSheet spaceId={currentSpace.id} onClose={() => setShowAdd(false)} onAdded={load} />}

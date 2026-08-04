@@ -86,7 +86,7 @@ export function Register() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@uniben.edu"
+              placeholder="you@student.edu"
               autoComplete="email"
               className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-inter text-sm placeholder:text-app-text-faint focus:border-app-accent focus:outline-none transition-colors"
               required

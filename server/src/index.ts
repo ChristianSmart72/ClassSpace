@@ -13,7 +13,6 @@ import { spaceRoutes } from './routes/spaces.js';
 import { announcementRoutes } from './routes/announcements.js';
 import { materialRoutes } from './routes/materials.js';
 import { shareRoutes } from './routes/share.js';
-import { demoRoutes } from './routes/demo.js';
 import { reactionRoutes } from './routes/reactions.js';
 import { timetableRoutes } from './routes/timetable.js';
 import { opportunityRoutes } from './routes/opportunities.js';
@@ -75,7 +74,6 @@ async function main() {
   announcementRoutes(app);
   materialRoutes(app);
   shareRoutes(app);
-  demoRoutes(app);
   reactionRoutes(app);
   timetableRoutes(app);
   opportunityRoutes(app);

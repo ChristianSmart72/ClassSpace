@@ -99,21 +99,6 @@ function getOppStatus(opp: Opportunity): { label: string; color: string } {
   return { label: `${days} Days Left`, color: 'text-app-text-dim' };
 }
 
-function futureDate(daysFromNow: number): string {
-  const d = new Date(Date.now() + daysFromNow * 86400000);
-  return d.toISOString().split('T')[0];
-}
-
-function pastDate(daysAgo: number): string {
-  return new Date(Date.now() - daysAgo * 86400000).toISOString();
-}
-
-const DEMO_OPPS: Opportunity[] = [
-  { id: -1, space_id: '', author_id: 0, author_name: 'ClassSpace', title: 'Shell Nigeria STEM Scholarship 2025', description: 'Open to 300L and 400L engineering students with a minimum CGPA of 3.5.', category: 'scholarship', link: 'https://shell.com/scholarship', deadline: futureDate(60), created_at: pastDate(5) },
-  { id: -2, space_id: '', author_id: 0, author_name: 'ClassSpace', title: 'MTN Foundation Summer Internship', description: 'Paid 3-month internship for penultimate year students.', category: 'internship', link: 'https://mtn.com/internship', deadline: futureDate(3), created_at: pastDate(2) },
-  { id: -3, space_id: '', author_id: 0, author_name: 'ClassSpace', title: 'IEEE Nigeria Student Competition', description: 'Submit your FYP abstract. Win ₦500,000 and IEEE membership.', category: 'competition', link: 'https://ieee.org/nigeria', deadline: futureDate(14), created_at: pastDate(30) },
-];
-
 const OPP_CAT_STYLE: Record<string, { color: string; label: string }> = {
   scholarship:  { color: '#3b82f6', label: 'Scholarship' },
   internship:   { color: '#22c55e', label: 'Internship' },
@@ -349,8 +334,7 @@ export function Home() {
   const todayClasses = getClassesToday(timetable);
   const dueItems = getDueItems(announcements);
   const recentAnnouncements = announcements.slice(0, 3);
-  const showDemoOpps = currentSpace?.id === 'pre220';
-  const displayOpp = getActiveOpps(opps.length > 0 ? opps : (showDemoOpps ? DEMO_OPPS : []))[0] ?? null;
+  const displayOpp = getActiveOpps(opps)[0] ?? null;
   const newAnnounceCount = announcements.filter(
     a => new Date(a.created_at).getTime() > Date.now() - 86400000 * 2
   ).length;
