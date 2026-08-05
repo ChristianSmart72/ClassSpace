@@ -26,24 +26,27 @@ export function SetupWizard() {
   const icons = ['💧', '🔥', '⚙️', '∑', '✍️', '📐', '🔬', '💡', '🖥️', '🏗️'];
   const colIndices = [0, 1, 2, 3, 4, 0, 1, 2, 3, 4];
 
-  const addCourse = () => setCourses([...courses, { name: '', code: '' }]);
-  const removeCourse = (i: number) => setCourses(courses.filter((_, idx) => idx !== i));
+  const addCourse = () => { setCourses([...courses, { name: '', code: '' }]); setError(''); };
+  const removeCourse = (i: number) => { setCourses(courses.filter((_, idx) => idx !== i)); setError(''); };
   const updateCourse = (i: number, field: keyof CourseInput, value: string) => {
     const updated = [...courses];
     updated[i] = { ...updated[i], [field]: value };
     setCourses(updated);
+    setError('');
   };
 
   const validCourseCount = courses.filter((c) => c.name.trim() && c.code.trim()).length;
   const step1Complete = !!(name.trim() && dept.trim() && level && uni.trim());
 
   const handleCreate = async () => {
-    if (!name || !dept || !level || !uni) {
+    if (!name.trim() || !dept.trim() || !level || !uni.trim()) {
       setError('Please fill in all fields');
       return;
     }
 
-    const validCourses = courses.filter((c) => c.name && c.code);
+    const validCourses = courses
+      .map((c) => ({ name: c.name.trim(), code: c.code.trim() }))
+      .filter((c) => c.name && c.code);
     if (validCourses.length === 0) {
       setError('Add at least one course');
       return;
@@ -73,7 +76,7 @@ export function SetupWizard() {
     <div className="min-h-dvh flex flex-col px-6 py-8">
       {/* Progress bar */}
       <div className="flex gap-1.5 mb-8">
-        {[1, 2, 3].map((s) => (
+        {[1, 2].map((s) => (
           <div
             key={s}
             className={`h-1 flex-1 rounded-full transition-all duration-300 ${
@@ -91,12 +94,12 @@ export function SetupWizard() {
           <div className="flex flex-col gap-4">
             <div>
               <label className="text-app-text-dim text-xs font-jakarta font-semibold uppercase tracking-wider mb-1.5 block">Your Name</label>
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name"
+              <input value={name} onChange={(e) => { setName(e.target.value); setError(''); }} placeholder="Your name"
                 className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-inter text-sm placeholder:text-app-text-faint focus:border-app-accent transition-colors" />
             </div>
             <div>
               <label className="text-app-text-dim text-xs font-jakarta font-semibold uppercase tracking-wider mb-1.5 block">Department</label>
-              <input value={dept} onChange={(e) => setDept(e.target.value)} placeholder="e.g. Production Engineering"
+              <input value={dept} onChange={(e) => { setDept(e.target.value); setError(''); }} placeholder="e.g. Production Engineering"
                 className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-inter text-sm placeholder:text-app-text-faint focus:border-app-accent transition-colors" />
             </div>
             <div className="flex gap-3">
@@ -111,7 +114,7 @@ export function SetupWizard() {
               </div>
               <div className="flex-1">
                 <label className="text-app-text-dim text-xs font-jakarta font-semibold uppercase tracking-wider mb-1.5 block">University</label>
-                <input value={uni} onChange={(e) => setUni(e.target.value)}
+                <input value={uni} onChange={(e) => { setUni(e.target.value); setError(''); }}
                   className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-inter text-sm placeholder:text-app-text-faint focus:border-app-accent transition-colors" />
               </div>
             </div>
@@ -127,7 +130,7 @@ export function SetupWizard() {
             </div>
           </div>
 
-          <button onClick={() => setStep(2)} disabled={!step1Complete}
+          <button onClick={() => { setError(''); setStep(2); }} disabled={!step1Complete}
             className="w-full bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl py-3.5 mt-8 active:scale-[0.98] transition-all duration-200 disabled:opacity-50">
             Continue →
           </button>

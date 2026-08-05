@@ -9,9 +9,9 @@ import { Skeleton, EmptyState } from '../components/ui/Shared';
 import { PostAnnouncementSheet } from '../components/sheets/PostAnnouncement';
 import { UploadMaterialSheet } from '../components/sheets/UploadMaterial';
 import { getTimetable, createTimetableEntry, deleteTimetableEntry, setEntryCancelled } from '../api/timetable';
-import { getMaterialsSummary } from '../api/content';
-import type { Announcement, TimetableEntry } from '../types';
-import { COURSE_COLORS, COURSE_BG_COLORS, DAYS } from '../types';
+import { getMaterialsSummary, getRecentMaterials } from '../api/content';
+import type { Announcement, TimetableEntry, Material } from '../types';
+import { COURSE_COLORS, COURSE_BG_COLORS, DAYS, FILE_ICONS } from '../types';
 import { formatRelativeTime } from '../lib/time';
 import { ShareSheet } from '../components/sheets/ShareSheet';
 import api from '../api/client';
@@ -36,6 +36,11 @@ const TYPE_STYLES: Record<string, { label: string; color: string; bg: string; ic
   meeting: { label: 'Meeting', color: '#22c55e', bg: 'rgba(34,197,94,0.12)', icon: '🤝' },
   update: { label: 'Update', color: '#d97706', bg: 'rgba(217,119,6,0.12)', icon: '📡' },
   announcement: { label: 'Announcement', color: '#6b7280', bg: 'rgba(107,114,128,0.12)', icon: '📢' },
+};
+
+const FILE_COLOR_CLASS: Record<string, string> = {
+  pdf: 'text-app-red', doc: 'text-app-accent2', ppt: 'text-app-orange',
+  xls: 'text-app-green', img: 'text-app-accent2', video: 'text-app-red', other: 'text-app-text-dim',
 };
 
 function getLastVisitKey(spaceId: string) {
@@ -81,6 +86,8 @@ export function Space() {
   const [scheduleDay, setScheduleDay] = useState(todayIndex);
   const [shareTarget, setShareTarget] = useState<{ type: string; id: string | number } | null>(null);
   const [courseSummary, setCourseSummary] = useState<Record<number, { count: number; latest: { name: string; created_at: string } | null }>>({});
+  const [recentMaterials, setRecentMaterials] = useState<Material[]>([]);
+  const [recentLoading, setRecentLoading] = useState(false);
 
   const isRep = memberRole === 'rep';
   const courseList = courses ?? [];
@@ -128,6 +135,18 @@ export function Space() {
     }
     return () => { cancelled.current = true; };
   }, [spaceId, tab]);
+
+  // Recently Added — refresh when the files tab opens and after an upload closes.
+  useEffect(() => {
+    if (!spaceId || tab !== 'files' || showUpload) return;
+    let cancelled = false;
+    setRecentLoading(true);
+    getRecentMaterials(spaceId, 5).then(data => {
+      if (!cancelled) setRecentMaterials(data || []);
+    }).catch(() => { if (!cancelled) setRecentMaterials([]); })
+    .finally(() => { if (!cancelled) setRecentLoading(false); });
+    return () => { cancelled = true; };
+  }, [spaceId, tab, showUpload]);
 
   const lastVisit = useMemo(() => {
     if (contentFilter !== 'unread') return null;
@@ -367,6 +386,41 @@ export function Space() {
       {/* ─── Files Tab ─── */}
       {tab === 'files' && (
         <div className="px-4 animate-fadeIn">
+          {/* ─── Recently Added ─── */}
+          {(recentMaterials.length > 0 || recentLoading) && (
+            <div className="mb-4">
+              <p className="text-app-text-dim text-xs font-jakarta font-semibold uppercase tracking-wider mb-2">Recently added</p>
+              {recentLoading && recentMaterials.length === 0 ? (
+                <div className="flex flex-col gap-1.5">
+                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  {recentMaterials.map(m => (
+                    <button key={m.id}
+                      onClick={() => navigate(`/space/${currentSpace.id}/material/${m.id}`)}
+                      className="w-full flex items-center gap-3 bg-app-surface rounded-xl border border-app-border px-3.5 py-3 text-left card-hover active:scale-[0.99] transition-all">
+                      <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0" style={{ background: 'var(--app-surface-2)' }}>
+                        <span className={FILE_COLOR_CLASS[m.file_type] || 'text-app-text-dim'}>{FILE_ICONS[m.file_type] || '📁'}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-app-text font-jakarta text-sm font-semibold truncate">{m.name}</p>
+                        <div className="flex items-center gap-1.5 text-app-text-faint text-[11px] font-inter mt-0.5">
+                          <span className="text-app-text-dim font-medium truncate">{m.course_code}</span>
+                          <span>·</span>
+                          <span className="truncate">Uploaded by {m.uploader_name}</span>
+                          <span>·</span>
+                          <span>{formatRelativeTime(m.created_at)}</span>
+                        </div>
+                      </div>
+                      <span className="text-app-text-faint text-[10px] font-inter flex-shrink-0">⬇ {m.downloads || 0}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {filteredCourses.length === 0 ? (
             <div className="pt-8">
               <EmptyState icon={search ? '🔍' : '📁'} title={search ? 'No results' : 'No courses yet'} />
@@ -577,13 +631,19 @@ const FeedCard = memo(function FeedCard({ ann, spaceId, canDelete, deleting, onD
   const style = TYPE_STYLES[ann.type] || TYPE_STYLES.announcement;
   const preview = ann.body.length > 120 ? ann.body.slice(0, 120) + '…' : ann.body;
   const [menuOpen, setMenuOpen] = useState(false);
-  const [menuUp, setMenuUp] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; left: number } | null>(null);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
 
   const toggleMenu = () => {
     if (!menuOpen && menuBtnRef.current) {
-      const rect = menuBtnRef.current.getBoundingClientRect();
-      setMenuUp(window.innerHeight - rect.bottom < 300);
+      const r = menuBtnRef.current.getBoundingClientRect();
+      const menuW = 184;
+      const menuH = 300;
+      const left = Math.max(8, Math.min(r.right - menuW, window.innerWidth - menuW - 8));
+      const up = window.innerHeight - r.bottom < menuH;
+      setMenuPos(up
+        ? { bottom: window.innerHeight - r.top + 4, left }
+        : { top: r.bottom + 4, left });
     }
     setMenuOpen(o => !o);
   };
@@ -652,10 +712,11 @@ const FeedCard = memo(function FeedCard({ ann, spaceId, canDelete, deleting, onD
               className="px-1.5 py-0.5 text-app-text-faint hover:text-app-text transition-colors rounded hover:bg-app-surface-2 text-sm leading-none tracking-wider font-bold">
               ···
             </button>
-            {menuOpen && (
+            {menuOpen && menuPos && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-                <div className={`absolute right-0 z-50 bg-app-bg border border-app-border rounded-xl shadow-xl py-1.5 min-w-[168px] max-h-[70vh] overflow-y-auto animate-fadeIn ${menuUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}`}>
+                <div className="fixed z-50 bg-app-bg border border-app-border rounded-xl shadow-xl py-1.5 min-w-[168px] max-h-[70vh] overflow-y-auto animate-fadeIn"
+                  style={{ top: menuPos.top, bottom: menuPos.bottom, left: menuPos.left }}>
                   <button onClick={() => {
                     const url = `${window.location.origin}/space/${spaceId}/announcement/${ann.id}`;
                     if (navigator.share) navigator.share({ url, title: ann.title }).catch(() => navigator.clipboard.writeText(url));

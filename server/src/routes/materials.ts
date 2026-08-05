@@ -228,6 +228,40 @@ export function materialRoutes(app: FastifyInstance) {
     };
   });
 
+  app.get('/api/spaces/:id/materials/recent', { preHandler: authMiddleware }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const userId = request.user!.userId;
+
+    if (!await isSpaceMember(id, userId)) {
+      return reply.status(403).send({ error: 'Not a member of this space' });
+    }
+
+    const query = request.query as { limit?: string };
+    const limit = Math.min(Math.max(Number(query.limit) || 5, 1), 10);
+    const db = getDb();
+
+    const materials = await db.prepare(`
+      SELECT m.id, m.name, m.file_type, m.category, m.file_size, m.created_at,
+             m.downloads, m.file_data IS NOT NULL as has_file,
+             u.name as uploader_name, c.id as course_id, c.name as course_name, c.code as course_code, c.icon as course_icon
+      FROM materials m
+      JOIN users u ON m.uploader_id = u.id
+      JOIN courses c ON m.course_id = c.id
+      WHERE m.space_id = ?
+      ORDER BY m.created_at DESC
+      LIMIT ?
+    `).all(id, limit) as unknown as MaterialRow[];
+
+    return {
+      materials: materials.map(m => ({
+        ...m,
+        pinned: Boolean(m.pinned),
+        has_file: Boolean(m.has_file),
+        downloads: m.downloads || 0,
+      })),
+    };
+  });
+
   app.get('/api/materials/shared/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     const db = getDb();

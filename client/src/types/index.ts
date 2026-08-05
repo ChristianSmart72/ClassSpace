@@ -73,6 +73,7 @@ export interface Material {
   created_at: string;
   course_name?: string;
   course_code?: string;
+  course_icon?: string;
   pinned?: boolean;
   downloads?: number;
   has_file?: boolean;
@@ -217,6 +218,7 @@ export interface Opportunity {
   category: string;
   link: string | null;
   deadline: string | null;
+  eligibility?: string | null;
   pinned?: boolean;
   created_at: string;
 }

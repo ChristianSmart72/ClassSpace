@@ -266,7 +266,7 @@ export function Opportunities() {
 
       {isRep && <Fab onClick={() => setShowPost(true)} icon="+" />}
       {showPost && spaceId && <PostOpportunitySheet spaceId={spaceId} onClose={() => setShowPost(false)} />}
-      {selectedOpp && <OpportunityDetailSheet opp={selectedOpp} onClose={() => setSelectedOpp(null)} />}
+      {selectedOpp && <OpportunityDetailSheet opp={selectedOpp} onClose={() => setSelectedOpp(null)} onBookmarkChange={handleBookmark} />}
     </div>
   );
 }

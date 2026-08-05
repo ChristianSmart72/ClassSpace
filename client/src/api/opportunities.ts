@@ -12,6 +12,7 @@ export async function createOpportunity(spaceId: string, payload: {
   category: string;
   link?: string;
   deadline?: string;
+  eligibility?: string;
 }) {
   const { data } = await api.post(`/spaces/${spaceId}/opportunities`, payload);
   return data.opportunity as Opportunity;

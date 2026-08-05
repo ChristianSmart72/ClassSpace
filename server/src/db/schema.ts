@@ -138,6 +138,7 @@ const TABLES = [
     category TEXT NOT NULL DEFAULT 'other',
     link TEXT,
     deadline TEXT,
+    eligibility TEXT,
     pinned INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
@@ -199,6 +200,10 @@ const MIGRATIONS: { name: string; sql: string }[] = [
   {
     name: 'add_timetable_cancelled',
     sql: `ALTER TABLE timetable ADD COLUMN cancelled INTEGER NOT NULL DEFAULT 0`,
+  },
+  {
+    name: 'add_opportunities_eligibility',
+    sql: `ALTER TABLE opportunities ADD COLUMN eligibility TEXT`,
   },
 ];
 

@@ -18,6 +18,7 @@ export function PostOpportunitySheet({ spaceId, onClose }: { spaceId: string; on
   const [description, setDescription] = useState('');
   const [link, setLink] = useState('');
   const [deadline, setDeadline] = useState('');
+  const [eligibility, setEligibility] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -43,6 +44,7 @@ export function PostOpportunitySheet({ spaceId, onClose }: { spaceId: string; on
         category,
         link: link.trim() || undefined,
         deadline: deadline || undefined,
+        eligibility: eligibility.trim() || undefined,
       });
       onClose();
     } catch (err: any) {
@@ -103,6 +105,12 @@ export function PostOpportunitySheet({ spaceId, onClose }: { spaceId: string; on
               <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://..." inputMode="url"
                 className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-inter text-sm placeholder:text-app-text-faint focus:border-app-accent transition-colors" />
             </div>
+          </div>
+
+          <div>
+            <label className="text-app-text-dim text-xs font-jakarta font-semibold uppercase tracking-wider mb-1.5 block">Eligibility</label>
+            <textarea value={eligibility} onChange={(e) => setEligibility(e.target.value)} placeholder="Who can apply? (optional)" rows={2}
+              className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-inter text-sm placeholder:text-app-text-faint focus:border-app-accent transition-colors resize-none" />
           </div>
 
           <button onClick={handleSubmit} disabled={submitting}

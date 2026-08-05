@@ -10,6 +10,7 @@ import { FILE_ICONS } from '../types';
 import type { Material } from '../types';
 import api from '../api/client';
 import { formatRelativeTime, formatSize } from '../lib/time';
+import { downloadMaterialFile, type DownloadPhase } from '../lib/download';
 
 const FILTER_CATEGORIES = [
   'All', 'Slides', 'Assignments', 'Past Questions',
@@ -288,7 +289,8 @@ const ResourceCard = memo(function ResourceCard({ material: m, canDelete, deleti
   onClick: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [menuUp, setMenuUp] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; left: number } | null>(null);
+  const [dlPhase, setDlPhase] = useState<DownloadPhase | 'idle'>('idle');
   const [dl, setDl] = useState(() => getDownloaded().includes(m.id));
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const icon = FILE_ICONS[m.file_type] || '📁';
@@ -297,10 +299,27 @@ const ResourceCard = memo(function ResourceCard({ material: m, canDelete, deleti
 
   const toggleMenu = () => {
     if (!menuOpen && menuBtnRef.current) {
-      const rect = menuBtnRef.current.getBoundingClientRect();
-      setMenuUp(window.innerHeight - rect.bottom < 260);
+      const r = menuBtnRef.current.getBoundingClientRect();
+      const menuW = 56;
+      const menuH = 240;
+      const left = Math.max(8, Math.min(r.right - menuW, window.innerWidth - menuW - 8));
+      const up = window.innerHeight - r.bottom < menuH;
+      setMenuPos(up
+        ? { bottom: window.innerHeight - r.top + 4, left }
+        : { top: r.bottom + 4, left });
     }
     setMenuOpen(o => !o);
+  };
+
+  const handleDownload = async () => {
+    setMenuOpen(false);
+    if (dlPhase === 'downloading' || dl) return;
+    setDlPhase('downloading');
+    const result = await downloadMaterialFile(m, setDlPhase);
+    if (result === 'complete') {
+      markDownloaded(m.id);
+      setDl(true);
+    }
   };
 
   return (
@@ -340,17 +359,23 @@ const ResourceCard = memo(function ResourceCard({ material: m, canDelete, deleti
           className="p-1.5 text-app-text-faint hover:text-app-text transition-colors rounded-lg hover:bg-app-surface-2 text-sm leading-none tracking-wider font-bold">
           ···
         </button>
-        {menuOpen && (
+        {menuOpen && menuPos && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-            <div className={`absolute right-0 z-50 bg-app-bg border border-app-border rounded-xl shadow-xl py-1.5 w-12 animate-fadeIn ${menuUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}`}>
+            <div className="fixed z-50 bg-app-bg border border-app-border rounded-xl shadow-xl py-1.5 w-14 max-h-[70vh] overflow-y-auto animate-fadeIn"
+              style={{ top: menuPos.top, bottom: menuPos.bottom, left: menuPos.left }}>
               {dl ? (
-                <button title="Downloaded" onClick={() => { window.open(`/api/materials/${m.id}/download`, '_blank'); setMenuOpen(false); }}
+                <button title="Downloaded" onClick={() => { setMenuOpen(false); window.open(`/api/materials/${m.id}/download`, '_blank'); }}
                   className="w-full flex items-center justify-center py-3 text-app-green hover:bg-app-surface transition-colors text-base">
                   ✓
                 </button>
+              ) : dlPhase === 'downloading' ? (
+                <button title="Downloading…" disabled
+                  className="w-full flex items-center justify-center py-3 text-app-accent hover:bg-app-surface transition-colors text-base disabled:opacity-60">
+                  <span className="w-4 h-4 border-2 border-app-accent border-t-transparent rounded-full animate-spin" />
+                </button>
               ) : (
-                <button title="Download" onClick={() => { markDownloaded(m.id); setDl(true); window.open(`/api/materials/${m.id}/download`, '_blank'); setMenuOpen(false); }}
+                <button title="Download" onClick={handleDownload}
                   className="w-full flex items-center justify-center py-3 text-app-text hover:bg-app-surface transition-colors text-base">
                   ⬇
                 </button>

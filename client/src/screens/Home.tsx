@@ -24,13 +24,6 @@ function getTodayName(): string {
   return WEEKDAYS[getTodayIndex()] || '';
 }
 
-function getTomorrowName(): string {
-  const today = new Date().getDay();
-  if (today === 0 || today === 6) return 'Monday';
-  const idx = today - 1;
-  return WEEKDAYS[(idx + 1) % 5];
-}
-
 function timeToMinutes(t: string): number {
   const [h, m] = t.split(':').map(Number);
   return h * 60 + m;
@@ -66,13 +59,36 @@ function getNextUpcomingClass(entries: TimetableEntry[]): TimetableEntry | null 
   return upcoming[0] ?? null;
 }
 
-function getTomorrowFirstClass(entries: TimetableEntry[]): TimetableEntry | null {
-  const tomorrow = getTomorrowName();
-  if (!tomorrow) return null;
-  const tomorrowEntries = entries.filter(e => e.day === tomorrow && !e.cancelled);
-  if (tomorrowEntries.length === 0) return null;
-  tomorrowEntries.sort((a, b) => timeToMinutes(a.start_time) - timeToMinutes(b.start_time));
-  return tomorrowEntries[0];
+const DAY_ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+function isCalendarTomorrow(day: string): boolean {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  if (d.getDay() === 0 || d.getDay() === 6) return false;
+  return DAY_ORDER[d.getDay() - 1] === day;
+}
+
+function dayLabelFor(day: string): string {
+  return isCalendarTomorrow(day) ? 'Tomorrow' : day;
+}
+
+// Scan ahead across the week (skipping weekends) for the next scheduled class.
+// Useful on weekends, or late Friday when the next class is on Monday.
+function getNextClassAcrossWeek(entries: TimetableEntry[]): { entry: TimetableEntry; dayLabel: string } | null {
+  const now = nowMinutes();
+  for (let offset = 1; offset <= 7; offset++) {
+    const d = new Date();
+    d.setDate(d.getDate() + offset);
+    const wd = d.getDay();
+    if (wd === 0 || wd === 6) continue;
+    const day = DAY_ORDER[wd - 1];
+    const dayEntries = entries
+      .filter(e => e.day === day && !e.cancelled)
+      .sort((a, b) => timeToMinutes(a.start_time) - timeToMinutes(b.start_time));
+    if (dayEntries.length === 0) continue;
+    return { entry: dayEntries[0], dayLabel: day };
+  }
+  return null;
 }
 
 function getDueItems(announcements: Announcement[]): Announcement[] {
@@ -172,7 +188,7 @@ function LiveCountdown({ startTime, endTime }: { startTime: string; endTime: str
   return null;
 }
 
-function NextClassSection({ timetable, ttLoading, navigate }: { timetable: TimetableEntry[]; ttLoading: boolean; spaceId?: string; navigate: ReturnType<typeof useNavigate> }) {
+function NextClassSection({ timetable, ttLoading, navigate }: { timetable: TimetableEntry[]; ttLoading: boolean; navigate: ReturnType<typeof useNavigate> }) {
   const [, forceUpdate] = useState(0);
   useEffect(() => {
     const id = setInterval(() => forceUpdate(t => t + 1), 30000);
@@ -190,7 +206,7 @@ function NextClassSection({ timetable, ttLoading, navigate }: { timetable: Timet
 
   const inProgress = getInProgressClass(timetable);
   const upcoming = getNextUpcomingClass(timetable);
-  const tomorrowFirst = getTomorrowFirstClass(timetable);
+  const nextUp = getNextClassAcrossWeek(timetable);
   if (inProgress) {
     return (
       <div className="mb-5 animate-fadeInUp" style={{ animationDelay: '0.04s' }}>
@@ -254,25 +270,26 @@ function NextClassSection({ timetable, ttLoading, navigate }: { timetable: Timet
     );
   }
 
-  if (tomorrowFirst) {
+  if (nextUp) {
+    const nextDay = dayLabelFor(nextUp.dayLabel);
     return (
       <div className="mb-5 animate-fadeInUp" style={{ animationDelay: '0.04s' }}>
         <p className="text-app-text-dim text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-1.5">Next class</p>
         <div className="bg-app-surface rounded-xl border border-app-border p-4">
           <p className="text-app-green text-sm font-jakarta font-semibold mb-2">🎉 You're done with classes today.</p>
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0" style={{ background: `${COURSE_COLORS[tomorrowFirst.color_index % 5]}18` }}>
-              {tomorrowFirst.course_icon}
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0" style={{ background: `${COURSE_COLORS[nextUp.entry.color_index % 5]}18` }}>
+              {nextUp.entry.course_icon}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <p className="text-app-text font-jakarta font-semibold text-sm leading-tight">{tomorrowFirst.course_name}</p>
-                <span className="text-app-text-faint text-[10px] font-jakarta font-medium">{tomorrowFirst.course_code}</span>
+                <p className="text-app-text font-jakarta font-semibold text-sm leading-tight">{nextUp.entry.course_name}</p>
+                <span className="text-app-text-faint text-[10px] font-jakarta font-medium">{nextUp.entry.course_code}</span>
               </div>
               <p className="text-app-text-dim text-xs font-inter mt-0.5">
-                {formatTime(tomorrowFirst.start_time)} – {formatTime(tomorrowFirst.end_time)}
-                {tomorrowFirst.venue && ` · ${tomorrowFirst.venue}`}
-                <span className="ml-1.5 text-app-text-faint">Tomorrow</span>
+                {formatTime(nextUp.entry.start_time)} – {formatTime(nextUp.entry.end_time)}
+                {nextUp.entry.venue && ` · ${nextUp.entry.venue}`}
+                <span className="ml-1.5 text-app-accent font-jakarta font-semibold">{nextDay}</span>
               </p>
             </div>
           </div>
@@ -285,7 +302,7 @@ function NextClassSection({ timetable, ttLoading, navigate }: { timetable: Timet
     <div className="mb-5 animate-fadeInUp" style={{ animationDelay: '0.04s' }}>
       <p className="text-app-text-dim text-[10px] font-jakarta font-semibold uppercase tracking-wider mb-1.5">Next class</p>
       <div className="bg-app-surface rounded-xl border border-app-border p-4">
-        <p className="text-app-text-dim text-sm font-inter">🎉 No classes scheduled. Enjoy your day!</p>
+        <p className="text-app-text-dim text-sm font-inter">🎉 No upcoming classes scheduled.</p>
       </div>
     </div>
   );
@@ -483,7 +500,6 @@ export function Home() {
       <NextClassSection
         timetable={timetable}
         ttLoading={ttLoading}
-        spaceId={currentSpace.id}
         navigate={navigate}
       />
 

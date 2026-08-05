@@ -62,6 +62,11 @@ export async function getMaterialsSummary(spaceId: string) {
   return data as { courses: { course_id: number; count: number; latest: { name: string; created_at: string } | null }[] };
 }
 
+export async function getRecentMaterials(spaceId: string, limit = 5) {
+  const { data } = await api.get(`/spaces/${spaceId}/materials/recent`, { params: { limit } });
+  return data.materials as Material[];
+}
+
 export async function patchAnnouncement(id: number, updates: Partial<Announcement>) {
   const { data } = await api.patch(`/announcements/${id}`, updates);
   return data;

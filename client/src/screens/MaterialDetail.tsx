@@ -5,6 +5,7 @@ import { useContentStore } from '../store/contentStore';
 import { FILE_ICONS, FILE_COLORS } from '../types';
 import api from '../api/client';
 import { formatSize, formatDate, canGoBack } from '../lib/time';
+import { downloadMaterialFile, type DownloadPhase } from '../lib/download';
 import type { Material } from '../types';
 
 function getMaterialBookmarks(): number[] {
@@ -36,9 +37,8 @@ export function MaterialDetail() {
   const updateMaterial = useContentStore(s => s.updateMaterial);
   const [material, setMaterial] = useState<Material | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [downloading, setDownloading] = useState(false);
+  const [phase, setPhase] = useState<DownloadPhase | 'idle'>('idle');
   const [progress, setProgress] = useState(0);
-  const [justDownloaded, setJustDownloaded] = useState(false);
   const [downloaded, setDownloaded] = useState(() => getDownloadedMaterials().includes(Number(mid)));
   const [bookmarked, setBookmarked] = useState(() => getMaterialBookmarks().includes(Number(mid)));
 
@@ -58,35 +58,12 @@ export function MaterialDetail() {
   }, [mid, materials]);
 
   const handleDownload = async () => {
-    if (!material) return;
-    setDownloading(true);
+    if (!material || phase === 'downloading') return;
     setProgress(0);
-    const interval = setInterval(() => {
-      setProgress(p => Math.min(p + Math.random() * 30, 90));
-    }, 200);
-    try {
-      const mat = material;
-      if (mat.file_data) {
-        const link = document.createElement('a');
-        link.href = `data:application/octet-stream;base64,${mat.file_data}`;
-        link.download = `${mat.name}.${mat.file_type}`;
-        link.click();
-      } else {
-        const link = document.createElement('a');
-        link.href = `/api/materials/${mat.id}/download`;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        link.click();
-      }
-      setProgress(100);
-      markDownloaded(mat.id);
+    const result = await downloadMaterialFile(material, setPhase, setProgress);
+    if (result === 'complete') {
+      markDownloaded(material.id);
       setDownloaded(true);
-      setJustDownloaded(true);
-      setTimeout(() => { setDownloading(false); setJustDownloaded(false); }, 1500);
-    } catch {
-      setDownloading(false);
-    } finally {
-      clearInterval(interval);
     }
   };
 
@@ -183,25 +160,36 @@ export function MaterialDetail() {
         </div>
 
         <div className="flex flex-col gap-2">
-          {justDownloaded && (
-            <div className="bg-app-green/10 border border-app-green/30 rounded-xl px-4 py-2.5 flex items-center gap-2 animate-fadeIn">
-              <span className="text-app-green text-sm">✓</span>
-              <span className="text-app-green text-xs font-jakarta font-semibold">Downloaded successfully</span>
+          {phase === 'downloading' && (
+            <div className="bg-app-accent/10 border border-app-accent/30 rounded-xl px-4 py-2.5 flex items-center gap-2 animate-fadeIn">
+              <span className="w-4 h-4 border-2 border-app-accent border-t-transparent rounded-full animate-spin flex-shrink-0" />
+              <span className="text-app-accent text-xs font-jakarta font-semibold">Downloading… {progress > 0 ? `${progress}%` : ''}</span>
             </div>
           )}
-
-          {downloaded && !justDownloaded ? (
+          {phase === 'started' && (
+            <div className="bg-app-accent/10 border border-app-accent/30 rounded-xl px-4 py-2.5 flex items-center gap-2 animate-fadeIn">
+              <span className="text-app-accent text-sm">⬇</span>
+              <span className="text-app-accent text-xs font-jakarta font-semibold">Download started — check your downloads</span>
+            </div>
+          )}
+          {phase === 'failed' && (
+            <div className="bg-app-red/10 border border-app-red/30 rounded-xl px-4 py-2.5 flex items-center gap-2 animate-fadeIn">
+              <span className="text-app-red text-sm">✕</span>
+              <span className="text-app-red text-xs font-jakarta font-semibold">Download failed — check your connection and try again</span>
+            </div>
+          )}
+          {downloaded && phase !== 'failed' ? (
             <button onClick={handleOpenFile}
               className="w-full bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2">
               <span>📂</span> Open File
             </button>
           ) : (
-            <button onClick={handleDownload} disabled={downloading}
+            <button onClick={handleDownload} disabled={phase === 'downloading'}
               className="w-full bg-app-accent text-app-bg font-jakarta font-bold text-sm rounded-xl py-3.5 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50">
-              {downloading ? (
+              {phase === 'downloading' ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 border-2 border-app-bg border-t-transparent rounded-full animate-spin" />
-                  Downloading {Math.round(progress)}%
+                  Downloading {progress}%
                 </span>
               ) : (
                 <><span>⬇</span> Download</>

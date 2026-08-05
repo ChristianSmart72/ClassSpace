@@ -60,6 +60,7 @@ export function opportunityRoutes(app: FastifyInstance) {
       category: string;
       link?: string;
       deadline?: string;
+      eligibility?: string;
     };
     const userId = request.user!.userId;
     const db = getDb();
@@ -82,8 +83,8 @@ export function opportunityRoutes(app: FastifyInstance) {
     const category = ALLOWED_CATEGORIES.includes(body.category) ? body.category : 'other';
 
     const result = await db.prepare(
-      'INSERT INTO opportunities (space_id, author_id, title, description, category, link, deadline) VALUES (?, ?, ?, ?, ?, ?, ?)'
-    ).run(id, userId, body.title.trim(), body.description.trim(), category, body.link || null, body.deadline || null);
+      'INSERT INTO opportunities (space_id, author_id, title, description, category, link, deadline, eligibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run(id, userId, body.title.trim(), body.description.trim(), category, body.link || null, body.deadline || null, body.eligibility?.trim() || null);
 
     const opportunity = await db.prepare(`
       SELECT o.*, u.name as author_name
