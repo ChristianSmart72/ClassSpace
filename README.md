@@ -84,6 +84,7 @@ classspace/
 │   │   └── index.ts         # Server entry point
 │   └── package.json
 ├── tests/                   # Playwright E2E tests
+├── docs/                    # CONTINUITY, ARCHITECTURE, API, DATABASE, DEPLOYMENT
 └── README.md
 ```
 
@@ -200,6 +201,16 @@ Christian Smart — founder of ClassSpace, studying at UNIBEN, building for Nige
 
 > Note: this project grows with every class it serves. If you're a Nigerian university student and it resonates, reach out — the best product decisions come from people who live the problem every day.
 
-## Docs / roadmap
+## Docs
 
-See `ARCHITECTURE_PLAN.md` for the engineering plan with status, and `PWA_OVERHAUL.md` for the PWA implementation notes.
+The authoritative guides live in `docs/` — read these after cloning:
+
+| Doc | What it covers |
+|---|---|
+| `docs/CONTINUITY.md` | **Start here** — project state, verified features, recent fixes, known limitations, gotchas |
+| `docs/ARCHITECTURE.md` | System design, data flows, full file-by-file map |
+| `docs/API.md` | Every endpoint, request/response shapes |
+| `docs/DATABASE.md` | Schema, migrations, seed/reset |
+| `docs/DEPLOYMENT.md` | Render deploy, env vars, troubleshooting |
+
+`ARCHITECTURE_PLAN.md` and `PWA_OVERHAUL.md` are historical planning docs, kept for context but superseded by `docs/`.
