@@ -51,7 +51,7 @@ export function reactionRoutes(app: FastifyInstance) {
       'SELECT emoji, COUNT(*) as count FROM reactions WHERE announcement_id = ? GROUP BY emoji'
     ).all(annId) as { emoji: string; count: number }[];
 
-    const reactions: Record<string, number> = {};
+    const reactions: Record<string, number> = { upvote: 0, downvote: 0 };
     for (const row of counts) reactions[row.emoji] = row.count;
 
     return { reactions, userReacted, emoji };
