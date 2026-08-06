@@ -3,14 +3,37 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useSpaceStore } from '../store/spaceStore';
 
+const DEMO_ACCOUNTS = [
+  {
+    label: '🎓 Class Rep',
+    sub: 'Can post & manage',
+    email: 'christian@classspace.app',
+    password: 'demo1234',
+  },
+  {
+    label: '👤 Student',
+    sub: 'Member view',
+    email: 'student@classspace.app',
+    password: 'demo1234',
+  },
+];
+
 export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [filled, setFilled] = useState<string | null>(null);
   const login = useAuthStore(s => s.login);
   const loading = useAuthStore(s => s.loading);
   const joinSpace = useSpaceStore(s => s.joinSpace);
   const navigate = useNavigate();
+
+  const prefill = (account: typeof DEMO_ACCOUNTS[0]) => {
+    setEmail(account.email);
+    setPassword(account.password);
+    setFilled(account.label);
+    setError('');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,7 +88,7 @@ export function Login() {
             <input
               type="email"
               value={email}
-              onChange={(e) => { setEmail(e.target.value); }}
+              onChange={(e) => { setEmail(e.target.value); setFilled(null); }}
               placeholder="you@student.edu"
               autoComplete="email"
               className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-inter text-sm placeholder:text-app-text-faint focus:border-app-accent focus:outline-none transition-colors"
@@ -80,7 +103,7 @@ export function Login() {
             <input
               type="password"
               value={password}
-              onChange={(e) => { setPassword(e.target.value); }}
+              onChange={(e) => { setPassword(e.target.value); setFilled(null); }}
               placeholder="••••••••"
               autoComplete="current-password"
               className="w-full bg-app-surface border border-app-border rounded-xl px-4 py-3 text-app-text font-inter text-sm placeholder:text-app-text-faint focus:border-app-accent focus:outline-none transition-colors"
@@ -96,6 +119,36 @@ export function Login() {
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
+
+        <div className="mt-6">
+          <p className="text-app-text-faint text-[11px] font-jakarta font-semibold uppercase tracking-wider text-center mb-2.5">
+            Try a demo account
+          </p>
+          <div className="flex gap-2">
+            {DEMO_ACCOUNTS.map((acc) => (
+              <button
+                key={acc.label}
+                type="button"
+                onClick={() => prefill(acc)}
+                className={`flex-1 rounded-xl border py-2.5 px-3 text-left transition-all duration-200 active:scale-[0.97] ${
+                  filled === acc.label
+                    ? 'border-app-accent bg-app-accent/10'
+                    : 'border-app-border bg-app-surface hover:border-app-accent/40'
+                }`}
+              >
+                <p className={`text-xs font-jakarta font-bold ${filled === acc.label ? 'text-app-accent' : 'text-app-text'}`}>
+                  {acc.label}
+                </p>
+                <p className="text-app-text-faint text-[10px] font-inter mt-0.5">{acc.sub}</p>
+              </button>
+            ))}
+          </div>
+          {filled && (
+            <p className="text-app-accent text-[11px] font-inter text-center mt-2">
+              ✓ Credentials filled — tap Sign In
+            </p>
+          )}
+        </div>
 
         <p className="text-app-text-dim text-sm font-inter text-center mt-5">
           No account?{' '}
