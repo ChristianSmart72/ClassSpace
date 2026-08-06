@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { getDb } from '../db/connection.js';
+import { getDb, isSpaceMember } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { sendPushToUser } from '../lib/push.js';
 
@@ -14,6 +14,10 @@ export function pushRoutes(app: FastifyInstance) {
 
     if (!body.endpoint || !body.keys?.p256dh || !body.keys?.auth || !body.spaceId) {
       return reply.status(400).send({ error: 'Missing required fields' });
+    }
+
+    if (!await isSpaceMember(body.spaceId, userId)) {
+      return reply.status(403).send({ error: 'Not a member of this space' });
     }
 
     const db = getDb();

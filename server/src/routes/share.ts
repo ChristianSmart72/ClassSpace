@@ -14,14 +14,14 @@ export function shareRoutes(app: FastifyInstance) {
     const rep = await db.prepare<{ name: string }>('SELECT name FROM users WHERE id = ?').get(space.rep_id);
     const memberCount = await db.prepare<{ count: number }>(
       "SELECT COUNT(*) as count FROM space_members WHERE space_id = ?"
-    ).get(id);
+    ).get(space.id);
     const materialCount = await db.prepare<{ count: number }>(
       "SELECT COUNT(*) as count FROM materials WHERE space_id = ?"
-    ).get(id);
+    ).get(space.id);
     const courses = await db.prepare(`
       SELECT c.*, (SELECT COUNT(*) FROM materials m WHERE m.course_id = c.id) as file_count
       FROM courses c WHERE c.space_id = ? ORDER BY c.id
-    `).all(id) as unknown as CourseRow[];
+    `).all(space.id) as unknown as CourseRow[];
     const recentAnnouncements = await db.prepare(`
       SELECT a.id, a.title, a.body, a.type, a.created_at, a.urgent,
              c.name as course_name, c.code as course_code
@@ -29,7 +29,7 @@ export function shareRoutes(app: FastifyInstance) {
       LEFT JOIN courses c ON a.course_id = c.id
       WHERE a.space_id = ?
       ORDER BY a.created_at DESC LIMIT 3
-    `).all(id) as unknown as (AnnouncementRow & { course_name?: string; course_code?: string })[];
+    `).all(space.id) as unknown as (AnnouncementRow & { course_name?: string; course_code?: string })[];
 
     return {
       type: 'space',

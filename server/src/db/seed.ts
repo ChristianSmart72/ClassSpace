@@ -67,9 +67,12 @@ export async function seedDatabase(): Promise<void> {
   const oldSpace = await db.prepare<{ id: string }>("SELECT id FROM spaces WHERE invite_code = 'PRE-220' AND id != 'pre220'").get();
   if (oldSpace) {
     console.log('Removing old space data to avoid conflicts...');
-    for (const table of ['announcements', 'materials', 'reactions', 'timetable', 'poll_votes', 'poll_options', 'polls', 'opportunities', 'courses', 'space_members']) {
+    for (const table of ['announcements', 'materials', 'timetable', 'polls', 'opportunities', 'courses', 'space_members']) {
       await db.prepare(`DELETE FROM ${table} WHERE space_id = ?`).run(oldSpace.id);
     }
+    await db.prepare('DELETE FROM reactions WHERE announcement_id IN (SELECT id FROM announcements WHERE space_id = ?)').run(oldSpace.id);
+    await db.prepare('DELETE FROM poll_options WHERE poll_id IN (SELECT id FROM polls WHERE space_id = ?)').run(oldSpace.id);
+    await db.prepare('DELETE FROM poll_votes WHERE poll_id IN (SELECT id FROM polls WHERE space_id = ?)').run(oldSpace.id);
     await db.prepare('DELETE FROM spaces WHERE id = ?').run(oldSpace.id);
   }
 

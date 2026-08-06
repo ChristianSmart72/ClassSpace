@@ -44,18 +44,6 @@ function fileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function downloadFile(material: Material) {
-  if (!material.file_data) return;
-  const byteStr = atob(material.file_data.split(',')[1] ?? material.file_data);
-  const arr = new Uint8Array(byteStr.length);
-  for (let i = 0; i < byteStr.length; i++) arr[i] = byteStr.charCodeAt(i);
-  const blob = new Blob([arr], { type: material.file_type || 'application/octet-stream' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = material.name; a.click();
-  URL.revokeObjectURL(url);
-}
-
 // ─── Type badge colours ────────────────────────────────────────────────────
 const TYPE_META: Record<string, { label: string; color: string; bg: string }> = {
   assignment: { label: 'Assignment', color: '#ffffff', bg: '#4f46e5' },
@@ -80,8 +68,11 @@ function AttachmentCard({ mat }: { mat: Material }) {
         <p className="text-app-text font-jakarta font-semibold text-sm leading-snug truncate">{mat.name}</p>
         <p className="text-app-text-faint text-xs font-inter mt-0.5">{catLabel} · {size}</p>
       </div>
-      <button
-        onClick={() => downloadFile(mat)}
+      <a
+        href={`/api/materials/${mat.id}/download`}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Download"
         className="w-9 h-9 rounded-xl bg-app-accent/10 border border-app-accent/20 flex items-center justify-center text-app-accent flex-shrink-0 hover:bg-app-accent/20 transition-colors active:scale-95"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -89,7 +80,7 @@ function AttachmentCard({ mat }: { mat: Material }) {
           <polyline points="7 10 12 15 17 10" />
           <line x1="12" y1="15" x2="12" y2="3" />
         </svg>
-      </button>
+      </a>
     </div>
   );
 }

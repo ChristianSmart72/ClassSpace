@@ -120,6 +120,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     safeRemove('token');
     safeRemove('spaceId');
     clearCachedUser();
+    try { if ('caches' in window) caches.delete('api-cache') } catch {}
     set({ user: null, token: null });
   },
 }));

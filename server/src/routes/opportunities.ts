@@ -4,7 +4,7 @@ import { authMiddleware } from '../middleware/auth.js';
 import { isNonEmptyString, isValidUrl, fail } from '../lib/validate.js';
 import { OpportunityRow, MembershipRow } from '../db/rows.js';
 
-const ALLOWED_CATEGORIES = ['seminar', 'scholarship', 'internship', 'job', 'event', 'competition', 'other'];
+const ALLOWED_CATEGORIES = ['seminar', 'scholarship', 'internship', 'job', 'event', 'competition', 'bootcamp', 'other'];
 
 export function opportunityRoutes(app: FastifyInstance) {
   app.get('/api/spaces/:id/opportunities', { preHandler: authMiddleware }, async (request, reply) => {

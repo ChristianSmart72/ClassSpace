@@ -267,7 +267,7 @@ export function materialRoutes(app: FastifyInstance) {
     const db = getDb();
 
     const material = await db.prepare(`
-      SELECT m.id, m.name, m.file_type, m.category, m.file_size, m.created_at,
+      SELECT m.id, m.name, m.file_type, m.category, m.file_size, m.created_at, m.course_id, m.pinned, m.downloads,
              m.file_data IS NOT NULL as has_file,
              u.name as uploader_name, c.name as course_name, c.code as course_code,
              c.icon as course_icon, s.name as space_name, s.id as space_id

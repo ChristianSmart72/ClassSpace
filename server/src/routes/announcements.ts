@@ -92,6 +92,16 @@ export function announcementRoutes(app: FastifyInstance) {
     const db = getDb();
     const ct = request.headers['content-type'] || '';
 
+    // Reject non-rep users before any expensive file uploads happen.
+    const membership = await db.prepare<MembershipRow>(
+      'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
+    ).get(id, userId);
+    if (!membership || membership.role !== 'rep') {
+      return reply.status(403).send({ error: 'Only class reps can create announcements' });
+    }
+
+    const uploadedUrls: string[] = [];
+
     let courseId: number | null = null;
     let title = '';
     let body = '';
@@ -113,6 +123,7 @@ export function announcementRoutes(app: FastifyInstance) {
           const buffer = await part.toBuffer();
           if (buffer.length > 0) {
             const result = await uploadFileBuffer(buffer, part.filename, part.mimetype);
+            uploadedUrls.push(result.url);
             attachments.push({ fileUrl: result.url, fileName: part.filename, fileSize: buffer.length });
           }
           continue;
@@ -170,14 +181,8 @@ export function announcementRoutes(app: FastifyInstance) {
     }
 
     if (!isNonEmptyString(title, 200) || !isNonEmptyString(body, 10000)) {
+      for (const url of uploadedUrls) await deleteFileByUrl(url);
       return fail(reply, 'Title (max 200 chars) and body (max 10,000 chars) are required');
-    }
-
-    const membership = await db.prepare(
-      'SELECT role FROM space_members WHERE space_id = ? AND user_id = ?'
-    ).get(id, userId);
-    if (!membership || membership.role !== 'rep') {
-      return reply.status(403).send({ error: 'Only class reps can create announcements' });
     }
 
     // last_insert_rowid() is clobbered by any subsequent INSERT in the same
@@ -322,7 +327,7 @@ export function announcementRoutes(app: FastifyInstance) {
     const body = request.body as Record<string, unknown>;
     const db = getDb();
 
-    const ann = await db.prepare<AnnouncementRow>('SELECT id, space_id FROM announcements WHERE id = ?').get(Number(id));
+    const ann = await db.prepare<AnnouncementRow>('SELECT id, space_id, file_data FROM announcements WHERE id = ?').get(Number(id));
     if (!ann) return reply.status(404).send({ error: 'Not found' });
 
     const isRep = await db.prepare(
@@ -342,6 +347,7 @@ export function announcementRoutes(app: FastifyInstance) {
     if (body.file_data !== undefined && typeof body.file_data === 'string') {
       const uploadName = typeof body.file_name === 'string' ? body.file_name : 'file.bin';
       const { url } = await uploadFile(body.file_data, uploadName);
+      deleteFileByUrl(ann.file_data);
       fields.push('file_data = ?');
       vals.push(url);
     }

@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { getDb } from '../db/connection.js';
+import { getDb, isSpaceMember } from '../db/connection.js';
 import { authMiddleware } from '../middleware/auth.js';
 
 const ALLOWED_REACTIONS = ['upvote', 'downvote'];
@@ -17,8 +17,11 @@ export function reactionRoutes(app: FastifyInstance) {
     const db = getDb();
     const annId = Number(id);
 
-    const ann = await db.prepare('SELECT id FROM announcements WHERE id = ?').get(annId);
+    const ann = await db.prepare<{ id: number; space_id: string }>('SELECT id, space_id FROM announcements WHERE id = ?').get(annId);
     if (!ann) return reply.status(404).send({ error: 'Announcement not found' });
+    if (!await isSpaceMember(ann.space_id, userId)) {
+      return reply.status(403).send({ error: 'Not a member of this space' });
+    }
 
     const existing = await db.prepare(
       'SELECT id FROM reactions WHERE announcement_id = ? AND user_id = ? AND emoji = ?'

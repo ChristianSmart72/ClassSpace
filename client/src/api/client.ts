@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getCachedResponse, setCachedResponse, invalidateCachedResponse } from './cache';
+import { getCachedResponse, setCachedResponse, invalidateCachedResponse, clearAllCachedResponses } from './cache';
 
 const api = axios.create({
   baseURL: '/api',
@@ -25,6 +25,8 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       try { localStorage.removeItem('token') } catch {}
+      clearAllCachedResponses();
+      try { if ('caches' in window) caches.delete('api-cache') } catch {}
     }
     // On network error, try serving cached GET response
     if (isOfflineError(error) && error.config?.method?.toLowerCase() === 'get') {
