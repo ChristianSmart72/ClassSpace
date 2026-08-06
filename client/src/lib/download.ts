@@ -42,7 +42,7 @@ export async function downloadMaterialFile(
       if (total > 0) onProgress?.(Math.min(Math.round((received / total) * 100), 99));
     }
 
-    const blob = new Blob(chunks, { type: res.headers.get('content-type') || 'application/octet-stream' });
+    const blob = new Blob(chunks as BlobPart[], { type: res.headers.get('content-type') || 'application/octet-stream' });
     saveBlob(blob, `${material.name}.${material.file_type}`);
     onProgress?.(100);
     onPhase('complete');

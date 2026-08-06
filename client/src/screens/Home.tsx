@@ -75,7 +75,6 @@ function dayLabelFor(day: string): string {
 // Scan ahead across the week (skipping weekends) for the next scheduled class.
 // Useful on weekends, or late Friday when the next class is on Monday.
 function getNextClassAcrossWeek(entries: TimetableEntry[]): { entry: TimetableEntry; dayLabel: string } | null {
-  const now = nowMinutes();
   for (let offset = 1; offset <= 7; offset++) {
     const d = new Date();
     d.setDate(d.getDate() + offset);
