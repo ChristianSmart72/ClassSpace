@@ -208,7 +208,7 @@ export function materialRoutes(app: FastifyInstance) {
       WHERE c.space_id = ?
       GROUP BY c.id
       ORDER BY c.name ASC
-    `).all(Number(id)) as unknown as {
+    `).all(id) as unknown as {
       course_id: number;
       count: number;
       contributors: number;
