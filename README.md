@@ -92,7 +92,7 @@ classspace/
 
 ### Prerequisites
 
-- Node.js 22+
+- Node.js 22–24 (`engines` in `package.json`)
 - npm
 - A [Turso](https://turso.tech) database (or `file:<path>` for local dev)
 - An [Uploadthing](https://uploadthing.com) app + API secret
