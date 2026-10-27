@@ -100,7 +100,13 @@ classspace/
 
 ### Environment variables
 
-All required vars live on the `server/` process. There is no `.env` in the repo — create one or export them:
+All required vars live on the `server/` process. Copy the template and fill it in:
+
+```bash
+cp .env.example server/.env    # gitignored — never commit real values
+```
+
+`npm run dev` and `npm run seed` load `server/.env` automatically (`--env-file-if-exists`), so there is no `export` step. Render never reads this file; production env comes from the dashboard.
 
 ```bash
 JWT_SECRET=…                 # REQUIRED — random secret: openssl rand -hex 32
@@ -118,11 +124,16 @@ NODE_ENV=production          # set on Render
 
 The server aborts at startup if any REQUIRED var is missing.
 
+For a throwaway local sandbox, point `TURSO_DB_URL` at a SQLite file (`file:./local-dev.db`) with any non-empty `TURSO_DB_TOKEN`. A dummy `UPLOADTHING_SECRET` still boots the API — only file uploads fail.
+
 ### Setup
 
 ```bash
 # Install dependencies for both workspaces
 npm install --workspaces
+
+# Create local env (then fill in your own values)
+cp .env.example server/.env
 
 # Seed the demo space (optional but recommended for dev)
 cd server && npm run seed

@@ -17,6 +17,16 @@ A **mobile-first academic organiser** for Nigerian university students. One stru
 - Did a **deep debug pass** (details below) and a live end-to-end smoke test of ~26 feature checks
 - Deployed to Render. Last verified deploy built + started clean and all smoke-tested endpoints passed
 
+## Local dev sandbox (2026-10-27)
+
+Full stack now runs against a local SQLite file, no Turso access required.
+
+- `.gitignore` covers `.env`, `.env.local`, `.env.*.local`, and `server/local-dev.db*`. **This was missing** — a `.env` dropped in the repo was one `git add -A` away from being committed.
+- Server `dev` and `seed` scripts pass `--env-file-if-exists=.env` (Node ≥22.9), so `server/.env` loads with no shell exports and still no `dotenv` dependency. `start` is deliberately unchanged: Render's `startCommand` supplies env directly.
+- Verified locally on 2026-10-27: both builds clean, `npm run seed` creates `server/local-dev.db` with demo space `pre220` (invite `PRE-220`), login works for `christian@classspace.app` and `student@classspace.app` (both `demo1234`), and announcements / materials summary / timetable / opportunities all return seeded data.
+- The sandbox `UPLOADTHING_SECRET` is a placeholder, so **uploads fail by design** — not a regression. Everything up to the UploadThing call is testable.
+- Phone testing goes through `cloudflared tunnel --url http://127.0.0.1:5000` (public, new hostname per restart, seed data only). Never aim a tunnel or any tooling at the live Render URL.
+
 ## Verified working against the LIVE site (last smoke test)
 
 Auth (register/login/me), space create/get/my-spaces/members, announcements (post with file, list, detail, pin, delete), reactions (upvote/downvote), timetable (add/list), materials (upload/list/download/recent), opportunities (post/list/delete), share previews (space/ann/mat/course), 401 guard. Health endpoints `GET /api/health` and `/api/health/upload` both OK; DB and UploadThing reachable.

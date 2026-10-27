@@ -41,11 +41,23 @@ The server **fails to start** if any required var is missing (`validateEnv()`).
 
 ```bash
 npm install --workspaces          # or: cd client && npm i && cd ../server && npm i
-cd server && npm run seed         # optional demo data
+cp .env.example server/.env       # gitignored; fill in your own values
+cd server && npm run seed         # creates tables + demo space pre220
 npm run dev                       # client :5000 (proxy /api → :3001), server :3001
 ```
 
-For a fully local DB: `TURSO_DB_URL=file:./dev.db TURSO_DB_TOKEN=local` on the server process.
+`server/.env` is loaded automatically by the server's `dev` and `seed` scripts via `--env-file-if-exists=.env`; no shell exports needed, and no secret enters git. Production is untouched — Render injects env from the dashboard and runs its own `startCommand`.
+
+**Fully local sandbox (no Turso):**
+
+```bash
+TURSO_DB_URL=file:/absolute/path/to/server/local-dev.db
+TURSO_DB_TOKEN=local-dev-token
+```
+
+`npm run seed` creates the file DB. Every required var still needs a value, so generate a throwaway `JWT_SECRET` and VAPID pair. Uploads need a real `UPLOADTHING_SECRET`; with a placeholder the API boots but uploads fail. Delete the `.db` file and reseed to reset.
+
+**Testing on a phone:** `cloudflared tunnel --url http://127.0.0.1:5000` serves the dev build over HTTPS on a `*.trycloudflare.com` host. Quick tunnels are public and change hostname on every restart — use them only with seed data, never with production credentials or a production database.
 
 ## Release notes for the next deployer
 
