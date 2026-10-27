@@ -1,6 +1,14 @@
 node_modules/
 client/dist/
 server/dist/
+
+# local secrets and sandbox database — never commit
+.env
+.env.local
+.env.*.local
+server/local-dev.db
+server/local-dev.db-shm
+server/local-dev.db-wal
 test-results/
 audit.tmp.cjs
 *.tmp.cjs
