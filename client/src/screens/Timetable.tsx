@@ -6,6 +6,8 @@ import { Fab } from '../components/layout';
 import { AddClassSheet } from '../components/sheets/AddClass';
 import { toast } from '../store/toastStore';
 import { DAYS, COURSE_COLORS, COURSE_BG_COLORS, type TimetableEntry } from '../types';
+import { getClassState, isSameDay, timeToMinutes, type ClassState } from '../lib/classStatus';
+import { useNow } from '../hooks/useNow';
 import api from '../api/client';
 
 const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
@@ -22,22 +24,6 @@ function getMonday(date: Date): Date {
 function getTodayIndex(): number {
   const d = new Date().getDay();
   return d === 0 || d === 6 ? 0 : d - 1;
-}
-
-function timeToMinutes(t: string): number {
-  const [h, m] = t.split(':').map(Number);
-  return h * 60 + m;
-}
-
-function getClassStatus(entry: TimetableEntry): 'past' | 'now' | 'soon' | 'upcoming' {
-  const now = new Date();
-  const currentMins = now.getHours() * 60 + now.getMinutes();
-  const start = timeToMinutes(entry.start_time);
-  const end = timeToMinutes(entry.end_time);
-  if (currentMins >= start && currentMins < end) return 'now';
-  if (currentMins < start && start - currentMins <= 60) return 'soon';
-  if (currentMins >= end) return 'past';
-  return 'upcoming';
 }
 
 function formatTimeRange(start: string, end: string) {
@@ -78,22 +64,30 @@ function CountdownToClass({ entry }: { entry: TimetableEntry }) {
   return <span className="text-amber-400 text-[10px] font-jakarta font-bold">{label}</span>;
 }
 
-function ClassCard({ entry, isToday, showStatus = true, onCancel, onRestore, onDelete }: { entry: TimetableEntry; isToday: boolean; showStatus?: boolean; onCancel?: (entry: TimetableEntry) => void; onRestore?: (entry: TimetableEntry) => void; onDelete?: (entry: TimetableEntry) => void }) {
-  const cancelled = !!entry.cancelled;
-  const status = cancelled ? 'past' : isToday ? getClassStatus(entry) : 'upcoming';
+function ClassCard({ entry, date, now, showStatus = true, onCancel, onRestore, onDelete }: { entry: TimetableEntry; date: Date; now: Date; showStatus?: boolean; onCancel?: (entry: TimetableEntry) => void; onRestore?: (entry: TimetableEntry) => void; onDelete?: (entry: TimetableEntry) => void }) {
+  const state: ClassState = getClassState(entry, date, now);
+  const cancelled = state === 'cancelled';
   const ci = entry.color_index % 5;
   const color = COURSE_COLORS[ci];
   const bg = COURSE_BG_COLORS[ci];
+  const sameDay = isSameDay(date, now);
+  const minutesUntilStart = timeToMinutes(entry.start_time) - (now.getHours() * 60 + now.getMinutes());
 
   return (
     <div
       className={`relative rounded-2xl border overflow-hidden transition-all duration-300 ${
-        status === 'now' ? 'border-opacity-60 shadow-lg' : 'opacity-45 border-app-border'
+        state === 'ongoing'
+          ? 'shadow-lg'
+          : state === 'past'
+            ? 'opacity-55'
+            : state === 'cancelled'
+              ? 'opacity-75'
+              : ''
       }`}
       style={{
-        background: status === 'now' ? bg : 'var(--color-app-surface)',
-        borderColor: status === 'now' ? color : undefined,
-        boxShadow: status === 'now' ? `0 4px 24px ${color}25` : undefined,
+        background: state === 'ongoing' ? bg : 'var(--color-app-surface)',
+        borderColor: state === 'ongoing' ? color : undefined,
+        boxShadow: state === 'ongoing' ? `0 4px 24px ${color}25` : undefined,
       }}
     >
       <div className="absolute left-0 top-0 bottom-0 w-1" style={{ background: color }} />
@@ -105,13 +99,18 @@ function ClassCard({ entry, isToday, showStatus = true, onCancel, onRestore, onD
                 <span className="text-[10px] font-jakarta font-bold uppercase tracking-wider text-app-red">❌ Cancelled</span>
               </div>
             )}
-            {showStatus && !cancelled && status === 'now' && (
+            {showStatus && state === 'ongoing' && (
               <div className="flex items-center gap-1.5 mb-2">
                 <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: color }} />
-                <span className="text-[10px] font-jakarta font-bold uppercase tracking-wider" style={{ color }}>Now in session</span>
+                <span className="text-[10px] font-jakarta font-bold uppercase tracking-wider text-app-accent">ONGOING</span>
               </div>
             )}
-            {showStatus && status === 'soon' && isToday && (
+            {showStatus && state === 'past' && (
+              <div className="flex items-center gap-1.5 mb-2">
+                <span className="text-[10px] font-jakarta font-semibold uppercase tracking-wider text-app-text-faint">Ended</span>
+              </div>
+            )}
+            {showStatus && state === 'upcoming' && sameDay && minutesUntilStart > 0 && minutesUntilStart <= 60 && (
               <div className="flex items-center gap-1.5 mb-2">
                 <CountdownToClass entry={entry} />
               </div>
@@ -186,6 +185,7 @@ export function Timetable() {
   const [weekOffset, setWeekOffset] = useState(0);
   const [cancelToast, setCancelToast] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
+  const now = useNow();
 
   const todayIndex = getTodayIndex();
 
@@ -399,7 +399,7 @@ export function Timetable() {
                   <div className="flex flex-col gap-3 animate-fadeIn">
                     {dayEntries.map(entry => (
                       <div key={entry.id}>
-                        <ClassCard entry={entry} isToday={isToday} onCancel={isRep ? handleCancelClass : undefined} onRestore={isRep ? handleRestoreClass : undefined} onDelete={isRep ? handleDeleteEntry : undefined} />
+                        <ClassCard entry={entry} date={weekDates[selectedDay]} now={now} onCancel={isRep ? handleCancelClass : undefined} onRestore={isRep ? handleRestoreClass : undefined} onDelete={isRep ? handleDeleteEntry : undefined} />
                       </div>
                     ))}
                     <div className="bg-app-surface rounded-xl p-3 border border-app-border flex items-center justify-between mt-1">
@@ -474,8 +474,8 @@ export function Timetable() {
                             </div>
                           ) : (
                             dEntries.map((entry) => {
-                              const cancelled = !!entry.cancelled;
-                              const status = cancelled ? 'past' : isActualToday ? getClassStatus(entry) : 'upcoming';
+                              const state = getClassState(entry, weekDates[i], now);
+                              const cancelled = state === 'cancelled';
                               const ci = entry.color_index % 5;
                               const color = COURSE_COLORS[ci];
                               const bg = COURSE_BG_COLORS[ci];
@@ -484,19 +484,30 @@ export function Timetable() {
                                 <div
                                   key={entry.id}
                                   className={`relative rounded-xl border overflow-hidden p-3 transition-all duration-300 ${
-                                    status === 'now' ? 'shadow-md' : status === 'past' ? 'opacity-45' : ''
+                                    state === 'ongoing'
+                                      ? 'shadow-md'
+                                      : state === 'past'
+                                        ? 'opacity-55'
+                                        : state === 'cancelled'
+                                          ? 'opacity-75'
+                                          : ''
                                   }`}
                                   style={{
-                                    background: status === 'now' ? bg : 'var(--color-app-surface)',
-                                    borderColor: status === 'now' ? color : 'var(--color-app-border)',
+                                    background: state === 'ongoing' ? bg : 'var(--color-app-surface)',
+                                    borderColor: state === 'ongoing' ? color : 'var(--color-app-border)',
                                   }}
                                 >
                                   <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl" style={{ background: color }} />
                                   <div className="pl-3">
-                                    {status === 'now' && (
+                                    {state === 'ongoing' && (
                                       <div className="flex items-center gap-1 mb-1">
                                         <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: color }} />
-                                        <span className="text-[9px] font-jakarta font-bold uppercase" style={{ color }}>Live</span>
+                                        <span className="text-[9px] font-jakarta font-bold uppercase text-app-accent">ONGOING</span>
+                                      </div>
+                                    )}
+                                    {state === 'past' && (
+                                      <div className="flex items-center gap-1 mb-1">
+                                        <span className="text-[9px] font-jakarta font-semibold uppercase text-app-text-faint">Ended</span>
                                       </div>
                                     )}
                                     {cancelled && (

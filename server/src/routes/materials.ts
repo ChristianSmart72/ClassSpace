@@ -191,13 +191,23 @@ export function materialRoutes(app: FastifyInstance) {
 
     const db = getDb();
 
+    // Unread = materials this student has never opened, excluding their own uploads.
     const rows = await db.prepare(`
       SELECT c.id as course_id, c.name as course_name, c.code as course_code,
              COUNT(m.id) as count,
              COUNT(DISTINCT m.uploader_id) as contributors,
              COALESCE(SUM(m.downloads), 0) as total_downloads,
              latest.name as latest_name,
-             latest.created_at as latest_created_at
+             latest.created_at as latest_created_at,
+             COALESCE((
+               SELECT COUNT(*) FROM materials nm
+               WHERE nm.course_id = c.id
+                 AND nm.uploader_id != ?
+                 AND NOT EXISTS (
+                   SELECT 1 FROM material_views mv
+                   WHERE mv.material_id = nm.id AND mv.user_id = ?
+                 )
+             ), 0) as new_count
       FROM courses c
       LEFT JOIN materials m ON m.course_id = c.id
       LEFT JOIN (
@@ -208,13 +218,14 @@ export function materialRoutes(app: FastifyInstance) {
       WHERE c.space_id = ?
       GROUP BY c.id
       ORDER BY c.name ASC
-    `).all(id) as unknown as {
+    `).all(userId, userId, id) as unknown as {
       course_id: number;
       count: number;
       contributors: number;
       total_downloads: number;
       latest_name: string | null;
       latest_created_at: string | null;
+      new_count: number;
     }[];
 
     return {
@@ -223,9 +234,50 @@ export function materialRoutes(app: FastifyInstance) {
         count: r.count,
         contributors: r.contributors,
         total_downloads: r.total_downloads,
+        new_count: r.new_count || 0,
         latest: r.latest_name ? { name: r.latest_name, created_at: r.latest_created_at } : null,
       })),
     };
+  });
+
+  // Marks every material in a course folder as viewed for the signed-in student,
+  // clearing their own unread badge for that course. Per-user by design.
+  app.post('/api/courses/:id/viewed', { preHandler: authMiddleware }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const userId = request.user!.userId;
+    const db = getDb();
+
+    const course = await db.prepare<CourseRow>('SELECT space_id FROM courses WHERE id = ?').get(Number(id));
+    if (!course) return reply.status(404).send({ error: 'Course not found' });
+
+    if (!await isSpaceMember(course.space_id, userId)) {
+      return reply.status(403).send({ error: 'Not a member of this space' });
+    }
+
+    await db.prepare(`
+      INSERT OR IGNORE INTO material_views (user_id, material_id)
+      SELECT ?, m.id FROM materials m WHERE m.course_id = ?
+    `).run(userId, Number(id));
+
+    return { success: true };
+  });
+
+  // Marks a single material as viewed, for direct opens from Recently Added or a share link.
+  app.post('/api/materials/:id/viewed', { preHandler: authMiddleware }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const userId = request.user!.userId;
+    const db = getDb();
+
+    const material = await db.prepare<MaterialRow>('SELECT id, space_id FROM materials WHERE id = ?').get(Number(id));
+    if (!material) return reply.status(404).send({ error: 'Material not found' });
+
+    if (!await isSpaceMember(material.space_id, userId)) {
+      return reply.status(403).send({ error: 'Not a member of this space' });
+    }
+
+    await db.prepare('INSERT OR IGNORE INTO material_views (user_id, material_id) VALUES (?, ?)').run(userId, Number(id));
+
+    return { success: true };
   });
 
   app.get('/api/spaces/:id/materials/recent', { preHandler: authMiddleware }, async (request, reply) => {

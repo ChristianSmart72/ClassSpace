@@ -59,12 +59,33 @@ export async function patchMaterial(id: number, updates: Partial<Material>) {
 
 export async function getMaterialsSummary(spaceId: string) {
   const { data } = await api.get(`/spaces/${spaceId}/materials/summary`);
-  return data as { courses: { course_id: number; count: number; latest: { name: string; created_at: string } | null }[] };
+  return data as {
+    courses: {
+      course_id: number;
+      count: number;
+      contributors?: number;
+      total_downloads?: number;
+      new_count: number;
+      latest: { name: string; created_at: string } | null;
+    }[];
+  };
 }
 
-export async function getRecentMaterials(spaceId: string, limit = 5) {
+export async function getRecentMaterials(spaceId: string, limit = 3) {
   const { data } = await api.get(`/spaces/${spaceId}/materials/recent`, { params: { limit } });
   return data.materials as Material[];
+}
+
+/** Records that this student has opened a course folder, clearing its unread count. */
+export async function markCourseViewed(courseId: number) {
+  const { data } = await api.post(`/courses/${courseId}/viewed`);
+  return data as { success: boolean };
+}
+
+/** Records that this student has viewed a single material. */
+export async function markMaterialViewed(materialId: number) {
+  const { data } = await api.post(`/materials/${materialId}/viewed`);
+  return data as { success: boolean };
 }
 
 export async function patchAnnouncement(id: number, updates: Partial<Announcement>) {

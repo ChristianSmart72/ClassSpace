@@ -45,7 +45,7 @@ export function ShareSheet({ type, id, spaceId, onClose }: {
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div
-        className="relative w-full max-w-[430px] bg-app-bg rounded-t-3xl border-t border-app-border animate-slideUp"
+        className="relative w-full max-w-[430px] bg-app-modal rounded-t-3xl border-t border-app-border animate-slideUp"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle */}

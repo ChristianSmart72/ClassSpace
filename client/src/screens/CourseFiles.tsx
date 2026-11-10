@@ -1,9 +1,10 @@
-import { useEffect, useState, useMemo, useRef, memo } from 'react';
+import { useEffect, useState, useMemo, memo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSpaceStore } from '../store/spaceStore';
 import { useContentStore } from '../store/contentStore';
 import { Fab } from '../components/layout';
 import { Skeleton, EmptyState } from '../components/ui/Shared';
+import { OverflowMenu, type OverflowMenuItem } from '../components/ui/OverflowMenu';
 import { UploadMaterialSheet } from '../components/sheets/UploadMaterial';
 import { ShareSheet } from '../components/sheets/ShareSheet';
 import { FILE_ICONS } from '../types';
@@ -11,6 +12,7 @@ import type { Material } from '../types';
 import api from '../api/client';
 import { formatRelativeTime, formatSize } from '../lib/time';
 import { downloadMaterialFile, type DownloadPhase } from '../lib/download';
+import { markCourseViewed } from '../api/content';
 
 const FILTER_CATEGORIES = [
   'All', 'Slides', 'Assignments', 'Past Questions',
@@ -69,6 +71,12 @@ export function CourseFiles() {
 
   useEffect(() => {
     if (cid) fetchMaterials(Number(cid));
+  }, [cid]);
+
+  // Opening a course folder marks its materials as seen for this student only.
+  useEffect(() => {
+    if (!cid) return;
+    markCourseViewed(Number(cid)).catch(() => {});
   }, [cid]);
 
   useEffect(() => {
@@ -288,31 +296,13 @@ const ResourceCard = memo(function ResourceCard({ material: m, canDelete, deleti
   onShare: () => void;
   onClick: () => void;
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; left: number } | null>(null);
   const [dlPhase, setDlPhase] = useState<DownloadPhase | 'idle'>('idle');
   const [dl, setDl] = useState(() => getDownloaded().includes(m.id));
-  const menuBtnRef = useRef<HTMLButtonElement>(null);
   const icon = FILE_ICONS[m.file_type] || '📁';
   const colorClass = CARD_FILE_COLORS[m.file_type] || 'text-app-text-dim';
   const extLabel = FILE_EXT_LABELS[m.file_type] || m.file_type.toUpperCase();
 
-  const toggleMenu = () => {
-    if (!menuOpen && menuBtnRef.current) {
-      const r = menuBtnRef.current.getBoundingClientRect();
-      const menuW = 56;
-      const menuH = 240;
-      const left = Math.max(8, Math.min(r.right - menuW, window.innerWidth - menuW - 8));
-      const up = window.innerHeight - r.bottom < menuH;
-      setMenuPos(up
-        ? { bottom: window.innerHeight - r.top + 4, left }
-        : { top: r.bottom + 4, left });
-    }
-    setMenuOpen(o => !o);
-  };
-
   const handleDownload = async () => {
-    setMenuOpen(false);
     if (dlPhase === 'downloading' || dl) return;
     setDlPhase('downloading');
     const result = await downloadMaterialFile(m, setDlPhase);
@@ -321,6 +311,21 @@ const ResourceCard = memo(function ResourceCard({ material: m, canDelete, deleti
       setDl(true);
     }
   };
+
+  const menuItems: OverflowMenuItem[] = [
+    dlPhase === 'downloading'
+      ? { key: 'download', label: 'Downloading…', icon: '⏳', disabled: true, onSelect: () => {} }
+      : dl
+        ? { key: 'download', label: 'Download again', icon: '⬇', onSelect: () => window.open(`/api/materials/${m.id}/download`, '_blank') }
+        : { key: 'download', label: 'Download', icon: '⬇', onSelect: handleDownload },
+    { key: 'share', label: 'Share', icon: '🔗', onSelect: onShare },
+  ];
+  if (canDelete) {
+    menuItems.push(
+      { key: 'pin', label: m.pinned ? 'Unpin' : 'Pin', icon: m.pinned ? '📍' : '📌', separatorBefore: true, onSelect: onPin },
+      { key: 'delete', label: 'Delete', icon: '🗑', danger: true, disabled: deleting, onSelect: onDelete },
+    );
+  }
 
   return (
     <div className="bg-app-surface rounded-xl border border-app-border relative card-hover">
@@ -354,52 +359,8 @@ const ResourceCard = memo(function ResourceCard({ material: m, canDelete, deleti
         </div>
       </div>
 
-      <div className="absolute right-2 top-3 z-10" onClick={e => e.stopPropagation()}>
-        <button ref={menuBtnRef} onClick={toggleMenu}
-          className="p-1.5 text-app-text-faint hover:text-app-text transition-colors rounded-lg hover:bg-app-surface-2 text-sm leading-none tracking-wider font-bold">
-          ···
-        </button>
-        {menuOpen && menuPos && (
-          <>
-            <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-            <div className="fixed z-50 bg-app-bg border border-app-border rounded-xl shadow-xl py-1.5 w-14 max-h-[70vh] overflow-y-auto animate-fadeIn"
-              style={{ top: menuPos.top, bottom: menuPos.bottom, left: menuPos.left }}>
-              {dl ? (
-                <button title="Downloaded" onClick={() => { setMenuOpen(false); window.open(`/api/materials/${m.id}/download`, '_blank'); }}
-                  className="w-full flex items-center justify-center py-3 text-app-green hover:bg-app-surface transition-colors text-base">
-                  ✓
-                </button>
-              ) : dlPhase === 'downloading' ? (
-                <button title="Downloading…" disabled
-                  className="w-full flex items-center justify-center py-3 text-app-accent hover:bg-app-surface transition-colors text-base disabled:opacity-60">
-                  <span className="w-4 h-4 border-2 border-app-accent border-t-transparent rounded-full animate-spin" />
-                </button>
-              ) : (
-                <button title="Download" onClick={handleDownload}
-                  className="w-full flex items-center justify-center py-3 text-app-text hover:bg-app-surface transition-colors text-base">
-                  ⬇
-                </button>
-              )}
-              <button title="Share" onClick={() => { onShare(); setMenuOpen(false); }}
-                className="w-full flex items-center justify-center py-3 text-app-text hover:bg-app-surface transition-colors text-base">
-                🔗
-              </button>
-              {canDelete && (
-                <>
-                  <div className="h-px bg-app-border mx-1.5 my-0.5" />
-                  <button title={m.pinned ? 'Unpin' : 'Pin'} onClick={() => { onPin(); setMenuOpen(false); }}
-                    className="w-full flex items-center justify-center py-3 text-app-text hover:bg-app-surface transition-colors text-base">
-                    {m.pinned ? '📍' : '📌'}
-                  </button>
-                  <button title="Delete" onClick={() => { onDelete(); setMenuOpen(false); }} disabled={deleting}
-                    className="w-full flex items-center justify-center py-3 text-app-red hover:bg-app-surface transition-colors text-base disabled:opacity-40">
-                    🗑
-                  </button>
-                </>
-              )}
-            </div>
-          </>
-        )}
+      <div className="absolute right-2 top-2.5 z-10" onClick={e => e.stopPropagation()}>
+        <OverflowMenu items={menuItems} ariaLabel={`Options for ${m.name}`} />
       </div>
     </div>
   );

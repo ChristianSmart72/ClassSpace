@@ -1,19 +1,21 @@
 @import "tailwindcss";
 
 @theme {
-  --color-app-bg: #0d0d12;
-  --color-app-surface: #181821;
-  --color-app-surface-2: #20202b;
-  --color-app-border: #262633;
+  --color-app-bg: #14161d;
+  --color-app-nav: #171a22;
+  --color-app-surface: #1d212b;
+  --color-app-surface-2: #272c38;
+  --color-app-modal: #20242f;
+  --color-app-border: #323848;
   --color-app-accent: #3b82f6;
-  --color-app-accent-2: #6366f1;
-  --color-app-accent2: #6366f1;
-  --color-app-text: #f0f0f4;
-  --color-app-text-dim: #8a8a9a;
-  --color-app-text-faint: #5a5a6a;
-  --color-app-red: #ef4444;
-  --color-app-green: #22c55e;
-  --color-app-orange: #f59e0b;
+  --color-app-accent-2: #818cf8;
+  --color-app-accent2: #818cf8;
+  --color-app-text: #eef1f7;
+  --color-app-text-dim: #a9b2c4;
+  --color-app-text-faint: #7c869a;
+  --color-app-red: #f87171;
+  --color-app-green: #4ade80;
+  --color-app-orange: #fbbf24;
 
   --font-jakarta: "Plus Jakarta Sans", sans-serif;
   --font-inter: "Inter", sans-serif;
@@ -55,27 +57,31 @@
 
 /* ── Dark theme (default) ── */
 :root, [data-theme="dark"] {
-  --app-bg: #0d0d12;
-  --app-surface: #181821;
-  --app-surface-2: #20202b;
-  --app-border: #262633;
+  --app-bg: #14161d;
+  --app-nav: #171a22;
+  --app-surface: #1d212b;
+  --app-surface-2: #272c38;
+  --app-modal: #20242f;
+  --app-border: #323848;
   --app-accent: #3b82f6;
-  --app-accent2: #6366f1;
-  --app-text: #f0f0f4;
-  --app-text-dim: #8a8a9a;
-  --app-text-faint: #5a5a6a;
-  --app-red: #ef4444;
-  --app-green: #22c55e;
-  --app-orange: #f59e0b;
+  --app-accent2: #818cf8;
+  --app-text: #eef1f7;
+  --app-text-dim: #a9b2c4;
+  --app-text-faint: #7c869a;
+  --app-red: #f87171;
+  --app-green: #4ade80;
+  --app-orange: #fbbf24;
   --app-on-accent: #ffffff;
-  --landing-bg: radial-gradient(ellipse at 65% -10%, #14141e 0%, #0d0d12 60%);
+  --landing-bg: radial-gradient(ellipse at 65% -10%, #1b1e28 0%, #14161d 60%);
 }
 
 /* ── Light theme ── */
 [data-theme="light"] {
   --app-bg: #ffffff;
+  --app-nav: #ffffff;
   --app-surface: #f8f9fc;
   --app-surface-2: #eef1f7;
+  --app-modal: #ffffff;
   --app-border: #d9dee6;
   --app-accent: #3b82f6;
   --app-accent2: #4f46e5;
@@ -89,8 +95,10 @@
   --landing-bg: linear-gradient(135deg, #eef2ff 0%, #ffffff 60%);
 
   --color-app-bg: #ffffff;
+  --color-app-nav: #ffffff;
   --color-app-surface: #f8f9fc;
   --color-app-surface-2: #eef1f7;
+  --color-app-modal: #ffffff;
   --color-app-border: #d9dee6;
   --color-app-accent: #3b82f6;
   --color-app-accent-2: #4f46e5;

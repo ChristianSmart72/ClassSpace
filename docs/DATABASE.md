@@ -39,6 +39,12 @@ Tables (all timestamps stored as `datetime('now')` strings, UTC):
 ### materials
 `space_id` → spaces · `course_id` → courses · `name` · `file_data`? (UploadThing URL) · `file_size` · `file_type` (extension) · `category` (Slides|Assignments|Past Questions|Lab Resources|Books|Templates|Other) · `uploader_id` → users · `pinned` 0/1 · `downloads` (count) · `created_at`
 
+### material_views
+`user_id` → users (CASCADE) · `material_id` → materials (CASCADE) · `viewed_at` · UNIQUE(user_id, material_id).
+One row per student per material they have seen; drives the per-student "N New" count on course folders
+(`new_count` in `GET /api/spaces/:id/materials/summary`). Opening a course folder inserts rows for all its
+materials, opening a single material inserts one row. Purely additive — no existing table is altered.
+
 ### reactions
 `announcement_id` → announcements (CASCADE) · `user_id` → users · `emoji` ('upvote'|'downvote') · `created_at` · UNIQUE(announcement_id, user_id, emoji)
 
