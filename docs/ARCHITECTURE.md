@@ -69,7 +69,7 @@ Fastify 5 (single Web Service on Render)
 | `routes/auth.ts` | register, login, me (+ nested `space` when member) |
 | `routes/spaces.ts` | create space (slug id + courses + rep membership), get space, join by invite code, members list, leave, my spaces |
 | `routes/announcements.ts` | list (filters urgent/pinned/course-code, reaction counts), create (JSON `files` array or multipart, pushes to members), get one, delete, patch, download legacy file, shared view |
-| `routes/materials.ts` | list (sort newest/oldest/downloads/alpha), upload (rep), download (302 → file URL, increments `downloads`), patch (pin), delete, per-space summary + recent, shared view |
+| `routes/materials.ts` | list (sort newest/oldest/downloads/alpha), upload (rep), download (302 → file URL, increments `downloads`), patch (pin), delete, per-space summary (`new_count`) + recent, mark viewed (course or single material), shared view |
 | `routes/timetable.ts` | get (day-ordered), add, patch (cancel), delete — all rep-gated |
 | `routes/opportunities.ts` | list, create (rep), patch (pin, rep), delete (rep) |
 | `routes/reactions.ts` | upvote/downvote toggle (membership-gated) |

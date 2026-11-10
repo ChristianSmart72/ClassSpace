@@ -41,7 +41,7 @@ export function BottomNav() {
   const tabs = useNavTabs();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 lg:hidden bg-app-bg border-t border-app-border z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+    <nav className="fixed bottom-0 left-0 right-0 lg:hidden bg-app-nav border-t border-app-border z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
       <div className="flex items-stretch justify-around h-12 max-w-[430px] mx-auto">
         {tabs.map((tab) => (
           <NavItem key={tab.label} tab={tab} />
@@ -64,7 +64,7 @@ export function SideNav() {
   };
 
   return (
-    <aside className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-52 bg-app-bg border-r border-app-border z-40">
+    <aside className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-52 bg-app-nav border-r border-app-border z-40">
       <div className="px-4 py-5 border-b border-app-border">
         <div className="font-jakarta font-extrabold text-[9px] tracking-[0.24em] uppercase text-app-accent flex items-center gap-2">
           <span className="text-lg">📚</span>

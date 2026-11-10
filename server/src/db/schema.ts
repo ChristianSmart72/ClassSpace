@@ -9,6 +9,7 @@ const TABLES_NAMES = [
   'opportunities',
   'timetable',
   'reactions',
+  'material_views',
   'materials',
   'announcements',
   'courses',
@@ -88,6 +89,13 @@ const TABLES = [
     pinned INTEGER NOT NULL DEFAULT 0,
     downloads INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
+  `CREATE TABLE IF NOT EXISTS material_views (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    material_id INTEGER NOT NULL REFERENCES materials(id) ON DELETE CASCADE,
+    viewed_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(user_id, material_id)
   )`,
   `CREATE TABLE IF NOT EXISTS reactions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -187,6 +195,8 @@ const INDEXES = [
   `CREATE INDEX IF NOT EXISTS idx_opp_space_created ON opportunities(space_id, created_at)`,
   `CREATE INDEX IF NOT EXISTS idx_polls_space_created ON polls(space_id, created_at)`,
   `CREATE INDEX IF NOT EXISTS idx_mat_course_pinned_created ON materials(course_id, pinned, created_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_material_views_user_material ON material_views(user_id, material_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_material_views_material ON material_views(material_id)`,
 ];
 
 // Migrations for existing databases (CREATE TABLE IF NOT EXISTS won't alter them).

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef, memo } from 'react';
+import { useEffect, useState, useMemo, memo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useSpaceStore } from '../store/spaceStore';
 import { useContentStore } from '../store/contentStore';
@@ -6,6 +6,7 @@ import { useBadgeStore } from '../store/badgeStore';
 import { useAuthStore } from '../store/authStore';
 import { Fab } from '../components/layout';
 import { Skeleton, EmptyState } from '../components/ui/Shared';
+import { OverflowMenu, type OverflowMenuItem } from '../components/ui/OverflowMenu';
 import { PostAnnouncementSheet } from '../components/sheets/PostAnnouncement';
 import { UploadMaterialSheet } from '../components/sheets/UploadMaterial';
 import { getTimetable, createTimetableEntry, deleteTimetableEntry, setEntryCancelled } from '../api/timetable';
@@ -13,6 +14,8 @@ import { getMaterialsSummary, getRecentMaterials } from '../api/content';
 import type { Announcement, TimetableEntry, Material } from '../types';
 import { COURSE_COLORS, COURSE_BG_COLORS, DAYS, FILE_ICONS } from '../types';
 import { formatRelativeTime } from '../lib/time';
+import { useNow } from '../hooks/useNow';
+import { getClassState } from '../lib/classStatus';
 import { ShareSheet } from '../components/sheets/ShareSheet';
 import api from '../api/client';
 import { toast } from '../store/toastStore';
@@ -85,12 +88,22 @@ export function Space() {
   const todayIndex = (() => { const d = new Date().getDay(); return d === 0 || d === 6 ? 0 : d - 1; })();
   const [scheduleDay, setScheduleDay] = useState(todayIndex);
   const [shareTarget, setShareTarget] = useState<{ type: string; id: string | number } | null>(null);
-  const [courseSummary, setCourseSummary] = useState<Record<number, { count: number; latest: { name: string; created_at: string } | null }>>({});
+  const [courseSummary, setCourseSummary] = useState<Record<number, { count: number; new_count: number; latest: { name: string; created_at: string } | null }>>({});
   const [recentMaterials, setRecentMaterials] = useState<Material[]>([]);
   const [recentLoading, setRecentLoading] = useState(false);
+  const now = useNow();
 
   const isRep = memberRole === 'rep';
   const courseList = courses ?? [];
+
+  // Concrete date of the selected weekday in the current week, so timetable
+  // states follow the calendar as well as the clock.
+  const selectedClassDate = useMemo(() => {
+    const d = new Date();
+    const dow = d.getDay();
+    d.setDate(d.getDate() + (dow === 0 ? -6 : 1 - dow) + scheduleDay);
+    return d;
+  }, [scheduleDay]);
 
   // Redirect non-logged-in users to the join preview page
   useEffect(() => {
@@ -128,8 +141,8 @@ export function Space() {
     if (tab === 'files') {
       getMaterialsSummary(spaceId).then(data => {
         if (cancelled.current) return;
-        const map: Record<number, { count: number; latest: { name: string; created_at: string } | null }> = {};
-        for (const c of data.courses) map[c.course_id] = { count: c.count, latest: c.latest };
+        const map: Record<number, { count: number; new_count: number; latest: { name: string; created_at: string } | null }> = {};
+        for (const c of data.courses) map[c.course_id] = { count: c.count, new_count: c.new_count, latest: c.latest };
         setCourseSummary(map);
       }).catch(() => {});
     }
@@ -141,7 +154,7 @@ export function Space() {
     if (!spaceId || tab !== 'files' || showUpload) return;
     let cancelled = false;
     setRecentLoading(true);
-    getRecentMaterials(spaceId, 5).then(data => {
+    getRecentMaterials(spaceId, 3).then(data => {
       if (!cancelled) setRecentMaterials(data || []);
     }).catch(() => { if (!cancelled) setRecentMaterials([]); })
     .finally(() => { if (!cancelled) setRecentLoading(false); });
@@ -406,11 +419,11 @@ export function Space() {
                       <div className="flex-1 min-w-0">
                         <p className="text-app-text font-jakarta text-sm font-semibold truncate">{m.name}</p>
                         <div className="flex items-center gap-1.5 text-app-text-faint text-[11px] font-inter mt-0.5">
-                          <span className="text-app-text-dim font-medium truncate">{m.course_code}</span>
-                          <span>·</span>
-                          <span className="truncate">Uploaded by {m.uploader_name}</span>
-                          <span>·</span>
-                          <span>{formatRelativeTime(m.created_at)}</span>
+                          <span className="text-app-text-dim font-medium flex-shrink-0">{m.course_code}</span>
+                          <span className="flex-shrink-0">·</span>
+                          <span className="truncate min-w-0">Uploaded by {m.uploader_name}</span>
+                          <span className="flex-shrink-0">·</span>
+                          <span className="flex-shrink-0 whitespace-nowrap">{formatRelativeTime(m.created_at)}</span>
                         </div>
                       </div>
                       <span className="text-app-text-faint text-[10px] font-inter flex-shrink-0">⬇ {m.downloads || 0}</span>
@@ -431,15 +444,8 @@ export function Space() {
                 const ci = (course.color_index ?? i) % 5;
                 const summary = courseSummary[course.id];
                 const count = summary?.count ?? 0;
+                const newCount = summary?.new_count ?? 0;
                 const latest = summary?.latest ?? null;
-
-                let isNew = false;
-                if (latest) {
-                  try {
-                    const lv = Number(localStorage.getItem(`spaceLastVisit:${spaceId}`)) || 0;
-                    isNew = new Date(latest.created_at).getTime() > lv;
-                  } catch {}
-                }
 
                 return (
                   <div key={course.id} className="bg-app-surface rounded-xl border border-app-border relative overflow-hidden cursor-pointer card-hover"
@@ -451,20 +457,24 @@ export function Space() {
                           {course.icon}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="text-app-text font-jakarta font-semibold text-sm leading-snug truncate">{course.name}</p>
-                            {isNew && <span className="text-[10px] font-jakarta font-bold text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded-full flex-shrink-0">New</span>}
-                          </div>
+                          <p className="text-app-text font-jakarta font-semibold text-sm leading-snug truncate">{course.name}</p>
                           <p className="text-app-text-dim text-xs font-inter mt-0.5">{course.code}</p>
                           <div className="flex items-center gap-1.5 text-app-text-faint text-[11px] font-inter mt-1.5">
-                            <span>{count} {count === 1 ? 'resource' : 'resources'}</span>
-                            {latest && (
+                            <span>{count} {count === 1 ? 'Resource' : 'Resources'}</span>
+                            {newCount > 0 && (
                               <>
                                 <span>·</span>
-                                <span className="truncate">Latest: {latest.name}</span>
+                                <span className="text-[10px] font-jakarta font-bold text-app-accent bg-app-accent/10 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                                  {newCount} New
+                                </span>
                               </>
                             )}
                           </div>
+                          {latest && (
+                            <p className="text-app-text-faint text-[11px] font-inter mt-1 truncate">
+                              <span className="text-app-text-dim">Latest:</span> {latest.name}
+                            </p>
+                          )}
                         </div>
                         <span className="text-app-text-faint text-xs font-inter flex-shrink-0 mt-1">→</span>
                       </div>
@@ -555,13 +565,28 @@ export function Space() {
               <div className="flex flex-col gap-2.5">
                 {classes.sort((a,b) => a.start_time.localeCompare(b.start_time)).map(entry => {
                   const ci = entry.color_index % 5;
+                  const state = getClassState(entry, selectedClassDate, now);
                   return (
-                    <div key={entry.id} className="bg-app-surface border border-app-border rounded-xl p-4 relative overflow-hidden">
+                    <div key={entry.id}
+                      className={`border rounded-xl p-4 relative overflow-hidden transition-colors ${
+                        state === 'ongoing' ? 'border-app-accent/60 bg-app-surface' : 'border-app-border bg-app-surface'
+                      } ${state === 'past' ? 'opacity-55' : ''} ${state === 'cancelled' ? 'opacity-75' : ''}`}
+                      style={state === 'ongoing' ? { background: COURSE_BG_COLORS[ci] } : undefined}>
                       <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl" style={{ background: COURSE_COLORS[ci] }} />
                       <div className="pl-3">
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <p className={`text-app-text font-jakarta font-bold text-sm leading-snug flex-1 ${entry.cancelled ? 'opacity-40 line-through' : ''}`}>{entry.course_name}</p>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                            {state === 'ongoing' && (
+                              <span className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-full bg-app-accent/15 text-app-accent flex-shrink-0">
+                                ONGOING
+                              </span>
+                            )}
+                            {state === 'past' && (
+                              <span className="text-[10px] font-jakarta font-semibold px-2 py-0.5 rounded-full bg-app-surface-2 text-app-text-faint flex-shrink-0">
+                                Ended
+                              </span>
+                            )}
                             {entry.cancelled && (
                               <span className="text-[10px] font-jakarta font-bold px-2 py-0.5 rounded-full bg-app-red/15 text-app-red flex-shrink-0">
                                 ❌ Cancelled
@@ -630,23 +655,26 @@ const FeedCard = memo(function FeedCard({ ann, spaceId, canDelete, deleting, onD
 }) {
   const style = TYPE_STYLES[ann.type] || TYPE_STYLES.announcement;
   const preview = ann.body.length > 120 ? ann.body.slice(0, 120) + '…' : ann.body;
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; left: number } | null>(null);
-  const menuBtnRef = useRef<HTMLButtonElement>(null);
 
-  const toggleMenu = () => {
-    if (!menuOpen && menuBtnRef.current) {
-      const r = menuBtnRef.current.getBoundingClientRect();
-      const menuW = 184;
-      const menuH = 300;
-      const left = Math.max(8, Math.min(r.right - menuW, window.innerWidth - menuW - 8));
-      const up = window.innerHeight - r.bottom < menuH;
-      setMenuPos(up
-        ? { bottom: window.innerHeight - r.top + 4, left }
-        : { top: r.bottom + 4, left });
+  const handleShare = () => {
+    const url = `${window.location.origin}/space/${spaceId}/announcement/${ann.id}`;
+    if (navigator.share) {
+      navigator.share({ url, title: ann.title }).catch(() => {});
+    } else {
+      navigator.clipboard?.writeText(url).catch(() => {});
     }
-    setMenuOpen(o => !o);
   };
+
+  const menuItems: OverflowMenuItem[] = [
+    { key: 'share', label: 'Share', icon: '🔗', onSelect: handleShare },
+  ];
+  if (canDelete) {
+    menuItems.push(
+      { key: 'edit', label: 'Edit', icon: '✏️', separatorBefore: true, onSelect: onEdit },
+      { key: 'pin', label: ann.pinned ? 'Unpin' : 'Pin', icon: ann.pinned ? '📍' : '📌', onSelect: onPin },
+      { key: 'delete', label: 'Delete', icon: '🗑', danger: true, disabled: deleting, onSelect: onDelete },
+    );
+  }
 
   const [unread, setUnread] = useState(() => {
     try {
@@ -707,45 +735,8 @@ const FeedCard = memo(function FeedCard({ ann, spaceId, canDelete, deleting, onD
 
           <div className="flex-1" />
 
-          <div className="relative" onClick={e => e.stopPropagation()}>
-            <button ref={menuBtnRef} onClick={toggleMenu}
-              className="px-1.5 py-0.5 text-app-text-faint hover:text-app-text transition-colors rounded hover:bg-app-surface-2 text-sm leading-none tracking-wider font-bold">
-              ···
-            </button>
-            {menuOpen && menuPos && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-                <div className="fixed z-50 bg-app-bg border border-app-border rounded-xl shadow-xl py-1.5 min-w-[168px] max-h-[70vh] overflow-y-auto animate-fadeIn"
-                  style={{ top: menuPos.top, bottom: menuPos.bottom, left: menuPos.left }}>
-                  <button onClick={() => {
-                    const url = `${window.location.origin}/space/${spaceId}/announcement/${ann.id}`;
-                    if (navigator.share) navigator.share({ url, title: ann.title }).catch(() => navigator.clipboard.writeText(url));
-                    else navigator.clipboard.writeText(url);
-                    setMenuOpen(false);
-                  }}
-                    className="w-full text-left px-3 py-2 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2.5">
-                    <span className="w-4 text-center text-sm">🔗</span> Share
-                  </button>
-                  {canDelete && (
-                    <>
-                      <div className="h-px bg-app-border mx-2 my-1" />
-                      <button onClick={() => { onEdit(); setMenuOpen(false); }}
-                        className="w-full text-left px-3 py-2 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2.5">
-                        <span className="w-4 text-center text-sm">✏️</span> Edit
-                      </button>
-                      <button onClick={() => { onPin(); setMenuOpen(false); }}
-                        className="w-full text-left px-3 py-2 text-xs font-jakarta font-medium text-app-text hover:bg-app-surface transition-colors flex items-center gap-2.5">
-                        <span className="w-4 text-center text-sm">{ann.pinned ? '📍' : '📌'}</span> {ann.pinned ? 'Unpin' : 'Pin'}
-                      </button>
-                      <button onClick={() => { onDelete(); setMenuOpen(false); }} disabled={deleting}
-                        className="w-full text-left px-3 py-2 text-xs font-jakarta font-medium text-app-red hover:bg-app-surface transition-colors flex items-center gap-2.5 disabled:opacity-40">
-                        <span className="w-4 text-center text-sm">🗑</span> Delete
-                      </button>
-                    </>
-                  )}
-                </div>
-              </>
-            )}
+          <div onClick={e => e.stopPropagation()}>
+            <OverflowMenu items={menuItems} ariaLabel={`Options for ${ann.title}`} />
           </div>
         </div>
 

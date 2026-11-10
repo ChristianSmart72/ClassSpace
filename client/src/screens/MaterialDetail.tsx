@@ -6,6 +6,7 @@ import { FILE_ICONS, FILE_COLORS } from '../types';
 import api from '../api/client';
 import { formatSize, formatDate, canGoBack } from '../lib/time';
 import { downloadMaterialFile, type DownloadPhase } from '../lib/download';
+import { markMaterialViewed } from '../api/content';
 import type { Material } from '../types';
 
 function getMaterialBookmarks(): number[] {
@@ -43,6 +44,10 @@ export function MaterialDetail() {
   const [bookmarked, setBookmarked] = useState(() => getMaterialBookmarks().includes(Number(mid)));
 
   const isRep = memberRole === 'rep';
+
+  useEffect(() => {
+    if (mid) markMaterialViewed(Number(mid)).catch(() => {});
+  }, [mid]);
 
   useEffect(() => {
     const cancelled = { current: false };

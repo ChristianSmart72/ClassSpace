@@ -63,8 +63,8 @@ export function UploadMaterialSheet({ courseId: preselected, onClose }: {
   return (
     <div className="fixed inset-0 z-50 flex items-end" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="absolute inset-0 bg-black/50" />
-      <div className="relative w-full max-w-[430px] mx-auto bg-app-bg rounded-t-3xl max-h-[85vh] overflow-y-auto animate-slideUp" onClick={(e) => e.stopPropagation()}>
-        <div className="sticky top-0 bg-app-bg border-b border-app-border px-6 py-4 flex items-center justify-between">
+      <div className="relative w-full max-w-[430px] mx-auto bg-app-modal rounded-t-3xl max-h-[85vh] overflow-y-auto animate-slideUp" onClick={(e) => e.stopPropagation()}>
+        <div className="sticky top-0 bg-app-modal border-b border-app-border px-6 py-4 flex items-center justify-between">
           <h2 className="text-app-text font-jakarta font-bold text-base">Upload Material</h2>
           <button onClick={onClose} className="text-app-text-dim text-lg">&times;</button>
         </div>

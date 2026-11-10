@@ -134,10 +134,20 @@ Rep or uploader. Deletes the UploadThing object too. → `{ success: true }`
 
 ### `GET /api/spaces/:id/materials/summary`
 Per-course aggregates (`space_id` is the slug — this route must never `Number(id)` it).
-→ `{ courses: [{ course_id, count, contributors, total_downloads, latest: { name, created_at } | null }] }`
+→ `{ courses: [{ course_id, count, contributors, total_downloads, new_count,
+  latest: { name, created_at } | null }] }`
+`new_count` is the signed-in member's unread materials in that course (no `material_views` row yet,
+excluding their own uploads), so it is personal to each student.
 
-### `GET /api/spaces/:id/materials/recent?limit=5` (1–10)
+### `POST /api/courses/:id/viewed` — member
+Marks every material in the course as seen for the caller (clears their `new_count`). → `{ success: true }`
+
+### `POST /api/materials/:id/viewed` — member
+Marks one material as seen for the caller (direct opens from Recently Added / shared links). → `{ success: true }`
+
+### `GET /api/spaces/:id/materials/recent?limit=3` (1–10)
 → `{ materials: [ latest across all courses with uploader/course names + has_file ] }`
+The client requests the three newest for the Recently Added strip.
 
 ### `GET /api/materials/shared/:id` — PUBLIC
 → `{ id, name, file_type, category, file_size, created_at, course_id, pinned, downloads, has_file, uploader_name, course_name, course_code, course_icon, space_name, space_id }`
